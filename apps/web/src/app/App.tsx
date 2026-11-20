@@ -11,7 +11,7 @@ export interface AppShellProps {
 
 export function AppProviders({
   children,
-  initialUser = null,
+  initialUser,
 }: AppShellProps & { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -32,7 +32,7 @@ export function AppProviders({
   );
 }
 
-export function App({ initialUser = null }: AppShellProps) {
+export function App({ initialUser }: AppShellProps) {
   return (
     <AppProviders initialUser={initialUser}>
       <BrowserRouter>

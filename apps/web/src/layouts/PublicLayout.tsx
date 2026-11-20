@@ -15,7 +15,7 @@ export function PublicLayout() {
           color: "var(--mr-text-muted)",
         }}
       >
-        Manga Reader Web Application · Foundation Architecture Shell
+        Manga Reader Web Application · Package v2.0 Compliant Catalog &amp; Reader Engine
       </footer>
     </div>
   );
