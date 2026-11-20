@@ -1,0 +1,52 @@
+{
+  "contract_name": "manga-reader-package",
+  "contract_version": "2.0",
+  "exported_at": "2026-11-20T10:30:00Z",
+  "manga": {
+    "pool_manga_id": "pm_noncontiguous",
+    "slug": "noncontiguous-pages-manga",
+    "source_manga_id": "src_manga_noncontig",
+    "title": "Non-Contiguous Pages Manga",
+    "stats": {
+      "chapter_count": 1,
+      "page_count": 2,
+      "total_size_bytes": 200000,
+      "languages": ["en"]
+    }
+  },
+  "chapters": [
+    {
+      "pool_chapter_id": "pc_noncontig_01",
+      "pool_manga_id": "pm_noncontiguous",
+      "source_chapter_id": "src_ch_nc_01",
+      "chapter_number": "1",
+      "chapter_numeric": 1,
+      "language": "en",
+      "page_count": 2,
+      "total_size_bytes": 200000,
+      "pages_revision": 1,
+      "pages": [
+        {
+          "page_uid": "pg_nc_1",
+          "page_number": 1,
+          "filename": "001.webp",
+          "media": {
+            "bucket": "manga-reader-media",
+            "object_key": "chapters/pc_noncontig_01/001.webp",
+            "file_size": 100000
+          }
+        },
+        {
+          "page_uid": "pg_nc_3",
+          "page_number": 3,
+          "filename": "003.webp",
+          "media": {
+            "bucket": "manga-reader-media",
+            "object_key": "chapters/pc_noncontig_01/003.webp",
+            "file_size": 100000
+          }
+        }
+      ]
+    }
+  ]
+}

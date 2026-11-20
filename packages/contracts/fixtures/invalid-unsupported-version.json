@@ -1,0 +1,11 @@
+{
+  "contract_name": "manga-reader-package",
+  "contract_version": "2.1",
+  "exported_at": "2026-11-20T10:30:00Z",
+  "manga": {
+    "pool_manga_id": "pm_unsupported_ver",
+    "slug": "unsupported-version-manga",
+    "source_manga_id": "src_manga_bad_ver",
+    "title": "Unsupported Version Manga"
+  }
+}

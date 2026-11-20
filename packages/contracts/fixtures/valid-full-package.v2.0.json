@@ -1,0 +1,211 @@
+{
+  "contract_name": "manga-reader-package",
+  "contract_version": "2.0",
+  "exported_at": "2026-11-20T10:00:00Z",
+  "manga": {
+    "pool_manga_id": "pm_01j9examplemanga000001",
+    "slug": "chronicles-of-the-azure-blade",
+    "source_manga_id": "src_manga_1001",
+    "mangadex_id": "11111111-2222-4333-8444-555555555555",
+    "title": "Chronicles of the Azure Blade",
+    "alt_titles": ["Ao no Yaiba Senki", "Biên Niên Sử Lam Kiếm"],
+    "description": "A wandering archivist uncovers sealed chapters of an ancient kingdom.",
+    "status": "ongoing",
+    "content_rating": "safe",
+    "publication_demographic": "shounen",
+    "original_language": "ja",
+    "year": 2024,
+    "published_start_date": "2024-03-15",
+    "published_end_date": null,
+    "official_volumes": 4,
+    "official_chapters": 32,
+    "creators": [
+      {
+        "creator_id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+        "slug": "akira-kuroda",
+        "name": "Akira Kuroda",
+        "role": "author",
+        "mangadex_id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+        "biography": {
+          "en": "Manga writer known for fantasy epics.",
+          "ja": "ファンタジー作品で知られる漫画原作者。"
+        },
+        "links": {
+          "website": "https://example.org/akira-kuroda"
+        }
+      },
+      {
+        "creator_id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+        "slug": "akira-kuroda",
+        "name": "Akira Kuroda",
+        "role": "artist",
+        "mangadex_id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+        "biography": {
+          "en": "Manga writer known for fantasy epics.",
+          "ja": "ファンタジー作品で知られる漫画原作者。"
+        },
+        "links": {
+          "website": "https://example.org/akira-kuroda"
+        }
+      }
+    ],
+    "tags": [
+      {
+        "slug": "action",
+        "source_tag_id": "tag_action",
+        "mangadex_id": "391b0423-d847-456f-aff0-8b0cfc03066b",
+        "group": "genre",
+        "name": {
+          "en": "Action",
+          "vi": "Hành động"
+        }
+      },
+      {
+        "slug": "fantasy",
+        "source_tag_id": "tag_fantasy",
+        "mangadex_id": "cdc58593-87dd-415e-bbc0-2ec27bf404cc",
+        "group": "genre",
+        "name": {
+          "en": "Fantasy",
+          "vi": "Giả tưởng"
+        }
+      }
+    ],
+    "links": [
+      {
+        "site": "MangaDex",
+        "url": "https://mangadex.org/title/11111111-2222-4333-8444-555555555555"
+      }
+    ],
+    "primary_cover": {
+      "bucket": "manga-reader-media",
+      "object_key": "covers/pm_01j9examplemanga000001/vol1.webp",
+      "content_type": "image/webp",
+      "width": 1200,
+      "height": 1700,
+      "file_size": 245760,
+      "md5_hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cover_arts": [
+      {
+        "cover_id": "cov_001",
+        "volume": "1",
+        "locale": "ja",
+        "description": "Volume 1 Japanese Cover",
+        "media": {
+          "bucket": "manga-reader-media",
+          "object_key": "covers/pm_01j9examplemanga000001/vol1.webp",
+          "content_type": "image/webp",
+          "width": 1200,
+          "height": 1700,
+          "file_size": 245760,
+          "md5_hash": "d41d8cd98f00b204e9800998ecf8427e",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    ],
+    "stats": {
+      "chapter_count": 2,
+      "page_count": 3,
+      "total_size_bytes": 450000,
+      "languages": ["en", "vi"]
+    },
+    "lineage": {
+      "pool_revision": 3,
+      "source_metadata_revision": 2,
+      "manifest_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "published_at": "2026-11-18T08:00:00Z",
+      "updated_at": "2026-11-20T09:45:00Z"
+    }
+  },
+  "chapters": [
+    {
+      "pool_chapter_id": "pc_01j9examplechap000001",
+      "pool_manga_id": "pm_01j9examplemanga000001",
+      "source_chapter_id": "src_ch_001",
+      "chapter_number": "Prologue",
+      "chapter_numeric": 0,
+      "volume": "1",
+      "title": "The Sealed Archive",
+      "language": "en",
+      "scanlation_group": "Azure Scans",
+      "publish_at": "2026-11-18T09:00:00Z",
+      "source": "mangadex",
+      "source_id": "22222222-3333-4444-8555-666666666666",
+      "page_count": 2,
+      "total_size_bytes": 300000,
+      "pages_revision": 1,
+      "manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "updated_at": "2026-11-18T09:05:00Z",
+      "pages": [
+        {
+          "page_uid": "pg_01j9examplepage0001",
+          "page_number": 1,
+          "filename": "001.webp",
+          "media": {
+            "bucket": "manga-reader-media",
+            "object_key": "chapters/pc_01j9examplechap000001/001.webp",
+            "content_type": "image/webp",
+            "width": 1200,
+            "height": 1800,
+            "file_size": 150000,
+            "md5_hash": "11111111111111111111111111111111",
+            "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        },
+        {
+          "page_uid": "pg_01j9examplepage0002",
+          "page_number": 2,
+          "filename": "002.webp",
+          "media": {
+            "bucket": "manga-reader-media",
+            "object_key": "chapters/pc_01j9examplechap000001/002.webp",
+            "content_type": "image/webp",
+            "width": 1200,
+            "height": 1800,
+            "file_size": 150000,
+            "md5_hash": "22222222222222222222222222222222",
+            "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        }
+      ]
+    },
+    {
+      "pool_chapter_id": "pc_01j9examplechap000002",
+      "pool_manga_id": "pm_01j9examplemanga000001",
+      "source_chapter_id": "src_ch_002",
+      "chapter_number": "1",
+      "chapter_numeric": 1,
+      "volume": "1",
+      "title": "Khởi Đầu",
+      "language": "vi",
+      "scanlation_group": "Lam Kiếm Team",
+      "publish_at": "2026-11-19T12:00:00Z",
+      "source": "mangadex",
+      "source_id": "33333333-4444-4555-8666-777777777777",
+      "page_count": 1,
+      "total_size_bytes": 150000,
+      "pages_revision": 1,
+      "manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "updated_at": "2026-11-19T12:05:00Z",
+      "pages": [
+        {
+          "page_uid": "pg_01j9examplepage0003",
+          "page_number": 1,
+          "filename": "001.webp",
+          "media": {
+            "bucket": "manga-reader-media",
+            "object_key": "chapters/pc_01j9examplechap000002/001.webp",
+            "content_type": "image/webp",
+            "width": 1200,
+            "height": 1800,
+            "file_size": 150000,
+            "md5_hash": "33333333333333333333333333333333",
+            "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,483 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:manga-datalake:contract:manga-reader-package:2.0",
+  "title": "MangaReaderPackage",
+  "description": "External manga pool package contract v2.0 reconstructed strictly from docs/agent-plan/05_PACKAGE_V2_ETL_CDC.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["exported_at", "manga"],
+  "properties": {
+    "contract_name": {
+      "type": "string",
+      "const": "manga-reader-package",
+      "default": "manga-reader-package",
+      "description": "Constant contract identifier."
+    },
+    "contract_version": {
+      "type": "string",
+      "const": "2.0",
+      "default": "2.0",
+      "description": "Pinned contract version."
+    },
+    "exported_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC ISO-8601 export timestamp."
+    },
+    "manga": {
+      "$ref": "#/$defs/ReaderManga"
+    },
+    "chapters": {
+      "type": "array",
+      "description": "Optional exported chapter array ordered by (chapter_numeric, language). Omission means metadata-only package (ADR-012).",
+      "items": {
+        "$ref": "#/$defs/ReaderChapter"
+      }
+    }
+  },
+  "$defs": {
+    "ReaderManga": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pool_manga_id", "slug", "source_manga_id", "title"],
+      "properties": {
+        "pool_manga_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "source_manga_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "mangadex_id": {
+          "type": ["string", "null"],
+          "maxLength": 64,
+          "default": null
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "alt_titles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "description": {
+          "type": "string",
+          "default": ""
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ongoing", "completed", "hiatus", "cancelled", "unknown"],
+          "default": "unknown"
+        },
+        "content_rating": {
+          "type": "string",
+          "enum": ["safe", "suggestive", "erotica", "pornographic", "unknown"],
+          "default": "unknown"
+        },
+        "publication_demographic": {
+          "type": "string",
+          "enum": ["shounen", "shoujo", "seinen", "josei", "kodomo", "unknown"],
+          "default": "unknown"
+        },
+        "original_language": {
+          "type": ["string", "null"],
+          "maxLength": 16,
+          "default": null
+        },
+        "year": {
+          "type": ["integer", "null"],
+          "minimum": 1800,
+          "maximum": 2200,
+          "default": null
+        },
+        "published_start_date": {
+          "type": ["string", "null"],
+          "default": null
+        },
+        "published_end_date": {
+          "type": ["string", "null"],
+          "default": null
+        },
+        "official_volumes": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "default": null
+        },
+        "official_chapters": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "default": null
+        },
+        "creators": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ReaderCreator" },
+          "default": []
+        },
+        "tags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ReaderTag" },
+          "default": []
+        },
+        "links": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ReaderLink" },
+          "default": []
+        },
+        "primary_cover": {
+          "anyOf": [{ "$ref": "#/$defs/ReaderMediaRef" }, { "type": "null" }],
+          "default": null
+        },
+        "cover_arts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ReaderCoverArt" },
+          "default": []
+        },
+        "stats": {
+          "$ref": "#/$defs/ReaderMangaStats"
+        },
+        "lineage": {
+          "$ref": "#/$defs/ReaderLineage"
+        }
+      }
+    },
+    "ReaderChapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pool_chapter_id", "pool_manga_id", "source_chapter_id", "chapter_number"],
+      "properties": {
+        "pool_chapter_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "pool_manga_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "source_chapter_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "chapter_number": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chapter_numeric": {
+          "type": "number",
+          "default": 0
+        },
+        "volume": {
+          "type": ["string", "null"],
+          "default": null
+        },
+        "title": {
+          "type": "string",
+          "default": ""
+        },
+        "language": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16,
+          "default": "en"
+        },
+        "scanlation_group": {
+          "type": ["string", "null"],
+          "default": null
+        },
+        "publish_at": {
+          "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+          "default": null
+        },
+        "source": {
+          "type": "string",
+          "default": "mangadex"
+        },
+        "source_id": {
+          "type": ["string", "null"],
+          "default": null
+        },
+        "page_count": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "total_size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "pages_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "manifest_sha256": {
+          "type": "string",
+          "default": ""
+        },
+        "updated_at": {
+          "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+          "default": null
+        },
+        "pages": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ReaderPage" },
+          "default": []
+        }
+      }
+    },
+    "ReaderPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["page_uid", "page_number", "filename", "media"],
+      "properties": {
+        "page_uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "page_number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "filename": {
+          "type": "string",
+          "minLength": 1
+        },
+        "media": {
+          "$ref": "#/$defs/ReaderMediaRef"
+        }
+      }
+    },
+    "ReaderMediaRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bucket", "object_key"],
+      "properties": {
+        "bucket": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 63
+        },
+        "object_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "content_type": {
+          "type": ["string", "null"],
+          "default": null
+        },
+        "width": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "default": null
+        },
+        "height": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "default": null
+        },
+        "file_size": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "md5_hash": {
+          "type": ["string", "null"],
+          "default": null
+        },
+        "sha256": {
+          "type": ["string", "null"],
+          "default": null
+        }
+      }
+    },
+    "ReaderCreator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["creator_id", "slug", "name", "role"],
+      "properties": {
+        "creator_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "enum": ["author", "artist"]
+        },
+        "mangadex_id": {
+          "type": ["string", "null"],
+          "maxLength": 64,
+          "default": null
+        },
+        "biography": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "default": {}
+        },
+        "links": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "default": {}
+        }
+      }
+    },
+    "ReaderTag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "name"],
+      "properties": {
+        "slug": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "source_tag_id": {
+          "type": ["string", "null"],
+          "maxLength": 100,
+          "default": null
+        },
+        "mangadex_id": {
+          "type": ["string", "null"],
+          "maxLength": 64,
+          "default": null
+        },
+        "group": {
+          "type": "string",
+          "enum": ["genre", "theme", "format", "content", "other"],
+          "default": "genre"
+        },
+        "name": {
+          "type": "object",
+          "required": ["en"],
+          "properties": {
+            "en": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "ReaderCoverArt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["media"],
+      "properties": {
+        "cover_id": {
+          "type": ["string", "null"],
+          "maxLength": 100,
+          "default": null
+        },
+        "volume": {
+          "type": ["string", "null"],
+          "default": null
+        },
+        "locale": {
+          "type": ["string", "null"],
+          "maxLength": 16,
+          "default": null
+        },
+        "description": {
+          "type": ["string", "null"],
+          "default": null
+        },
+        "media": {
+          "$ref": "#/$defs/ReaderMediaRef"
+        }
+      }
+    },
+    "ReaderLink": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["site", "url"],
+      "properties": {
+        "site": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "ReaderLineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pool_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "source_metadata_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "manifest_sha256": {
+          "type": "string",
+          "default": ""
+        },
+        "published_at": {
+          "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+          "default": null
+        },
+        "updated_at": {
+          "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+          "default": null
+        }
+      }
+    },
+    "ReaderMangaStats": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chapter_count": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "page_count": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "total_size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "languages": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    }
+  }
+}

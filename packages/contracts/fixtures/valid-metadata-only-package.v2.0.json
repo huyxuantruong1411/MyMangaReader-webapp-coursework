@@ -1,0 +1,14 @@
+{
+  "contract_name": "manga-reader-package",
+  "contract_version": "2.0",
+  "exported_at": "2026-11-20T10:30:00Z",
+  "manga": {
+    "pool_manga_id": "pm_01j9metadataonly000002",
+    "slug": "mystery-of-the-silent-bell",
+    "source_manga_id": "src_manga_1002",
+    "title": "Mystery of the Silent Bell",
+    "content_rating": "unknown",
+    "status": "unknown",
+    "publication_demographic": "unknown"
+  }
+}

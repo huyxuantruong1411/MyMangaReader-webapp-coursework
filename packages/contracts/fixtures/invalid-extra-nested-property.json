@@ -1,0 +1,12 @@
+{
+  "contract_name": "manga-reader-package",
+  "contract_version": "2.0",
+  "exported_at": "2026-11-20T10:30:00Z",
+  "manga": {
+    "pool_manga_id": "pm_extra_field",
+    "slug": "extra-field-manga",
+    "source_manga_id": "src_manga_extra",
+    "title": "Extra Field Manga",
+    "undocumented_reader_rating": 9.5
+  }
+}
