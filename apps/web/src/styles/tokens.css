@@ -1,0 +1,53 @@
+/* ============================================================================
+ * Manga Reader Design Tokens & Typography (`tokens.css`)
+ * Dark-first reading palette with high-contrast Light theme toggle.
+ * ============================================================================ */
+
+:root,
+[data-theme="dark"] {
+  --mr-font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mr-font-mono: "JetBrains Mono", "Cascadia Code", ui-monospace, monospace;
+
+  --mr-bg-canvas: #0f1117;
+  --mr-bg-surface: #171b24;
+  --mr-bg-elevated: #1f2532;
+  --mr-bg-reader: #07080b;
+
+  --mr-text-primary: #f1f5f9;
+  --mr-text-secondary: #94a3b8;
+  --mr-text-muted: #64748b;
+
+  --mr-border-subtle: #273043;
+  --mr-border-strong: #3a465e;
+
+  --mr-accent: #38bdf8;
+  --mr-accent-hover: #0ea5e9;
+  --mr-danger: #f87171;
+  --mr-warning: #fbbf24;
+  --mr-success: #34d399;
+
+  --mr-radius-sm: 6px;
+  --mr-radius-md: 10px;
+  --mr-radius-lg: 14px;
+  --mr-max-width: 1280px;
+}
+
+[data-theme="light"] {
+  --mr-bg-canvas: #f8fafc;
+  --mr-bg-surface: #ffffff;
+  --mr-bg-elevated: #f1f5f9;
+  --mr-bg-reader: #111318;
+
+  --mr-text-primary: #0f172a;
+  --mr-text-secondary: #475569;
+  --mr-text-muted: #64748b;
+
+  --mr-border-subtle: #e2e8f0;
+  --mr-border-strong: #cbd5e1;
+
+  --mr-accent: #0284c7;
+  --mr-accent-hover: #0369a1;
+  --mr-danger: #dc2626;
+  --mr-warning: #d97706;
+  --mr-success: #059669;
+}
