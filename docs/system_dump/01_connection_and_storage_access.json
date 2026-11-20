@@ -1,0 +1,49 @@
+{
+  "env_file_path": "D:\\work\\Android\\coursework\\manga_backend\\.env",
+  "database": {
+    "engine": "Microsoft SQL Server",
+    "sqlalchemy_url_scheme": "mssql+aioodbc",
+    "host": "desktop-hkipi1m",
+    "port": 1433,
+    "database": "MangaLibrary",
+    "schema": "dbo",
+    "username": "",
+    "password": "",
+    "odbc_driver": "ODBC Driver 17 for SQL Server",
+    "available_odbc_drivers": [
+      "SQL Server",
+      "ODBC Driver 18 for SQL Server",
+      "ODBC Driver 17 for SQL Server"
+    ],
+    "trust_server_certificate": "yes",
+    "pyodbc_connection_string": "DRIVER={ODBC Driver 17 for SQL Server};SERVER=desktop-hkipi1m;DATABASE=MangaLibrary;Trusted_Connection=yes;TrustServerCertificate=yes;",
+    "sqlalchemy_async_url": "mssql+aioodbc://@DESKTOP-HKIPI1M/MangaLibrary?driver=ODBC+Driver+17+for+SQL+Server&Trusted_Connection=yes&MARS_Connection=yes"
+  },
+  "minio_storage": {
+    "endpoint": "localhost:9010",
+    "console_port": 9011,
+    "use_ssl": false,
+    "bucket": "manga-media",
+    "access_key": "mangaadmin",
+    "secret_key": "MangaMinio2026!",
+    "url_mode": "proxy",
+    "host_data_path": "D:\\work\\Android\\coursework\\manga_backend\\services\\minio\\data",
+    "docker_compose_path": "D:\\work\\Android\\coursework\\manga_backend\\services\\minio\\docker-compose.yml"
+  },
+  "api_server": {
+    "host": "0.0.0.0",
+    "port": 8010,
+    "android_emulator_base_url": "http://10.0.2.2:8010/",
+    "jwt_algorithm": "HS256",
+    "access_token_expire_minutes": 10080,
+    "secret_key_set": true
+  },
+  "external_services": {
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "smtp_account": "xuanhuy10ad3@gmail.com",
+    "smtp_password_masked": "<masked len=16>",
+    "otp_debug_log": true,
+    "gemini_api_key_masked": "<masked len=39>"
+  }
+}

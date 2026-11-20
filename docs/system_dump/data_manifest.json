@@ -1,0 +1,949 @@
+{
+  "generated_at": "2026-11-18T10:02:06.354235Z",
+  "source_database": "MangaLibrary",
+  "format": "gzipped JSON Lines (.jsonl.gz), UTF-8, normalized lowercase UUIDs & ISO-8601 timestamps",
+  "excluded_tables": [
+    "sysdiagrams"
+  ],
+  "excluded_binary_columns_summary": {
+    "Covers.image_data": "Legacy VARBINARY(MAX) cover blobs; actual covers live in MinIO covers/ or MangaDex URLs",
+    "MangaCover.ImageData": "Legacy VARBINARY(MAX) cover blobs (~489 MB); table unmapped in FastAPI ORM"
+  },
+  "total_exported_rows": 3868469,
+  "total_compressed_mb": 245.71,
+  "tables": [
+    {
+      "order": 1,
+      "table_name": "Covers",
+      "topological_level": 0,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 68787,
+      "columns": [
+        "cover_id",
+        "manga_id",
+        "type",
+        "description",
+        "volume",
+        "fileName",
+        "locale",
+        "createdAt",
+        "updatedAt",
+        "version",
+        "rel_user_id",
+        "url"
+      ],
+      "excluded_binary_columns": [
+        "image_data"
+      ],
+      "primary_key": [
+        "cover_id"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/01_Covers.part001.jsonl.gz",
+          "rows": 68787,
+          "bytes": 5327916,
+          "sha256": "fef389628434db7af1e8ca03bdd0627b66a57b1803eb74af7aece759378adffc"
+        }
+      ]
+    },
+    {
+      "order": 2,
+      "table_name": "Creator",
+      "topological_level": 0,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 49937,
+      "columns": [
+        "CreatorId",
+        "Type",
+        "Name",
+        "ImageUrl",
+        "BiographyEn",
+        "BiographyJa",
+        "BiographyPtBr",
+        "CreatedAt",
+        "UpdatedAt"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "CreatorId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/02_Creator.part001.jsonl.gz",
+          "rows": 49937,
+          "bytes": 2928867,
+          "sha256": "6e120544482cd9951f6b09d2112ddce23d5a63ebb0f78806fce44cc3a974a447"
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "table_name": "Manga",
+      "topological_level": 0,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 86866,
+      "columns": [
+        "MangaId",
+        "Type",
+        "TitleEn",
+        "ChapterNumbersResetOnNewVolume",
+        "ContentRating",
+        "CreatedAt",
+        "UpdatedAt",
+        "IsLocked",
+        "LastChapter",
+        "LastVolume",
+        "LatestUploadedChapter",
+        "OriginalLanguage",
+        "PublicationDemographic",
+        "State",
+        "Status",
+        "Year",
+        "OfficialLinks"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "MangaId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/03_Manga.part001.jsonl.gz",
+          "rows": 86866,
+          "bytes": 8412014,
+          "sha256": "9a61c9155216339d29f6d23b4aa2a646c5369c3edb74d68660f58fe9c33ec74a"
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "table_name": "MangaCover",
+      "topological_level": 0,
+      "is_legacy_unmapped_in_orm": true,
+      "exported_rows": 454,
+      "columns": [
+        "MangaId",
+        "CoverId",
+        "FileName",
+        "DownloadDate"
+      ],
+      "excluded_binary_columns": [
+        "ImageData"
+      ],
+      "primary_key": [
+        "MangaId",
+        "CoverId",
+        "FileName"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/04_MangaCover.part001.jsonl.gz",
+          "rows": 454,
+          "bytes": 36949,
+          "sha256": "8dc8732138dfd784c19195a1d2db434ffd12b3718709eca357c551b9fcf2eb3c"
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "table_name": "MangaCovers",
+      "topological_level": 0,
+      "is_legacy_unmapped_in_orm": true,
+      "exported_rows": 1400,
+      "columns": [
+        "cover_id",
+        "manga_id",
+        "file_name",
+        "description",
+        "volume",
+        "locale",
+        "created_at",
+        "updated_at",
+        "version",
+        "image_url",
+        "file_path",
+        "downloaded_at",
+        "raw_json",
+        "inserted_at"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "cover_id"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/05_MangaCovers.part001.jsonl.gz",
+          "rows": 1400,
+          "bytes": 216544,
+          "sha256": "a11345f722c608f379d0e70e83a3089af520689fb840b5d5d48a89bf7f591420"
+        }
+      ]
+    },
+    {
+      "order": 6,
+      "table_name": "MangaTopicAnalysis",
+      "topological_level": 0,
+      "is_legacy_unmapped_in_orm": true,
+      "exported_rows": 72945,
+      "columns": [
+        "MangaId",
+        "TopicId",
+        "OriginalTags"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "MangaId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/06_MangaTopicAnalysis.part001.jsonl.gz",
+          "rows": 72945,
+          "bytes": 2466300,
+          "sha256": "89d1e55c7fe1369230703141a728ecc8ad59cabaf41aead65480e93d3291d2a8"
+        }
+      ]
+    },
+    {
+      "order": 7,
+      "table_name": "Tag",
+      "topological_level": 0,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 76,
+      "columns": [
+        "TagId",
+        "GroupName",
+        "NameEn"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "TagId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/07_Tag.part001.jsonl.gz",
+          "rows": 76,
+          "bytes": 2612,
+          "sha256": "4a6e658341d3f890e12ec97dbce17e25f520899042561af071c9bfa0d85833e3"
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "table_name": "User",
+      "topological_level": 0,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 614,
+      "columns": [
+        "UserId",
+        "Username",
+        "Email",
+        "PasswordHash",
+        "Avatar",
+        "Role",
+        "IsLocked",
+        "CreatedAt",
+        "Bio",
+        "DisplayName",
+        "AvatarObjectKey",
+        "UpdatedAt",
+        "IsVerified"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "UserId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/08_User.part001.jsonl.gz",
+          "rows": 614,
+          "bytes": 24633,
+          "sha256": "f7b705dd6ea278c06c458c2c558fc4708509fee0e09b6a31a47a3dda1575adc4"
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "table_name": "Chapter",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 1780598,
+      "columns": [
+        "ChapterId",
+        "MangaId",
+        "Type",
+        "Volume",
+        "ChapterNumber",
+        "Title",
+        "TranslatedLang",
+        "Pages",
+        "PublishAt",
+        "ReadableAt",
+        "IsUnavailable",
+        "CreatedAt",
+        "UpdatedAt"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "ChapterId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/09_Chapter.part001.jsonl.gz",
+          "rows": 250000,
+          "bytes": 23666129,
+          "sha256": "487d5f6e3f2240384838eb7b6b25d6de54c749116d73067d70c9f96cd27ab4ad"
+        },
+        {
+          "path": "data_jsonl_gz/09_Chapter.part002.jsonl.gz",
+          "rows": 250000,
+          "bytes": 23672637,
+          "sha256": "d0a1d1572285da0472ee1c2f7803b03361e312ff6796cfc9f18f85ecf6d63079"
+        },
+        {
+          "path": "data_jsonl_gz/09_Chapter.part003.jsonl.gz",
+          "rows": 250000,
+          "bytes": 23677837,
+          "sha256": "3acd1af91b6e1b784a2660b93ea9b2cc63114756a7b1016c8d5ca2a78e4601df"
+        },
+        {
+          "path": "data_jsonl_gz/09_Chapter.part004.jsonl.gz",
+          "rows": 250000,
+          "bytes": 23670583,
+          "sha256": "0c6b239fe1bc43e464a1b3884e92b43fd9a1271342324c970f0f57b4cf84c7b4"
+        },
+        {
+          "path": "data_jsonl_gz/09_Chapter.part005.jsonl.gz",
+          "rows": 250000,
+          "bytes": 23675327,
+          "sha256": "29178522c02e658dd3eb923fa1ed04851b05e911bf9194a5ceee75aa5e91d387"
+        },
+        {
+          "path": "data_jsonl_gz/09_Chapter.part006.jsonl.gz",
+          "rows": 250000,
+          "bytes": 23686034,
+          "sha256": "428549e8866888a80706797a133cb42d3879bf73fcde46c34959fa671405bdac"
+        },
+        {
+          "path": "data_jsonl_gz/09_Chapter.part007.jsonl.gz",
+          "rows": 250000,
+          "bytes": 23668712,
+          "sha256": "6c7e4458235f10b09b74c86a4926802ab76678027f6947a57ff481db2f193f44"
+        },
+        {
+          "path": "data_jsonl_gz/09_Chapter.part008.jsonl.gz",
+          "rows": 30598,
+          "bytes": 2900937,
+          "sha256": "a66b955394988017b332bfb4016b5de6afd66528dbb8911db6c69555e76ec391"
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "table_name": "ChatRoom",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 4,
+      "columns": [
+        "RoomId",
+        "Type",
+        "Name",
+        "AvatarUrl",
+        "CreatedBy",
+        "CreatedAt",
+        "UpdatedAt"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "RoomId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/10_ChatRoom.part001.jsonl.gz",
+          "rows": 4,
+          "bytes": 452,
+          "sha256": "a57444a5d41c419f9dd8b7092c7ea6412ef043ad757718c64c380be8311c9166"
+        }
+      ]
+    },
+    {
+      "order": 11,
+      "table_name": "CreatorRelationship",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 107514,
+      "columns": [
+        "Id",
+        "CreatorId",
+        "RelatedId",
+        "RelatedType"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "Id"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/11_CreatorRelationship.part001.jsonl.gz",
+          "rows": 107514,
+          "bytes": 4123297,
+          "sha256": "2c347ee476b09fa221a828edf916185aca2fceeec9c9478c1f97e2aed51b0162"
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "table_name": "Friendship",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 1,
+      "columns": [
+        "UserId",
+        "FriendId",
+        "Status",
+        "CreatedAt"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "UserId",
+        "FriendId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/12_Friendship.part001.jsonl.gz",
+          "rows": 1,
+          "bytes": 187,
+          "sha256": "0ef7609268acf326e4ded863bbf607e296b132f655d438b5db5332abffd3c9b4"
+        }
+      ]
+    },
+    {
+      "order": 13,
+      "table_name": "List",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 20,
+      "columns": [
+        "ListId",
+        "UserId",
+        "Name",
+        "Description",
+        "IsPublic",
+        "Slug",
+        "Visibility",
+        "CreatedAt",
+        "UpdatedAt",
+        "FollowerCount",
+        "ItemCount"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "ListId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/13_List.part001.jsonl.gz",
+          "rows": 20,
+          "bytes": 2913,
+          "sha256": "acaffe83e168736e1dd9e6bde37b47b64a815192249076f28e8ee338d028b5f2"
+        }
+      ]
+    },
+    {
+      "order": 14,
+      "table_name": "MangaAltTitle",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 240601,
+      "columns": [
+        "AltTitleId",
+        "MangaId",
+        "LangCode",
+        "AltTitle"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "AltTitleId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/14_MangaAltTitle.part001.jsonl.gz",
+          "rows": 240601,
+          "bytes": 8828493,
+          "sha256": "cce64c6887974965404ce40c99468f085b63ad9612721f41a2e966e0bd519b54"
+        }
+      ]
+    },
+    {
+      "order": 15,
+      "table_name": "MangaAvailableLanguage",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 118027,
+      "columns": [
+        "LangId",
+        "MangaId",
+        "LangCode"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "LangId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/15_MangaAvailableLanguage.part001.jsonl.gz",
+          "rows": 118027,
+          "bytes": 2036386,
+          "sha256": "c3238271c0f760255131a5c9c73f4a01401786b8e96c5b06d7caefea538de691"
+        }
+      ]
+    },
+    {
+      "order": 16,
+      "table_name": "MangaDescription",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 101248,
+      "columns": [
+        "DescriptionId",
+        "MangaId",
+        "LangCode",
+        "Description"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "DescriptionId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/16_MangaDescription.part001.jsonl.gz",
+          "rows": 101248,
+          "bytes": 24902724,
+          "sha256": "7079379e271b741c80cebc28b033624c57642f24916d2d1071fd96c8ee1bfddd"
+        }
+      ]
+    },
+    {
+      "order": 17,
+      "table_name": "MangaLink",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 334010,
+      "columns": [
+        "LinkId",
+        "MangaId",
+        "Provider",
+        "Url"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "LinkId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/17_MangaLink.part001.jsonl.gz",
+          "rows": 250000,
+          "bytes": 5587607,
+          "sha256": "e17d486e5c67b148f2a94895c1231b2116c7bcb197d238ab12d16134f85d0b97"
+        },
+        {
+          "path": "data_jsonl_gz/17_MangaLink.part002.jsonl.gz",
+          "rows": 84010,
+          "bytes": 2482086,
+          "sha256": "0ed3542872ae2f2b627163b93f44ab5059990c372e8299228a8ad19d6ebcdc10"
+        }
+      ]
+    },
+    {
+      "order": 18,
+      "table_name": "MangaRelated",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 368565,
+      "columns": [
+        "MangaId",
+        "RelatedId",
+        "Type",
+        "Related",
+        "FetchedAt"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "MangaId",
+        "RelatedId",
+        "Type"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/18_MangaRelated.part001.jsonl.gz",
+          "rows": 250000,
+          "bytes": 7389310,
+          "sha256": "8e398e8ba99df1952d45e6ee5f2957dd469416d3a84fdcf4af7dffc245dbc00b"
+        },
+        {
+          "path": "data_jsonl_gz/18_MangaRelated.part002.jsonl.gz",
+          "rows": 118565,
+          "bytes": 3502728,
+          "sha256": "24a5794adc039c8b084467f81b98b7ca884e2c4edfe131f78d7145e61e0750b8"
+        }
+      ]
+    },
+    {
+      "order": 19,
+      "table_name": "MangaStatistics",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 86866,
+      "columns": [
+        "StatisticId",
+        "MangaId",
+        "Source",
+        "Follows",
+        "AverageRating",
+        "BayesianRating",
+        "UnavailableChapters",
+        "FetchedAt"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "StatisticId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/19_MangaStatistics.part001.jsonl.gz",
+          "rows": 86866,
+          "bytes": 4567418,
+          "sha256": "7da9a9a8fd8389b3e7415540744ef0c1e18ba57e5f6a5dfe74b2dff9a0095197"
+        }
+      ]
+    },
+    {
+      "order": 20,
+      "table_name": "MangaTag",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 416406,
+      "columns": [
+        "MangaId",
+        "TagId"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "MangaId",
+        "TagId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/20_MangaTag.part001.jsonl.gz",
+          "rows": 250000,
+          "bytes": 2415264,
+          "sha256": "644aa6c3a74165f9fbcd574ba2759703fd00a0adc804ebe54eb4ba621ebda9c8"
+        },
+        {
+          "path": "data_jsonl_gz/20_MangaTag.part002.jsonl.gz",
+          "rows": 166406,
+          "bytes": 1609804,
+          "sha256": "d17cef119bd9f19c15e96a312b6d4974999d4fbad69cb6f6bdedab682e8b34f0"
+        }
+      ]
+    },
+    {
+      "order": 21,
+      "table_name": "Rating",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 5295,
+      "columns": [
+        "RatingId",
+        "UserId",
+        "MangaId",
+        "Score"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "RatingId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/21_Rating.part001.jsonl.gz",
+          "rows": 5295,
+          "bytes": 256598,
+          "sha256": "a6b663714fc69016ef1b59da86f9566f4d297552d140386580889fcc2934b4a6"
+        }
+      ]
+    },
+    {
+      "order": 22,
+      "table_name": "UserMangaStatus",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 6347,
+      "columns": [
+        "UserId",
+        "MangaId",
+        "Status",
+        "UpdatedAt"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "UserId",
+        "MangaId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/22_UserMangaStatus.part001.jsonl.gz",
+          "rows": 6347,
+          "bytes": 63652,
+          "sha256": "84709fb1e25edbac1cece36bff66b16573c50ab99ab39faade2fafdae3c81ce7"
+        }
+      ]
+    },
+    {
+      "order": 23,
+      "table_name": "UserPresence",
+      "topological_level": 1,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 3,
+      "columns": [
+        "UserId",
+        "IsOnline",
+        "LastSeenAt"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "UserId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/23_UserPresence.part001.jsonl.gz",
+          "rows": 3,
+          "bytes": 245,
+          "sha256": "4bbf47057c6b70ccfb80197583980fb885599cbca4a8101373c5149a31973157"
+        }
+      ]
+    },
+    {
+      "order": 24,
+      "table_name": "ChatMessage",
+      "topological_level": 2,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 38,
+      "columns": [
+        "MessageId",
+        "RoomId",
+        "SenderId",
+        "Content",
+        "MessageType",
+        "MediaUrl",
+        "ReplyToId",
+        "Status",
+        "CreatedAt",
+        "EditedAt",
+        "IsDeleted"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "MessageId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/24_ChatMessage.part001.jsonl.gz",
+          "rows": 38,
+          "bytes": 2705,
+          "sha256": "262cb5e830998689057eae44abff4770ebed77cdbec1c4c9e71c3026f2f74c73"
+        }
+      ]
+    },
+    {
+      "order": 25,
+      "table_name": "ChatRoomMember",
+      "topological_level": 2,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 10,
+      "columns": [
+        "RoomId",
+        "UserId",
+        "JoinedAt",
+        "Role",
+        "LastReadAt",
+        "Nickname",
+        "IsMuted"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "RoomId",
+        "UserId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/25_ChatRoomMember.part001.jsonl.gz",
+          "rows": 10,
+          "bytes": 599,
+          "sha256": "98d95fd79a3b94f2ede350bf5103958a71344409c78b84c02a9a75de0d8c23cb"
+        }
+      ]
+    },
+    {
+      "order": 26,
+      "table_name": "Comment",
+      "topological_level": 2,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 4972,
+      "columns": [
+        "CommentId",
+        "UserId",
+        "MangaId",
+        "ChapterId",
+        "Content",
+        "CreatedAt",
+        "UpdatedAt",
+        "IsDeleted",
+        "IsSpoiler",
+        "LikeCount",
+        "DislikeCount"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "CommentId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/26_Comment.part001.jsonl.gz",
+          "rows": 4972,
+          "bytes": 596917,
+          "sha256": "81c3eedb728671b34fa316f0025c3aa2c66f1959ee48af015451ab5f7fdbf289"
+        }
+      ]
+    },
+    {
+      "order": 27,
+      "table_name": "ListFollower",
+      "topological_level": 2,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 182,
+      "columns": [
+        "ListId",
+        "UserId",
+        "FollowedAt"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "ListId",
+        "UserId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/27_ListFollower.part001.jsonl.gz",
+          "rows": 182,
+          "bytes": 4116,
+          "sha256": "8fb7fd13f5f9b98f463c8c328a04030eff7472197539126a55b96ff3e45cb041"
+        }
+      ]
+    },
+    {
+      "order": 28,
+      "table_name": "ListManga",
+      "topological_level": 2,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 137,
+      "columns": [
+        "ListId",
+        "MangaId",
+        "AddedAt",
+        "Position"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "ListId",
+        "MangaId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/28_ListManga.part001.jsonl.gz",
+          "rows": 137,
+          "bytes": 3338,
+          "sha256": "b785b5b125f4167c49b52b1a9b7421c1f1def39b809cd119b7e888f7aab5d594"
+        }
+      ]
+    },
+    {
+      "order": 29,
+      "table_name": "ReadingHistory",
+      "topological_level": 2,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 15307,
+      "columns": [
+        "HistoryId",
+        "UserId",
+        "MangaId",
+        "ChapterId",
+        "LastPageRead",
+        "ReadAt"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "HistoryId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/29_ReadingHistory.part001.jsonl.gz",
+          "rows": 15307,
+          "bytes": 1160412,
+          "sha256": "a7ceb36308a97e59f1e90c3824652887b6e56501b8119f248b23029e317a05ea"
+        }
+      ]
+    },
+    {
+      "order": 30,
+      "table_name": "CommentReaction",
+      "topological_level": 3,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 1195,
+      "columns": [
+        "ReactionId",
+        "CommentId",
+        "UserId",
+        "Type",
+        "CreatedAt"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "ReactionId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/30_CommentReaction.part001.jsonl.gz",
+          "rows": 1195,
+          "bytes": 65913,
+          "sha256": "e6c2f6c832378c453e23505fd38dbd31f21a45e076fcd3a6eb0294415020b6c9"
+        }
+      ]
+    },
+    {
+      "order": 31,
+      "table_name": "Report",
+      "topological_level": 3,
+      "is_legacy_unmapped_in_orm": false,
+      "exported_rows": 44,
+      "columns": [
+        "ReportId",
+        "UserId",
+        "CommentId",
+        "Reason",
+        "Status",
+        "CreatedAt"
+      ],
+      "excluded_binary_columns": [],
+      "primary_key": [
+        "ReportId"
+      ],
+      "files": [
+        {
+          "path": "data_jsonl_gz/31_Report.part001.jsonl.gz",
+          "rows": 44,
+          "bytes": 3245,
+          "sha256": "c56142b3c28d880c660cce5d557095eb3d3591c0a27715b47e7899d605000ac8"
+        }
+      ]
+    }
+  ]
+}

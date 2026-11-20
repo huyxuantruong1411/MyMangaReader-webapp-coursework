@@ -1,0 +1,6208 @@
+{
+  "database_meta": {
+    "version_banner": "Microsoft SQL Server 2022 (RTM-GDR) (KB5132747) - 16.0.1220.3 (X64) ",
+    "database_name": "MangaLibrary",
+    "product_version": "16.0.1220.3",
+    "edition": "Express Edition (64-bit)",
+    "collation": "SQL_Latin1_General_CP1_CI_AS"
+  },
+  "tables": {
+    "Chapter": {
+      "schema": "dbo",
+      "table_name": "Chapter",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 1780598,
+      "reserved_mb": 233.13,
+      "used_mb": 233.11,
+      "primary_key": [
+        "ChapterId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__Chapter__MangaId__08B54D69",
+          "from_table": "Chapter",
+          "from_columns": [
+            "MangaId"
+          ],
+          "to_table": "Manga",
+          "to_columns": [
+            "MangaId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__Chapter__0893A36A70122534",
+          "table_name": "Chapter",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "ChapterId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "ChapterId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Type",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Volume",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "ChapterNumber",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Title",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "TranslatedLang",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(10)",
+          "postgres_type": "VARCHAR(10)",
+          "max_length": 20,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Pages",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "PublishAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "ReadableAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "IsUnavailable",
+          "sql_type": "bit",
+          "mssql_type_full": "bit",
+          "postgres_type": "BOOLEAN",
+          "max_length": 1,
+          "precision": 1,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CreatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UpdatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "ChapterId": "2554de24-77f7-48d7-8266-000000a6717e",
+          "MangaId": "0591325d-191f-4632-a9e7-bae6fc64f120",
+          "Type": "chapter",
+          "Volume": "1",
+          "ChapterNumber": "10",
+          "Title": "La notte del blackout",
+          "TranslatedLang": "it",
+          "Pages": 8,
+          "PublishAt": "2022-05-03T11:51:52",
+          "ReadableAt": "2022-05-03T11:51:52",
+          "IsUnavailable": false,
+          "CreatedAt": "2022-05-03T11:51:51",
+          "UpdatedAt": "2022-05-03T11:52:00"
+        },
+        {
+          "ChapterId": "19b2a578-c477-4883-9363-00000d766ec9",
+          "MangaId": "f65444dc-3694-4e31-a166-8afb2938ed55",
+          "Type": "chapter",
+          "Volume": "52",
+          "ChapterNumber": "465",
+          "Title": null,
+          "TranslatedLang": "es-la",
+          "Pages": 19,
+          "PublishAt": "2024-10-04T13:23:56",
+          "ReadableAt": "2024-10-04T13:23:56",
+          "IsUnavailable": false,
+          "CreatedAt": "2024-10-04T13:23:56",
+          "UpdatedAt": "2025-02-02T04:13:57"
+        },
+        {
+          "ChapterId": "2c80d840-e9a6-4585-ab40-00001ba343f2",
+          "MangaId": "f0c7ac83-5bad-4ec2-958c-418016009ee3",
+          "Type": "chapter",
+          "Volume": "19",
+          "ChapterNumber": "162",
+          "Title": "Those who’ve changed and those who haven’t",
+          "TranslatedLang": "en",
+          "Pages": 21,
+          "PublishAt": "2018-02-08T12:41:54",
+          "ReadableAt": "2018-02-08T12:41:54",
+          "IsUnavailable": false,
+          "CreatedAt": "2018-02-08T12:41:54",
+          "UpdatedAt": "2021-05-17T02:39:22"
+        },
+        {
+          "ChapterId": "cead919b-8d19-4f98-98f2-000021235cc8",
+          "MangaId": "6440a4b0-2fdc-4a99-9378-f53e5ee6c90e",
+          "Type": "chapter",
+          "Volume": "2",
+          "ChapterNumber": "8.2",
+          "Title": null,
+          "TranslatedLang": "id",
+          "Pages": 14,
+          "PublishAt": "2023-04-16T01:23:31",
+          "ReadableAt": "2023-04-16T01:23:31",
+          "IsUnavailable": false,
+          "CreatedAt": "2023-04-16T01:23:31",
+          "UpdatedAt": "2024-02-25T23:55:54"
+        },
+        {
+          "ChapterId": "93ba00b4-5c11-4db6-ad0e-0000273d3926",
+          "MangaId": "f9114bf2-6474-4cb3-a2dc-56a151c7371b",
+          "Type": "chapter",
+          "Volume": null,
+          "ChapterNumber": "14",
+          "Title": null,
+          "TranslatedLang": "en",
+          "Pages": 17,
+          "PublishAt": "2023-02-03T16:32:22",
+          "ReadableAt": "2023-02-03T16:32:22",
+          "IsUnavailable": false,
+          "CreatedAt": "2023-02-03T16:32:21",
+          "UpdatedAt": "2023-02-03T16:32:45"
+        }
+      ]
+    },
+    "ChatMessage": {
+      "schema": "dbo",
+      "table_name": "ChatMessage",
+      "topological_level": 2,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 38,
+      "reserved_mb": 0.07,
+      "used_mb": 0.04,
+      "primary_key": [
+        "MessageId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__ChatMessa__RoomI__09A971A2",
+          "from_table": "ChatMessage",
+          "from_columns": [
+            "RoomId"
+          ],
+          "to_table": "ChatRoom",
+          "to_columns": [
+            "RoomId"
+          ],
+          "on_delete": "CASCADE",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK__ChatMessa__Sende__0A9D95DB",
+          "from_table": "ChatMessage",
+          "from_columns": [
+            "SenderId"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__ChatMess__C87C0C9C6ACC7A07",
+          "table_name": "ChatMessage",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "MessageId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "MessageId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "(newid())",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "RoomId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "SenderId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Content",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "MessageType",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(20)",
+          "postgres_type": "VARCHAR(20)",
+          "max_length": 40,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": "('text')",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "MediaUrl",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(500)",
+          "postgres_type": "VARCHAR(500)",
+          "max_length": 1000,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "ReplyToId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Status",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(20)",
+          "postgres_type": "VARCHAR(20)",
+          "max_length": 40,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": "('sent')",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CreatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": "(sysutcdatetime())",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "EditedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "IsDeleted",
+          "sql_type": "bit",
+          "mssql_type_full": "bit",
+          "postgres_type": "BOOLEAN",
+          "max_length": 1,
+          "precision": 1,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": "((0))",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "MessageId": "ab014b75-b6b7-4f7d-9301-114887a1111e",
+          "RoomId": "7b8f529a-945c-44ae-abd9-516c3c18aa80",
+          "SenderId": "8fa0d0c7-ed84-437b-aad5-a0ab4917ba06",
+          "Content": "hello",
+          "MessageType": "text",
+          "MediaUrl": null,
+          "ReplyToId": null,
+          "Status": "sent",
+          "CreatedAt": "2026-05-13T11:28:17.260079",
+          "EditedAt": null,
+          "IsDeleted": false
+        },
+        {
+          "MessageId": "5e9b6819-dbf8-4c82-bc6f-1a6aa1060fc3",
+          "RoomId": "0655f84a-2113-4ad2-91ec-cc3b893251ed",
+          "SenderId": "fbf74bea-9b1c-46cf-ad9e-7ec72c026354",
+          "Content": "Hey",
+          "MessageType": "text",
+          "MediaUrl": null,
+          "ReplyToId": null,
+          "Status": "sent",
+          "CreatedAt": "2026-11-10T17:11:32.585899",
+          "EditedAt": null,
+          "IsDeleted": false
+        },
+        {
+          "MessageId": "235f3ed4-c644-4724-8e4e-1ddfca66a9e1",
+          "RoomId": "ab69f979-02bd-4021-9387-b1f2d9021ed5",
+          "SenderId": "ee5e2c0c-b22c-4369-85ac-00450e03751c",
+          "Content": "gì??",
+          "MessageType": "text",
+          "MediaUrl": null,
+          "ReplyToId": null,
+          "Status": "sent",
+          "CreatedAt": "2026-05-13T14:24:15.285578",
+          "EditedAt": null,
+          "IsDeleted": false
+        },
+        {
+          "MessageId": "f41ce127-7482-4551-87ca-238ddceeef03",
+          "RoomId": "79408a90-9600-4803-9a06-31187ecfa3e0",
+          "SenderId": "8fa0d0c7-ed84-437b-aad5-a0ab4917ba06",
+          "Content": "[Image]",
+          "MessageType": "image",
+          "MediaUrl": "chat/79408a90-9600-4803-9a06-31187ecfa3e0/6156e058-cbee-4fc0-b062-56cf13171154.jpg",
+          "ReplyToId": null,
+          "Status": "sent",
+          "CreatedAt": "2026-05-16T14:53:48.752216",
+          "EditedAt": null,
+          "IsDeleted": false
+        },
+        {
+          "MessageId": "1cf5d0f3-cf15-4c8d-b5c7-23a91091499c",
+          "RoomId": "ab69f979-02bd-4021-9387-b1f2d9021ed5",
+          "SenderId": "8fa0d0c7-ed84-437b-aad5-a0ab4917ba06",
+          "Content": "[Image]",
+          "MessageType": "image",
+          "MediaUrl": "chat/ab69f979-02bd-4021-9387-b1f2d9021ed5/9bd8edca-90bf-465e-8f33-7ef9d9bf9d72.png",
+          "ReplyToId": null,
+          "Status": "sent",
+          "CreatedAt": "2026-05-13T16:31:02.343167",
+          "EditedAt": null,
+          "IsDeleted": false
+        }
+      ]
+    },
+    "ChatRoom": {
+      "schema": "dbo",
+      "table_name": "ChatRoom",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 4,
+      "reserved_mb": 0.07,
+      "used_mb": 0.02,
+      "primary_key": [
+        "RoomId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__ChatRoom__Create__0B91BA14",
+          "from_table": "ChatRoom",
+          "from_columns": [
+            "CreatedBy"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__ChatRoom__328639397CFEA882",
+          "table_name": "ChatRoom",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "RoomId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "RoomId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "(newid())",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Type",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(20)",
+          "postgres_type": "VARCHAR(20)",
+          "max_length": 40,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "('direct')",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Name",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(200)",
+          "postgres_type": "VARCHAR(200)",
+          "max_length": 400,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "AvatarUrl",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(500)",
+          "postgres_type": "VARCHAR(500)",
+          "max_length": 1000,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CreatedBy",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CreatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": "(sysutcdatetime())",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UpdatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": "(sysutcdatetime())",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "RoomId": "79408a90-9600-4803-9a06-31187ecfa3e0",
+          "Type": "group",
+          "Name": "Chill Guys",
+          "AvatarUrl": null,
+          "CreatedBy": "8fa0d0c7-ed84-437b-aad5-a0ab4917ba06",
+          "CreatedAt": "2026-05-16T14:52:55.759751",
+          "UpdatedAt": "2026-11-13T09:23:49.136644"
+        },
+        {
+          "RoomId": "7b8f529a-945c-44ae-abd9-516c3c18aa80",
+          "Type": "direct",
+          "Name": null,
+          "AvatarUrl": null,
+          "CreatedBy": "8fa0d0c7-ed84-437b-aad5-a0ab4917ba06",
+          "CreatedAt": "2026-05-10T02:11:55.555878",
+          "UpdatedAt": "2026-05-17T03:30:15.213684"
+        },
+        {
+          "RoomId": "ab69f979-02bd-4021-9387-b1f2d9021ed5",
+          "Type": "direct",
+          "Name": null,
+          "AvatarUrl": null,
+          "CreatedBy": "ee5e2c0c-b22c-4369-85ac-00450e03751c",
+          "CreatedAt": "2026-05-13T12:41:13.626853",
+          "UpdatedAt": "2026-05-21T19:04:38.118343"
+        },
+        {
+          "RoomId": "0655f84a-2113-4ad2-91ec-cc3b893251ed",
+          "Type": "direct",
+          "Name": null,
+          "AvatarUrl": null,
+          "CreatedBy": "fbf74bea-9b1c-46cf-ad9e-7ec72c026354",
+          "CreatedAt": "2026-11-10T17:11:20.773062",
+          "UpdatedAt": "2026-11-10T17:12:07.090925"
+        }
+      ]
+    },
+    "ChatRoomMember": {
+      "schema": "dbo",
+      "table_name": "ChatRoomMember",
+      "topological_level": 2,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 10,
+      "reserved_mb": 0.07,
+      "used_mb": 0.02,
+      "primary_key": [
+        "RoomId",
+        "UserId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__ChatRoomM__RoomI__0C85DE4D",
+          "from_table": "ChatRoomMember",
+          "from_columns": [
+            "RoomId"
+          ],
+          "to_table": "ChatRoom",
+          "to_columns": [
+            "RoomId"
+          ],
+          "on_delete": "CASCADE",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK__ChatRoomM__UserI__0D7A0286",
+          "from_table": "ChatRoomMember",
+          "from_columns": [
+            "UserId"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__ChatRoom__E3FEB5FD89D89AA9",
+          "table_name": "ChatRoomMember",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "RoomId",
+              "desc": false
+            },
+            {
+              "column": "UserId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "RoomId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UserId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "JoinedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": "(sysutcdatetime())",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Role",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(20)",
+          "postgres_type": "VARCHAR(20)",
+          "max_length": 40,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": "('member')",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "LastReadAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Nickname",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(100)",
+          "postgres_type": "VARCHAR(100)",
+          "max_length": 200,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "IsMuted",
+          "sql_type": "bit",
+          "mssql_type_full": "bit",
+          "postgres_type": "BOOLEAN",
+          "max_length": 1,
+          "precision": 1,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": "((0))",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "RoomId": "79408a90-9600-4803-9a06-31187ecfa3e0",
+          "UserId": "ee5e2c0c-b22c-4369-85ac-00450e03751c",
+          "JoinedAt": "2026-05-16T14:53:21.621998",
+          "Role": "member",
+          "LastReadAt": null,
+          "Nickname": null,
+          "IsMuted": false
+        },
+        {
+          "RoomId": "79408a90-9600-4803-9a06-31187ecfa3e0",
+          "UserId": "5507d294-546f-4f41-82e2-00470a71e984",
+          "JoinedAt": "2026-05-16T14:53:22.192236",
+          "Role": "member",
+          "LastReadAt": null,
+          "Nickname": null,
+          "IsMuted": false
+        },
+        {
+          "RoomId": "79408a90-9600-4803-9a06-31187ecfa3e0",
+          "UserId": "58675116-8916-49d1-a037-004f607ef51a",
+          "JoinedAt": "2026-05-16T14:53:22.804764",
+          "Role": "member",
+          "LastReadAt": null,
+          "Nickname": null,
+          "IsMuted": false
+        },
+        {
+          "RoomId": "79408a90-9600-4803-9a06-31187ecfa3e0",
+          "UserId": "8fa0d0c7-ed84-437b-aad5-a0ab4917ba06",
+          "JoinedAt": "2026-05-16T14:52:55.764479",
+          "Role": "admin",
+          "LastReadAt": "2026-11-13T09:23:31.667318",
+          "Nickname": null,
+          "IsMuted": false
+        },
+        {
+          "RoomId": "7b8f529a-945c-44ae-abd9-516c3c18aa80",
+          "UserId": "e2e2f2eb-ab34-4f4b-8eeb-6348801287ba",
+          "JoinedAt": "2026-05-10T02:11:55.572224",
+          "Role": "member",
+          "LastReadAt": null,
+          "Nickname": null,
+          "IsMuted": false
+        }
+      ]
+    },
+    "Comment": {
+      "schema": "dbo",
+      "table_name": "Comment",
+      "topological_level": 2,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 4972,
+      "reserved_mb": 1.63,
+      "used_mb": 1.55,
+      "primary_key": [
+        "CommentId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__Comment__Chapter__0E6E26BF",
+          "from_table": "Comment",
+          "from_columns": [
+            "ChapterId"
+          ],
+          "to_table": "Chapter",
+          "to_columns": [
+            "ChapterId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK__Comment__MangaId__0F624AF8",
+          "from_table": "Comment",
+          "from_columns": [
+            "MangaId"
+          ],
+          "to_table": "Manga",
+          "to_columns": [
+            "MangaId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK__Comment__UserId__10566F31",
+          "from_table": "Comment",
+          "from_columns": [
+            "UserId"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__Comment__C3B4DFCAE26A0A27",
+          "table_name": "Comment",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "CommentId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "CommentId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UserId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "ChapterId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Content",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CreatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UpdatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "IsDeleted",
+          "sql_type": "bit",
+          "mssql_type_full": "bit",
+          "postgres_type": "BOOLEAN",
+          "max_length": 1,
+          "precision": 1,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "IsSpoiler",
+          "sql_type": "bit",
+          "mssql_type_full": "bit",
+          "postgres_type": "BOOLEAN",
+          "max_length": 1,
+          "precision": 1,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "((0))",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "LikeCount",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "((0))",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "DislikeCount",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "((0))",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "CommentId": "da374fe6-5a0f-4b25-b49a-000b90669f34",
+          "UserId": "097982e1-7d5a-4596-b247-202176295ff4",
+          "MangaId": "5ad85438-68dc-4f83-947e-a3766680d287",
+          "ChapterId": "9351c27d-8592-478e-b9e6-27ee633362a4",
+          "Content": "User user_410 says something about 5AD854",
+          "CreatedAt": "2025-10-11T12:14:39.714082",
+          "UpdatedAt": "2025-10-11T12:14:39.714082",
+          "IsDeleted": false,
+          "IsSpoiler": false,
+          "LikeCount": 0,
+          "DislikeCount": 0
+        },
+        {
+          "CommentId": "c29d7a4b-120b-4ecb-a467-001386a89161",
+          "UserId": "068848c8-3267-4867-9ea4-a2a584d7130f",
+          "MangaId": "c1f44fd5-544b-4cba-bb28-317f2af9009a",
+          "ChapterId": "71bb0157-beca-437d-9249-32fa290eb158",
+          "Content": "User user_331 says something about C1F44F",
+          "CreatedAt": "2025-09-18T21:21:39.714082",
+          "UpdatedAt": "2025-09-18T21:21:39.714082",
+          "IsDeleted": false,
+          "IsSpoiler": false,
+          "LikeCount": 0,
+          "DislikeCount": 0
+        },
+        {
+          "CommentId": "0c4075a4-2df0-4311-a778-003b2d9655f1",
+          "UserId": "2eb35e62-11a0-49bd-b956-46119b2736d0",
+          "MangaId": "9937f7da-7913-49cb-a354-2e4ecd9cbd52",
+          "ChapterId": "b66499f3-39aa-4158-b999-8cf6a193d1ee",
+          "Content": "User user_80 says something about 9937F7",
+          "CreatedAt": "2025-09-20T04:03:21.334686",
+          "UpdatedAt": "2025-09-20T04:03:21.334686",
+          "IsDeleted": false,
+          "IsSpoiler": false,
+          "LikeCount": 0,
+          "DislikeCount": 0
+        },
+        {
+          "CommentId": "d50e3db6-5041-450f-a478-003babab508f",
+          "UserId": "38b99a78-5ea5-4d62-9b1e-69cb64bda48c",
+          "MangaId": "6478cd0d-0756-4dee-a21f-ceb404f762ba",
+          "ChapterId": "3d847ebc-71b5-4895-8fd9-ad0af725b2e8",
+          "Content": "User user_161 says something about 6478CD",
+          "CreatedAt": "2025-09-02T18:34:21.334686",
+          "UpdatedAt": "2025-09-02T18:34:21.334686",
+          "IsDeleted": false,
+          "IsSpoiler": false,
+          "LikeCount": 0,
+          "DislikeCount": 0
+        },
+        {
+          "CommentId": "77763a08-b268-4cfe-aab5-003df30527ab",
+          "UserId": "351e4344-63a8-4e6b-9dfc-7faa5ec9e6db",
+          "MangaId": "82b76e9d-43b7-49aa-97b2-53fb364aeaaa",
+          "ChapterId": "77147126-ca40-4eb2-856c-c28a55b98634",
+          "Content": "Comment on manga 82B76E9D chapter 77147126",
+          "CreatedAt": "2025-02-06T05:20:14.213688",
+          "UpdatedAt": "2025-02-06T05:20:14.213688",
+          "IsDeleted": false,
+          "IsSpoiler": false,
+          "LikeCount": 0,
+          "DislikeCount": 0
+        }
+      ]
+    },
+    "CommentReaction": {
+      "schema": "dbo",
+      "table_name": "CommentReaction",
+      "topological_level": 3,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 1195,
+      "reserved_mb": 0.2,
+      "used_mb": 0.15,
+      "primary_key": [
+        "ReactionId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK_CommentReaction_Comment",
+          "from_table": "CommentReaction",
+          "from_columns": [
+            "CommentId"
+          ],
+          "to_table": "Comment",
+          "to_columns": [
+            "CommentId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK_CommentReaction_User",
+          "from_table": "CommentReaction",
+          "from_columns": [
+            "UserId"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__CommentR__46DDF9B42F657435",
+          "table_name": "CommentReaction",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "ReactionId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        },
+        {
+          "name": "UQ_CommentReaction_Comment_User_Type",
+          "table_name": "CommentReaction",
+          "type_desc": "NONCLUSTERED",
+          "is_unique": true,
+          "is_primary_key": false,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "CommentId",
+              "desc": false
+            },
+            {
+              "column": "UserId",
+              "desc": false
+            },
+            {
+              "column": "Type",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "ReactionId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CommentId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UserId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Type",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(10)",
+          "postgres_type": "VARCHAR(10)",
+          "max_length": 20,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CreatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "(sysutcdatetime())",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "ReactionId": "d1978a2f-7110-42aa-baad-00662cd7fcdd",
+          "CommentId": "bf12365e-0708-441d-9455-3d4419e609f7",
+          "UserId": "34edd4f3-cbf6-4733-aa38-09b1b6249509",
+          "Type": "dislike",
+          "CreatedAt": "2026-10-21T13:18:49"
+        },
+        {
+          "ReactionId": "0d79572e-1202-41d3-abe8-00b82d8c0b97",
+          "CommentId": "28f9288b-8e30-4980-af17-6f5611653c1c",
+          "UserId": "48b049bd-c96e-4794-803e-35ade0560301",
+          "Type": "like",
+          "CreatedAt": "2026-10-22T17:49:56"
+        },
+        {
+          "ReactionId": "8c98ccf1-1edb-4261-befc-00d0c434a557",
+          "CommentId": "538a6914-0add-4011-b9f8-2a2c75122291",
+          "UserId": "e3e600f9-81c0-4f2b-84d4-826c640e0e77",
+          "Type": "like",
+          "CreatedAt": "2026-11-09T03:29:51"
+        },
+        {
+          "ReactionId": "d3c92533-539a-45d4-8927-00eb687b58fc",
+          "CommentId": "2537ad10-0bf4-4ad9-b801-44c78107c4f9",
+          "UserId": "093cb63b-77bd-4fb5-9c41-08384eb69d1a",
+          "Type": "like",
+          "CreatedAt": "2026-11-06T00:05:54"
+        },
+        {
+          "ReactionId": "43d3af6c-b7e6-4ecc-961c-00eb74a72405",
+          "CommentId": "0aeabf5d-904e-46b4-82b3-879423ed8075",
+          "UserId": "91d874c8-350f-4314-8ee0-603d6df718f5",
+          "Type": "like",
+          "CreatedAt": "2026-10-27T08:51:20"
+        }
+      ]
+    },
+    "Covers": {
+      "schema": "dbo",
+      "table_name": "Covers",
+      "topological_level": 0,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 68787,
+      "reserved_mb": 648.64,
+      "used_mb": 648.51,
+      "primary_key": [
+        "cover_id"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "name": "PK__Covers__68D299CFE94CD390",
+          "table_name": "Covers",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "cover_id",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "cover_id",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "manga_id",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "type",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "description",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "volume",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "fileName",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(255)",
+          "postgres_type": "VARCHAR(255)",
+          "max_length": 510,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "locale",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(10)",
+          "postgres_type": "VARCHAR(10)",
+          "max_length": 20,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "createdAt",
+          "sql_type": "datetimeoffset",
+          "mssql_type_full": "datetimeoffset(7)",
+          "postgres_type": "TIMESTAMPTZ",
+          "max_length": 10,
+          "precision": 34,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": true
+        },
+        {
+          "name": "updatedAt",
+          "sql_type": "datetimeoffset",
+          "mssql_type_full": "datetimeoffset(7)",
+          "postgres_type": "TIMESTAMPTZ",
+          "max_length": 10,
+          "precision": 34,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": true
+        },
+        {
+          "name": "version",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "rel_user_id",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "url",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(500)",
+          "postgres_type": "VARCHAR(500)",
+          "max_length": 1000,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "image_data",
+          "sql_type": "varbinary",
+          "mssql_type_full": "varbinary(max)",
+          "postgres_type": "BYTEA",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": true,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "cover_id": "9a94fc06-af59-4f1d-acc1-000170c8a4c3",
+          "manga_id": "c9d84159-6c72-4fa8-81b9-b4a3983514a6",
+          "type": "cover_art",
+          "description": null,
+          "volume": "1",
+          "fileName": "791462db-2bf3-4d3b-8c80-cdd09d8a47fc.png",
+          "locale": "ja",
+          "createdAt": null,
+          "updatedAt": null,
+          "version": 1,
+          "rel_user_id": null,
+          "url": null,
+          "image_data": null
+        },
+        {
+          "cover_id": "6ef74ae7-0a85-41cb-8852-0004905ed090",
+          "manga_id": "44d3c30e-c1f1-4ebc-b4bf-7be88b02d12f",
+          "type": "cover_art",
+          "description": null,
+          "volume": "2",
+          "fileName": "383ab96b-ee94-45f5-a581-794aad525c1d.jpg",
+          "locale": "ja",
+          "createdAt": null,
+          "updatedAt": null,
+          "version": 1,
+          "rel_user_id": null,
+          "url": null,
+          "image_data": null
+        },
+        {
+          "cover_id": "377a8e58-6113-424a-b505-0004a8c4da00",
+          "manga_id": "5a42e0e7-74b4-4073-9a29-50022ccb834c",
+          "type": "cover_art",
+          "description": null,
+          "volume": "1",
+          "fileName": "3e730fe3-cc95-4d77-beaf-142950ce4bff.jpg",
+          "locale": "zh",
+          "createdAt": null,
+          "updatedAt": null,
+          "version": 1,
+          "rel_user_id": null,
+          "url": null,
+          "image_data": null
+        },
+        {
+          "cover_id": "56bf86b0-ae59-44b3-bc0f-000593e78dc7",
+          "manga_id": "9fc3d887-094c-4752-9a89-202f7b735c40",
+          "type": "cover_art",
+          "description": null,
+          "volume": "2",
+          "fileName": "fc31898b-cf28-495b-a4fd-423622b6ad76.jpg",
+          "locale": "ja",
+          "createdAt": null,
+          "updatedAt": null,
+          "version": 1,
+          "rel_user_id": null,
+          "url": null,
+          "image_data": null
+        },
+        {
+          "cover_id": "90fb1ac9-5d70-4042-a824-00063f2dad55",
+          "manga_id": "d7eaf98a-afe1-4cb8-a793-b9646411571f",
+          "type": "cover_art",
+          "description": null,
+          "volume": "1",
+          "fileName": "bd5d47ae-3504-40e4-b744-98a079924d55.jpg",
+          "locale": "ja",
+          "createdAt": null,
+          "updatedAt": null,
+          "version": 1,
+          "rel_user_id": null,
+          "url": null,
+          "image_data": null
+        }
+      ]
+    },
+    "Creator": {
+      "schema": "dbo",
+      "table_name": "Creator",
+      "topological_level": 0,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 49937,
+      "reserved_mb": 6.08,
+      "used_mb": 5.91,
+      "primary_key": [
+        "CreatorId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "name": "PK__Creator__6C7548318077BD36",
+          "table_name": "Creator",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "CreatorId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "CreatorId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Type",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Name",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(500)",
+          "postgres_type": "VARCHAR(500)",
+          "max_length": 1000,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "ImageUrl",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "BiographyEn",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "BiographyJa",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "BiographyPtBr",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CreatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UpdatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "CreatorId": "4e05418d-243a-48ca-8df3-00002a8f284f",
+          "Type": "author",
+          "Name": "Kazuki (かずき) (Webcomic Artist)",
+          "ImageUrl": null,
+          "BiographyEn": "**Name In Native Language:** かずき\n\n**Not to be confused with:**\n- the autobiographical author [kazuki (かずき)](https://mangadex.org/author/fed01cb9-9038-4b4e-a26e-0748f69146ab)\n- the manga artist [Kazuki (カズキ)](https://mangadex.org/author/7741cf13-7946-42b8-8d0f-84a4d63ff481)\n- the hentai artist [Kazuki (かづき)](https://mangadex.org/author/867695db-f1ba-40a2-9743-3b8de2820fac)\n- the BL doujinshi artist [Kazuki (架月)](https://mangadex.org/author/848d178b-4d69-4cf2-adc7-e37d67f3e6e7)\n\n**Additional Sites:**\n- [Sub X](https://x.com/ka3uki)",
+          "BiographyJa": null,
+          "BiographyPtBr": null,
+          "CreatedAt": "2023-05-22T20:17:21",
+          "UpdatedAt": "2025-04-30T11:53:27"
+        },
+        {
+          "CreatorId": "b243326f-b45f-4920-9821-00011d8a52f4",
+          "Type": "author",
+          "Name": "Yagami Hiroki",
+          "ImageUrl": null,
+          "BiographyEn": null,
+          "BiographyJa": null,
+          "BiographyPtBr": null,
+          "CreatedAt": "2021-04-19T21:59:45",
+          "UpdatedAt": "2021-04-19T21:59:45"
+        },
+        {
+          "CreatorId": "b0ab89b3-a069-4927-92a5-00015a0c5047",
+          "Type": "author",
+          "Name": "Doyouwantto",
+          "ImageUrl": null,
+          "BiographyEn": null,
+          "BiographyJa": null,
+          "BiographyPtBr": null,
+          "CreatedAt": "2021-04-19T21:59:45",
+          "UpdatedAt": "2021-04-19T21:59:45"
+        },
+        {
+          "CreatorId": "c7427c02-ec2d-49cd-b329-0002343e7ed4",
+          "Type": "author",
+          "Name": "Mishima Ukyou",
+          "ImageUrl": null,
+          "BiographyEn": null,
+          "BiographyJa": null,
+          "BiographyPtBr": null,
+          "CreatedAt": "2023-05-17T18:30:22",
+          "UpdatedAt": "2023-05-17T18:30:22"
+        },
+        {
+          "CreatorId": "667684f5-a409-4746-a55b-0003941e8a02",
+          "Type": "author",
+          "Name": "Ogasawara",
+          "ImageUrl": null,
+          "BiographyEn": "**Native name:** ォガサワラ",
+          "BiographyJa": null,
+          "BiographyPtBr": null,
+          "CreatedAt": "2024-10-24T01:59:10",
+          "UpdatedAt": "2024-10-24T01:59:30"
+        }
+      ]
+    },
+    "CreatorRelationship": {
+      "schema": "dbo",
+      "table_name": "CreatorRelationship",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 107514,
+      "reserved_mb": 6.2,
+      "used_mb": 6.16,
+      "primary_key": [
+        "Id"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__CreatorRe__Creat__1332DBDC",
+          "from_table": "CreatorRelationship",
+          "from_columns": [
+            "CreatorId"
+          ],
+          "to_table": "Creator",
+          "to_columns": [
+            "CreatorId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__CreatorR__3214EC0779A90841",
+          "table_name": "CreatorRelationship",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "Id",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "Id",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "SERIAL",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": true,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CreatorId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "RelatedId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "RelatedType",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "Id": 1,
+          "CreatorId": "5a6b43dc-1de6-47fa-9ef6-e88f26b52b6f",
+          "RelatedId": "3b3cf500-72f5-445b-8ff8-2ba6955096b5",
+          "RelatedType": "manga"
+        },
+        {
+          "Id": 2,
+          "CreatorId": "5a6b43dc-1de6-47fa-9ef6-e88f26b52b6f",
+          "RelatedId": "f3463b40-0e1d-46a6-ac18-9f44ed1a3f0e",
+          "RelatedType": "manga"
+        },
+        {
+          "Id": 3,
+          "CreatorId": "3d5b3bc0-7f16-41fd-bb49-d56d560ea11b",
+          "RelatedId": "fb3834f5-f778-419d-8d4c-ad37151ce1ec",
+          "RelatedType": "manga"
+        },
+        {
+          "Id": 4,
+          "CreatorId": "3d5b3bc0-7f16-41fd-bb49-d56d560ea11b",
+          "RelatedId": "cb479983-dd00-4bbc-b51f-00ffbcc67f6e",
+          "RelatedType": "manga"
+        },
+        {
+          "Id": 5,
+          "CreatorId": "293d4b13-f20e-4f5e-84e6-2deec4982de5",
+          "RelatedId": "ce44765a-750d-474f-bbc5-e8389d0ee6ab",
+          "RelatedType": "manga"
+        }
+      ]
+    },
+    "Friendship": {
+      "schema": "dbo",
+      "table_name": "Friendship",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 1,
+      "reserved_mb": 0.07,
+      "used_mb": 0.02,
+      "primary_key": [
+        "UserId",
+        "FriendId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__Friendshi__Frien__14270015",
+          "from_table": "Friendship",
+          "from_columns": [
+            "FriendId"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK__Friendshi__UserI__151B244E",
+          "from_table": "Friendship",
+          "from_columns": [
+            "UserId"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__Friendsh__3DA43A14414B90BA",
+          "table_name": "Friendship",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "UserId",
+              "desc": false
+            },
+            {
+              "column": "FriendId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "UserId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "FriendId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Status",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(20)",
+          "postgres_type": "VARCHAR(20)",
+          "max_length": 40,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "('pending')",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CreatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": "(sysutcdatetime())",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "UserId": "8fa0d0c7-ed84-437b-aad5-a0ab4917ba06",
+          "FriendId": "ee5e2c0c-b22c-4369-85ac-00450e03751c",
+          "Status": "pending",
+          "CreatedAt": "2026-05-13T18:58:33.507380"
+        }
+      ]
+    },
+    "List": {
+      "schema": "dbo",
+      "table_name": "List",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 20,
+      "reserved_mb": 0.07,
+      "used_mb": 0.02,
+      "primary_key": [
+        "ListId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__List__UserId__160F4887",
+          "from_table": "List",
+          "from_columns": [
+            "UserId"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__List__E383280557FF6C00",
+          "table_name": "List",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "ListId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "ListId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UserId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Name",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(200)",
+          "postgres_type": "VARCHAR(200)",
+          "max_length": 400,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Description",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "IsPublic",
+          "sql_type": "bit",
+          "mssql_type_full": "bit",
+          "postgres_type": "BOOLEAN",
+          "max_length": 1,
+          "precision": 1,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Slug",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(255)",
+          "postgres_type": "VARCHAR(255)",
+          "max_length": 510,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Visibility",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(20)",
+          "postgres_type": "VARCHAR(20)",
+          "max_length": 40,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CreatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UpdatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "FollowerCount",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "((0))",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "ItemCount",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "((0))",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "ListId": "dff1c2f6-14fe-422c-a436-09d9fa4b07f7",
+          "UserId": "091180b8-64fe-4198-b6b0-d10be8650e74",
+          "Name": "Thanh Xuân Vườn Trường Chọn Lọc",
+          "Description": "Tuổi học trò đầy kỷ niệm và tiếng cười.",
+          "IsPublic": true,
+          "Slug": "thanh-xuân-vu?n-tru?ng-ch?n-l?-848b67",
+          "Visibility": "public",
+          "CreatedAt": "2026-11-04T10:19:34.912339",
+          "UpdatedAt": "2026-11-08T10:19:34.912339",
+          "FollowerCount": 19,
+          "ItemCount": 9
+        },
+        {
+          "ListId": "b2a02df9-5c71-455a-b989-15972ae2669b",
+          "UserId": "fbf74bea-9b1c-46cf-ad9e-7ec72c026354",
+          "Name": "RomCom & Đời Thường Ngọt Sâu Răng",
+          "Description": "Những bộ truyện tình cảm hài hước nhẹ nhàng chữa lành tâm hồn.",
+          "IsPublic": true,
+          "Slug": "romcom-&-d?i-thu?ng-ng?t-sâu-r-ff29a5",
+          "Visibility": "public",
+          "CreatedAt": "2026-11-05T10:19:34.912339",
+          "UpdatedAt": "2026-11-08T10:19:34.912339",
+          "FollowerCount": 12,
+          "ItemCount": 10
+        },
+        {
+          "ListId": "4048ce71-c351-4fa3-bbb9-1c71c91bae18",
+          "UserId": "351e4344-63a8-4e6b-9dfc-7faa5ec9e6db",
+          "Name": "Fav manga",
+          "Description": "ha ha ha",
+          "IsPublic": null,
+          "Slug": "fav-manga-aaab21e6",
+          "Visibility": "public",
+          "CreatedAt": "2025-10-17T00:28:20.753073",
+          "UpdatedAt": "2025-10-17T00:28:39.957844",
+          "FollowerCount": 1,
+          "ItemCount": 1
+        },
+        {
+          "ListId": "0823bb6b-88d4-472d-9293-1fc9f86a50b6",
+          "UserId": "fbf74bea-9b1c-46cf-ad9e-7ec72c026354",
+          "Name": "Manga Hay",
+          "Description": "",
+          "IsPublic": null,
+          "Slug": "manga-hay-c8ed1691",
+          "Visibility": "private",
+          "CreatedAt": "2026-11-10T19:46:50.311944",
+          "UpdatedAt": "2026-11-10T19:46:50.311944",
+          "FollowerCount": 0,
+          "ItemCount": 0
+        },
+        {
+          "ListId": "db18c8fc-27bc-4d4a-9b45-2e224a966bc0",
+          "UserId": "fbf74bea-9b1c-46cf-ad9e-7ec72c026354",
+          "Name": "Test1",
+          "Description": "hello",
+          "IsPublic": null,
+          "Slug": "test1-86b53f0e",
+          "Visibility": "private",
+          "CreatedAt": "2026-11-10T07:37:25.840092",
+          "UpdatedAt": "2026-11-10T19:00:44.949657",
+          "FollowerCount": 0,
+          "ItemCount": 1
+        }
+      ]
+    },
+    "ListFollower": {
+      "schema": "dbo",
+      "table_name": "ListFollower",
+      "topological_level": 2,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 182,
+      "reserved_mb": 0.07,
+      "used_mb": 0.03,
+      "primary_key": [
+        "ListId",
+        "UserId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK_ListFollower_List",
+          "from_table": "ListFollower",
+          "from_columns": [
+            "ListId"
+          ],
+          "to_table": "List",
+          "to_columns": [
+            "ListId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK_ListFollower_User",
+          "from_table": "ListFollower",
+          "from_columns": [
+            "UserId"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK_ListFollower",
+          "table_name": "ListFollower",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "ListId",
+              "desc": false
+            },
+            {
+              "column": "UserId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "ListId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UserId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "FollowedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "(sysutcdatetime())",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "ListId": "dff1c2f6-14fe-422c-a436-09d9fa4b07f7",
+          "UserId": "08daa7ba-4ded-4c4d-94dc-0ab1daabfa84",
+          "FollowedAt": "2026-11-07T10:19:34.912339"
+        },
+        {
+          "ListId": "dff1c2f6-14fe-422c-a436-09d9fa4b07f7",
+          "UserId": "ce66e6bd-1ebc-4d13-abdd-11c00049fc38",
+          "FollowedAt": "2026-10-29T10:19:34.912339"
+        },
+        {
+          "ListId": "dff1c2f6-14fe-422c-a436-09d9fa4b07f7",
+          "UserId": "d9b17c31-882c-46eb-9fc7-24ac18f2bfdb",
+          "FollowedAt": "2026-10-31T10:19:34.912339"
+        },
+        {
+          "ListId": "dff1c2f6-14fe-422c-a436-09d9fa4b07f7",
+          "UserId": "f5d5f8ca-42ca-456f-afa1-4ee69e2b065a",
+          "FollowedAt": "2026-11-07T10:19:34.912339"
+        },
+        {
+          "ListId": "dff1c2f6-14fe-422c-a436-09d9fa4b07f7",
+          "UserId": "518d3a1e-8c54-4fd6-b6b8-5bef0a49a91c",
+          "FollowedAt": "2026-11-08T10:19:34.912339"
+        }
+      ]
+    },
+    "ListManga": {
+      "schema": "dbo",
+      "table_name": "ListManga",
+      "topological_level": 2,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 137,
+      "reserved_mb": 0.07,
+      "used_mb": 0.02,
+      "primary_key": [
+        "ListId",
+        "MangaId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__ListManga__ListI__18EBB532",
+          "from_table": "ListManga",
+          "from_columns": [
+            "ListId"
+          ],
+          "to_table": "List",
+          "to_columns": [
+            "ListId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK__ListManga__Manga__19DFD96B",
+          "from_table": "ListManga",
+          "from_columns": [
+            "MangaId"
+          ],
+          "to_table": "Manga",
+          "to_columns": [
+            "MangaId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__ListMang__1A3368F94B0E62FD",
+          "table_name": "ListManga",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "ListId",
+              "desc": false
+            },
+            {
+              "column": "MangaId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "ListId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "AddedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Position",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "((0))",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "ListId": "dff1c2f6-14fe-422c-a436-09d9fa4b07f7",
+          "MangaId": "02996c7c-ad97-49cf-adc5-015110df101a",
+          "AddedAt": "2026-11-03T10:19:34.912339",
+          "Position": 7
+        },
+        {
+          "ListId": "dff1c2f6-14fe-422c-a436-09d9fa4b07f7",
+          "MangaId": "028240e6-d308-415d-8fc2-1e9060eb4108",
+          "AddedAt": "2026-10-30T10:19:34.912339",
+          "Position": 6
+        },
+        {
+          "ListId": "dff1c2f6-14fe-422c-a436-09d9fa4b07f7",
+          "MangaId": "010abcb5-c705-4dcb-a51d-49b2c518b673",
+          "AddedAt": "2026-11-03T10:19:34.912339",
+          "Position": 3
+        },
+        {
+          "ListId": "dff1c2f6-14fe-422c-a436-09d9fa4b07f7",
+          "MangaId": "01ea7299-112c-41f4-b2a0-6d28c272deef",
+          "AddedAt": "2026-10-27T10:19:34.912339",
+          "Position": 5
+        },
+        {
+          "ListId": "dff1c2f6-14fe-422c-a436-09d9fa4b07f7",
+          "MangaId": "016b265e-f9ed-4514-aed1-71e729e6e6ef",
+          "AddedAt": "2026-10-29T10:19:34.912339",
+          "Position": 4
+        }
+      ]
+    },
+    "Manga": {
+      "schema": "dbo",
+      "table_name": "Manga",
+      "topological_level": 0,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 86866,
+      "reserved_mb": 21.51,
+      "used_mb": 21.48,
+      "primary_key": [
+        "MangaId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "name": "PK__Manga__9B040FCE3CF2AC64",
+          "table_name": "Manga",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "MangaId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Type",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "TitleEn",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(500)",
+          "postgres_type": "VARCHAR(500)",
+          "max_length": 1000,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "ChapterNumbersResetOnNewVolume",
+          "sql_type": "bit",
+          "mssql_type_full": "bit",
+          "postgres_type": "BOOLEAN",
+          "max_length": 1,
+          "precision": 1,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "ContentRating",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CreatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UpdatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "IsLocked",
+          "sql_type": "bit",
+          "mssql_type_full": "bit",
+          "postgres_type": "BOOLEAN",
+          "max_length": 1,
+          "precision": 1,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "LastChapter",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "LastVolume",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "LatestUploadedChapter",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "OriginalLanguage",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(10)",
+          "postgres_type": "VARCHAR(10)",
+          "max_length": 20,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "PublicationDemographic",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "State",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Status",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Year",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "OfficialLinks",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "MangaId": "f8aa7ce7-e951-428d-9494-000002b34237",
+          "Type": "manga",
+          "TitleEn": "Geniearth",
+          "ChapterNumbersResetOnNewVolume": false,
+          "ContentRating": "safe",
+          "CreatedAt": "2022-01-18T19:03:36",
+          "UpdatedAt": "2024-10-01T15:18:53",
+          "IsLocked": false,
+          "LastChapter": "43",
+          "LastVolume": "5.0",
+          "LatestUploadedChapter": "180137ed-4212-4d16-b5fb-eee912bb9845",
+          "OriginalLanguage": "ja",
+          "PublicationDemographic": "shounen",
+          "State": "published",
+          "Status": "completed",
+          "Year": 2021,
+          "OfficialLinks": null
+        },
+        {
+          "MangaId": "23bf6825-ad23-48d8-bba8-00012a1eca0a",
+          "Type": "manga",
+          "TitleEn": "The Model",
+          "ChapterNumbersResetOnNewVolume": false,
+          "ContentRating": "safe",
+          "CreatedAt": "2025-07-14T23:42:32",
+          "UpdatedAt": "2025-07-14T23:55:48",
+          "IsLocked": false,
+          "LastChapter": "1",
+          "LastVolume": "1.0",
+          "LatestUploadedChapter": null,
+          "OriginalLanguage": "ja",
+          "PublicationDemographic": "shoujo",
+          "State": "published",
+          "Status": "completed",
+          "Year": 1910,
+          "OfficialLinks": null
+        },
+        {
+          "MangaId": "e7bc63e3-6c25-4162-887a-0002e997ad6d",
+          "Type": "manga",
+          "TitleEn": "Hood",
+          "ChapterNumbersResetOnNewVolume": false,
+          "ContentRating": "safe",
+          "CreatedAt": "2023-07-28T16:12:09",
+          "UpdatedAt": "2023-10-31T04:06:15",
+          "IsLocked": false,
+          "LastChapter": null,
+          "LastVolume": null,
+          "LatestUploadedChapter": "7e22f709-3af6-4b64-8439-d81c0b948aa6",
+          "OriginalLanguage": "ko",
+          "PublicationDemographic": null,
+          "State": "published",
+          "Status": "ongoing",
+          "Year": 2023,
+          "OfficialLinks": null
+        },
+        {
+          "MangaId": "7930c35c-fdb7-43e7-adb3-0003068313f5",
+          "Type": "manga",
+          "TitleEn": "Campus no Mahou Tsukai",
+          "ChapterNumbersResetOnNewVolume": false,
+          "ContentRating": "safe",
+          "CreatedAt": "2022-11-21T01:25:21",
+          "UpdatedAt": "2025-01-27T14:22:53",
+          "IsLocked": false,
+          "LastChapter": null,
+          "LastVolume": "3.0",
+          "LatestUploadedChapter": null,
+          "OriginalLanguage": "ja",
+          "PublicationDemographic": null,
+          "State": "published",
+          "Status": "completed",
+          "Year": 2018,
+          "OfficialLinks": null
+        },
+        {
+          "MangaId": "ded474e8-dec2-4d59-89b7-0003f8a6ac73",
+          "Type": "manga",
+          "TitleEn": "Senpai to Love Love Gokko",
+          "ChapterNumbersResetOnNewVolume": false,
+          "ContentRating": "safe",
+          "CreatedAt": "2018-11-07T20:28:52",
+          "UpdatedAt": "2018-11-07T20:28:52",
+          "IsLocked": false,
+          "LastChapter": null,
+          "LastVolume": null,
+          "LatestUploadedChapter": null,
+          "OriginalLanguage": "ja",
+          "PublicationDemographic": null,
+          "State": "published",
+          "Status": "ongoing",
+          "Year": null,
+          "OfficialLinks": null
+        }
+      ]
+    },
+    "MangaAltTitle": {
+      "schema": "dbo",
+      "table_name": "MangaAltTitle",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 240601,
+      "reserved_mb": 19.07,
+      "used_mb": 19.02,
+      "primary_key": [
+        "AltTitleId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__MangaAltT__Manga__1AD3FDA4",
+          "from_table": "MangaAltTitle",
+          "from_columns": [
+            "MangaId"
+          ],
+          "to_table": "Manga",
+          "to_columns": [
+            "MangaId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__MangaAlt__96A24561748D521B",
+          "table_name": "MangaAltTitle",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "AltTitleId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "AltTitleId",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "SERIAL",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": true,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "LangCode",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(10)",
+          "postgres_type": "VARCHAR(10)",
+          "max_length": 20,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "AltTitle",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "AltTitleId": 1,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "LangCode": "ko",
+          "AltTitle": "신의 탑"
+        },
+        {
+          "AltTitleId": 2,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "LangCode": "sv",
+          "AltTitle": "Guds Torn"
+        },
+        {
+          "AltTitleId": 3,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "LangCode": "hu",
+          "AltTitle": "Isten Tornya"
+        },
+        {
+          "AltTitleId": 4,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "LangCode": "el",
+          "AltTitle": "Kami no Tou"
+        },
+        {
+          "AltTitleId": 5,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "LangCode": "id",
+          "AltTitle": "Menara Dewa"
+        }
+      ]
+    },
+    "MangaAvailableLanguage": {
+      "schema": "dbo",
+      "table_name": "MangaAvailableLanguage",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 118027,
+      "reserved_mb": 4.38,
+      "used_mb": 4.37,
+      "primary_key": [
+        "LangId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__MangaAvai__Manga__1BC821DD",
+          "from_table": "MangaAvailableLanguage",
+          "from_columns": [
+            "MangaId"
+          ],
+          "to_table": "Manga",
+          "to_columns": [
+            "MangaId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__MangaAva__A5F312DE7CE2805A",
+          "table_name": "MangaAvailableLanguage",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "LangId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "LangId",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "SERIAL",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": true,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "LangCode",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(10)",
+          "postgres_type": "VARCHAR(10)",
+          "max_length": 20,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "LangId": 1,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "LangCode": "en"
+        },
+        {
+          "LangId": 2,
+          "MangaId": "7dbeaa0e-420a-4dc0-b2d3-eb174de266da",
+          "LangCode": "en"
+        },
+        {
+          "LangId": 3,
+          "MangaId": "7dbeaa0e-420a-4dc0-b2d3-eb174de266da",
+          "LangCode": "fr"
+        },
+        {
+          "LangId": 4,
+          "MangaId": "7dbeaa0e-420a-4dc0-b2d3-eb174de266da",
+          "LangCode": "pt-br"
+        },
+        {
+          "LangId": 5,
+          "MangaId": "7dbeaa0e-420a-4dc0-b2d3-eb174de266da",
+          "LangCode": "pl"
+        }
+      ]
+    },
+    "MangaCover": {
+      "schema": "dbo",
+      "table_name": "MangaCover",
+      "topological_level": 0,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": true,
+      "exact_rows": 454,
+      "reserved_mb": 489.33,
+      "used_mb": 489.23,
+      "primary_key": [
+        "MangaId",
+        "CoverId",
+        "FileName"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "name": "PK_MangaCover",
+          "table_name": "MangaCover",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "MangaId",
+              "desc": false
+            },
+            {
+              "column": "CoverId",
+              "desc": false
+            },
+            {
+              "column": "FileName",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CoverId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "FileName",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(255)",
+          "postgres_type": "VARCHAR(255)",
+          "max_length": 510,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "DownloadDate",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "(getdate())",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "ImageData",
+          "sql_type": "varbinary",
+          "mssql_type_full": "varbinary(max)",
+          "postgres_type": "BYTEA",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": true,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "MangaId": "034800c3-330c-437f-add5-00197020c21a",
+          "CoverId": "4ccb92f4-b2a8-4fae-9586-0e6b9ef2f922",
+          "FileName": "c9db86f1-8974-4eaa-a076-ca2972eec5d4.jpg",
+          "DownloadDate": "2025-09-21T20:38:55.282352",
+          "ImageData": "<BINARY 528688 bytes>"
+        },
+        {
+          "MangaId": "ffa5a1fb-52f5-4f01-9ab9-001a209473dd",
+          "CoverId": "97bc683d-3795-4f3a-8c70-0ee9c66b42cc",
+          "FileName": "99278e3f-34ec-4eb2-ad95-afe5a8fdfbd3.jpg",
+          "DownloadDate": "2025-09-23T15:24:28.014298",
+          "ImageData": "<BINARY 516100 bytes>"
+        },
+        {
+          "MangaId": "83963f15-d12b-4b22-9198-00772ed745d4",
+          "CoverId": "7e783f20-6706-4f56-874c-09ee655560cd",
+          "FileName": "0699b1f1-c183-485c-aa44-584e4402aa0b.jpg",
+          "DownloadDate": "2025-10-03T00:43:10.421642",
+          "ImageData": "<BINARY 50853 bytes>"
+        },
+        {
+          "MangaId": "740db8d3-355b-46ee-ae8e-00a66c0c5e1c",
+          "CoverId": "419f936c-0ba7-401a-8d56-28e24f1a9aa3",
+          "FileName": "8b75402b-9d5b-4f9e-adf4-f974857d6251.jpg",
+          "DownloadDate": "2025-10-03T00:43:23.019418",
+          "ImageData": "<BINARY 1701297 bytes>"
+        },
+        {
+          "MangaId": "900b1790-4d86-4030-b410-00db69df4771",
+          "CoverId": "4d6263d2-f12e-4121-b9dd-3493bbc5c19f",
+          "FileName": "0f648c5b-24e7-4c53-96a9-2474eadbdc52.jpg",
+          "DownloadDate": "2025-10-03T00:43:26.536136",
+          "ImageData": "<BINARY 565720 bytes>"
+        }
+      ]
+    },
+    "MangaCovers": {
+      "schema": "dbo",
+      "table_name": "MangaCovers",
+      "topological_level": 0,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": true,
+      "exact_rows": 1400,
+      "reserved_mb": 2.32,
+      "used_mb": 2.22,
+      "primary_key": [
+        "cover_id"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "name": "PK__MangaCov__68D299CFD72982BA",
+          "table_name": "MangaCovers",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "cover_id",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "cover_id",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "manga_id",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "file_name",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(300)",
+          "postgres_type": "VARCHAR(300)",
+          "max_length": 600,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "description",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "volume",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "locale",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(20)",
+          "postgres_type": "VARCHAR(20)",
+          "max_length": 40,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "created_at",
+          "sql_type": "datetimeoffset",
+          "mssql_type_full": "datetimeoffset(7)",
+          "postgres_type": "TIMESTAMPTZ",
+          "max_length": 10,
+          "precision": 34,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": true
+        },
+        {
+          "name": "updated_at",
+          "sql_type": "datetimeoffset",
+          "mssql_type_full": "datetimeoffset(7)",
+          "postgres_type": "TIMESTAMPTZ",
+          "max_length": 10,
+          "precision": 34,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": true
+        },
+        {
+          "name": "version",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "image_url",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(1000)",
+          "postgres_type": "VARCHAR(1000)",
+          "max_length": 2000,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "file_path",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(1000)",
+          "postgres_type": "VARCHAR(1000)",
+          "max_length": 2000,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "downloaded_at",
+          "sql_type": "datetimeoffset",
+          "mssql_type_full": "datetimeoffset(7)",
+          "postgres_type": "TIMESTAMPTZ",
+          "max_length": 10,
+          "precision": 34,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": true
+        },
+        {
+          "name": "raw_json",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "inserted_at",
+          "sql_type": "datetimeoffset",
+          "mssql_type_full": "datetimeoffset(7)",
+          "postgres_type": "TIMESTAMPTZ",
+          "max_length": 10,
+          "precision": 34,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": "(sysutcdatetime())",
+          "is_binary_blob": false,
+          "is_datetimeoffset": true
+        }
+      ],
+      "sample_rows": [
+        {
+          "cover_id": "000a3967-e848-47f8-a043-4cda74ea54e4",
+          "manga_id": "6859a3c7-dfa5-4026-9688-e999b928892e",
+          "file_name": "e0dec1c4-d9f0-40a2-960c-6e8a797a82c5.jpg",
+          "description": null,
+          "volume": "2.0",
+          "locale": "ja",
+          "created_at": "2025-09-11T10:36:15Z",
+          "updated_at": "2025-09-11T10:36:15Z",
+          "version": 1,
+          "image_url": "https://uploads.mangadex.org/covers/6859a3c7-dfa5-4026-9688-e999b928892e/e0dec1c4-d9f0-40a2-960c-6e8a797a82c5.jpg",
+          "file_path": null,
+          "downloaded_at": null,
+          "raw_json": "{\"id\": \"000a3967-e848-47f8-a043-4cda74ea54e4\", \"type\": \"cover_art\", \"attributes\": {\"description\": \"\", \"volume\": \"2\", \"fileName\": \"e0dec1c4-d9f0-40a2-960c-6e8a797a82c5.jpg\", \"locale\": \"ja\", \"createdAt\": \"2025-09-11T10:36:15+00:00\", \"updatedAt\": \"2025-09-11T10:36:15+00:00\", \"version\": 1}, \"relationships\": [{\"id\": \"6859a3c7-dfa5-4026-9688-e999b928892e\", \"type\": \"manga\"}, {\"id\": \"cf326533-07d1-4596-ac9e-e8ec899277b7\", \"type\": \"user\"}]}",
+          "inserted_at": "2025-09-20T17:17:30.2782550Z"
+        },
+        {
+          "cover_id": "000a4a5e-e83f-4dfd-8ef7-6043f0aaa9ea",
+          "manga_id": "3c4da5c5-5c4f-418c-871e-26907a90b2ad",
+          "file_name": "2a5cc9b7-042f-4699-bce3-37afcfa8e128.jpg",
+          "description": null,
+          "volume": "2.0",
+          "locale": "ja",
+          "created_at": "2025-09-11T15:18:29Z",
+          "updated_at": "2025-09-11T15:18:29Z",
+          "version": 1,
+          "image_url": "https://uploads.mangadex.org/covers/3c4da5c5-5c4f-418c-871e-26907a90b2ad/2a5cc9b7-042f-4699-bce3-37afcfa8e128.jpg",
+          "file_path": null,
+          "downloaded_at": null,
+          "raw_json": "{\"id\": \"000a4a5e-e83f-4dfd-8ef7-6043f0aaa9ea\", \"type\": \"cover_art\", \"attributes\": {\"description\": \"\", \"volume\": \"2\", \"fileName\": \"2a5cc9b7-042f-4699-bce3-37afcfa8e128.jpg\", \"locale\": \"ja\", \"createdAt\": \"2025-09-11T15:18:29+00:00\", \"updatedAt\": \"2025-09-11T15:18:29+00:00\", \"version\": 1}, \"relationships\": [{\"id\": \"3c4da5c5-5c4f-418c-871e-26907a90b2ad\", \"type\": \"manga\"}, {\"id\": \"132c7600-c1bd-4263-bcaf-c0e0c1a644ab\", \"type\": \"user\"}]}",
+          "inserted_at": "2025-09-20T17:17:30.2702540Z"
+        },
+        {
+          "cover_id": "002a646b-9a7d-43d5-9988-718d18b5080f",
+          "manga_id": "a16a5cc2-a130-4482-b21a-2cc3ac8b1743",
+          "file_name": "b278df23-fba8-4b21-8ddd-cef320f52c5c.jpg",
+          "description": null,
+          "volume": "5.0",
+          "locale": "ja",
+          "created_at": "2025-09-17T10:11:23Z",
+          "updated_at": "2025-09-17T10:11:23Z",
+          "version": 1,
+          "image_url": "https://uploads.mangadex.org/covers/a16a5cc2-a130-4482-b21a-2cc3ac8b1743/b278df23-fba8-4b21-8ddd-cef320f52c5c.jpg",
+          "file_path": null,
+          "downloaded_at": null,
+          "raw_json": "{\"id\": \"002a646b-9a7d-43d5-9988-718d18b5080f\", \"type\": \"cover_art\", \"attributes\": {\"description\": \"\", \"volume\": \"5\", \"fileName\": \"b278df23-fba8-4b21-8ddd-cef320f52c5c.jpg\", \"locale\": \"ja\", \"createdAt\": \"2025-09-17T10:11:23+00:00\", \"updatedAt\": \"2025-09-17T10:11:23+00:00\", \"version\": 1}, \"relationships\": [{\"id\": \"a16a5cc2-a130-4482-b21a-2cc3ac8b1743\", \"type\": \"manga\"}, {\"id\": \"f73d34f6-f678-4f8b-9dff-5c759d5fc767\", \"type\": \"user\"}]}",
+          "inserted_at": "2025-09-20T17:17:24.6868640Z"
+        },
+        {
+          "cover_id": "00460c74-0aa9-4037-abb9-6c37aff635df",
+          "manga_id": "db0ac526-46c9-41ea-be96-1959bc26a314",
+          "file_name": "9a9ec45b-1370-4e25-a950-150f720a6511.jpg",
+          "description": null,
+          "volume": "1.0",
+          "locale": "ja",
+          "created_at": "2025-09-16T14:43:30Z",
+          "updated_at": "2025-09-16T14:43:30Z",
+          "version": 1,
+          "image_url": "https://uploads.mangadex.org/covers/db0ac526-46c9-41ea-be96-1959bc26a314/9a9ec45b-1370-4e25-a950-150f720a6511.jpg",
+          "file_path": null,
+          "downloaded_at": null,
+          "raw_json": "{\"id\": \"00460c74-0aa9-4037-abb9-6c37aff635df\", \"type\": \"cover_art\", \"attributes\": {\"description\": \"\", \"volume\": \"1\", \"fileName\": \"9a9ec45b-1370-4e25-a950-150f720a6511.jpg\", \"locale\": \"ja\", \"createdAt\": \"2025-09-16T14:43:30+00:00\", \"updatedAt\": \"2025-09-16T14:43:30+00:00\", \"version\": 1}, \"relationships\": [{\"id\": \"db0ac526-46c9-41ea-be96-1959bc26a314\", \"type\": \"manga\"}, {\"id\": \"f73d34f6-f678-4f8b-9dff-5c759d5fc767\", \"type\": \"user\"}]}",
+          "inserted_at": "2025-09-20T17:17:26.1716510Z"
+        },
+        {
+          "cover_id": "009cc51e-fb05-4c2a-a326-ca63e3051a0f",
+          "manga_id": "d82cb3cd-93c2-4b58-ae28-794be1cabd31",
+          "file_name": "dc9e0c7d-f521-43d4-befa-8059120c62c3.jpg",
+          "description": null,
+          "volume": "1.0",
+          "locale": "ko",
+          "created_at": "2025-09-19T13:36:14Z",
+          "updated_at": "2025-09-19T13:36:14Z",
+          "version": 1,
+          "image_url": "https://uploads.mangadex.org/covers/d82cb3cd-93c2-4b58-ae28-794be1cabd31/dc9e0c7d-f521-43d4-befa-8059120c62c3.jpg",
+          "file_path": "covers\\d82cb3cd-93c2-4b58-ae28-794be1cabd31\\dc9e0c7d-f521-43d4-befa-8059120c62c3.jpg",
+          "downloaded_at": "2025-09-20T17:17:58.0860690Z",
+          "raw_json": "{\"id\": \"009cc51e-fb05-4c2a-a326-ca63e3051a0f\", \"type\": \"cover_art\", \"attributes\": {\"description\": \"\", \"volume\": \"1\", \"fileName\": \"dc9e0c7d-f521-43d4-befa-8059120c62c3.jpg\", \"locale\": \"ko\", \"createdAt\": \"2025-09-19T13:36:14+00:00\", \"updatedAt\": \"2025-09-19T13:36:14+00:00\", \"version\": 1}, \"relationships\": [{\"id\": \"d82cb3cd-93c2-4b58-ae28-794be1cabd31\", \"type\": \"manga\"}, {\"id\": \"47ddebe8-f2e6-458c-8f3f-45fa9a090946\", \"type\": \"user\"}]}",
+          "inserted_at": "2025-09-20T17:17:22.2195170Z"
+        }
+      ]
+    },
+    "MangaDescription": {
+      "schema": "dbo",
+      "table_name": "MangaDescription",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 101248,
+      "reserved_mb": 89.33,
+      "used_mb": 89.28,
+      "primary_key": [
+        "DescriptionId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__MangaDesc__Manga__1CBC4616",
+          "from_table": "MangaDescription",
+          "from_columns": [
+            "MangaId"
+          ],
+          "to_table": "Manga",
+          "to_columns": [
+            "MangaId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__MangaDes__A58A9F8B858691D0",
+          "table_name": "MangaDescription",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "DescriptionId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "DescriptionId",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "SERIAL",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": true,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "LangCode",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(10)",
+          "postgres_type": "VARCHAR(10)",
+          "max_length": 20,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Description",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "DescriptionId": 1,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "LangCode": "en",
+          "Description": "Bam, who was alone all his life has entered the tower to chase after his only friend, Rachel, but how will he survive without having any special strength or power?  \n  \n\"What do you desire? Money and wealth? Honor and pride? Authority and power? Revenge? Or something that transcends them all? Whatever you desire—it's here.\"\n\n**Links:**\n- Alternate Official Raw - [Naver Series](https://series.naver.com/comic/detail.series?productNo=2140867)\n\n---\n## Important Note:\n**Because a takedown notice was sent to MangaDex from the owners of this series, fan translations of Tower of God are unable to be posted at this time. The series can be officially read in its entirety for free on [Webtoons](https://www.webtoons.com/en/fantasy/tower-of-god/list?title_no=95) in English, or with their many complete fan translations in other languages.**"
+        },
+        {
+          "DescriptionId": 2,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "LangCode": "es",
+          "Description": "¿Cuál es tu mayor deseo? ¿Dinero y riquezas? ¿Orgullo y honor? ¿Autoridad y poder? ¿Venganza? ¿O quizás algo más trascendente? No importa cuál sea, lo encontrarás aquí."
+        },
+        {
+          "DescriptionId": 3,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "LangCode": "fr",
+          "Description": "“Que désirez-vous? La richesse? La gloire? Le pouvoir? La vengeance? Ou une chose qui surpasse toutes les autres ? Quel que soit votre désir, il se trouve ici !”"
+        },
+        {
+          "DescriptionId": 4,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "LangCode": "hi",
+          "Description": "• [Naver Webtoon Fan Translation (Hindi)](http://webtoons.com/translate/episodeList?titleNo=95&translatedWebtoonType=WEBTOON&languageCode=HIN&teamVersion=0)"
+        },
+        {
+          "DescriptionId": 5,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "LangCode": "id",
+          "Description": "Harta, kuasa, dan dendam.. Semua yang kamu inginkan, ada di sini!"
+        }
+      ]
+    },
+    "MangaLink": {
+      "schema": "dbo",
+      "table_name": "MangaLink",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 334010,
+      "reserved_mb": 30.2,
+      "used_mb": 30.19,
+      "primary_key": [
+        "LinkId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__MangaLink__Manga__1DB06A4F",
+          "from_table": "MangaLink",
+          "from_columns": [
+            "MangaId"
+          ],
+          "to_table": "Manga",
+          "to_columns": [
+            "MangaId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__MangaLin__2D122135AE3DB79F",
+          "table_name": "MangaLink",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "LinkId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "LinkId",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "SERIAL",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": true,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Provider",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(20)",
+          "postgres_type": "VARCHAR(20)",
+          "max_length": 40,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Url",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "LinkId": 1,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "Provider": "al",
+          "Url": "85143"
+        },
+        {
+          "LinkId": 2,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "Provider": "ap",
+          "Url": "tower-of-god"
+        },
+        {
+          "LinkId": 3,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "Provider": "kt",
+          "Url": "25436"
+        },
+        {
+          "LinkId": 4,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "Provider": "mu",
+          "Url": "55901"
+        },
+        {
+          "LinkId": 5,
+          "MangaId": "c0ee660b-f9f2-45c3-8068-5123ff53f84a",
+          "Provider": "mal",
+          "Url": "122663"
+        }
+      ]
+    },
+    "MangaRelated": {
+      "schema": "dbo",
+      "table_name": "MangaRelated",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 368565,
+      "reserved_mb": 25.07,
+      "used_mb": 25.05,
+      "primary_key": [
+        "MangaId",
+        "RelatedId",
+        "Type"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__MangaRela__Manga__1EA48E88",
+          "from_table": "MangaRelated",
+          "from_columns": [
+            "MangaId"
+          ],
+          "to_table": "Manga",
+          "to_columns": [
+            "MangaId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__MangaRel__B13651861E8635C4",
+          "table_name": "MangaRelated",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "MangaId",
+              "desc": false
+            },
+            {
+              "column": "RelatedId",
+              "desc": false
+            },
+            {
+              "column": "Type",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "RelatedId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Type",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Related",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "FetchedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "MangaId": "f8aa7ce7-e951-428d-9494-000002b34237",
+          "RelatedId": "f2650a70-35e6-4dc7-b435-11f782484e27",
+          "Type": "cover_art",
+          "Related": null,
+          "FetchedAt": "2025-08-11T07:12:11.493000"
+        },
+        {
+          "MangaId": "f8aa7ce7-e951-428d-9494-000002b34237",
+          "RelatedId": "9fbe9050-d5c2-48fe-8154-6ebe032de6c4",
+          "Type": "artist",
+          "Related": null,
+          "FetchedAt": "2025-08-11T07:12:11.493000"
+        },
+        {
+          "MangaId": "f8aa7ce7-e951-428d-9494-000002b34237",
+          "RelatedId": "9fbe9050-d5c2-48fe-8154-6ebe032de6c4",
+          "Type": "author",
+          "Related": null,
+          "FetchedAt": "2025-08-11T07:12:11.493000"
+        },
+        {
+          "MangaId": "f8aa7ce7-e951-428d-9494-000002b34237",
+          "RelatedId": "2e7d74f1-21a3-4e43-8cf8-723bd44e6c0c",
+          "Type": "creator",
+          "Related": null,
+          "FetchedAt": "2025-08-11T07:12:11.493000"
+        },
+        {
+          "MangaId": "e7bc63e3-6c25-4162-887a-0002e997ad6d",
+          "RelatedId": "23b5f413-fccd-40ff-b609-22fc05be9a60",
+          "Type": "artist",
+          "Related": null,
+          "FetchedAt": "2025-08-11T08:43:21.330000"
+        }
+      ]
+    },
+    "MangaStatistics": {
+      "schema": "dbo",
+      "table_name": "MangaStatistics",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 86866,
+      "reserved_mb": 7.88,
+      "used_mb": 7.87,
+      "primary_key": [
+        "StatisticId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__MangaStat__Manga__1F98B2C1",
+          "from_table": "MangaStatistics",
+          "from_columns": [
+            "MangaId"
+          ],
+          "to_table": "Manga",
+          "to_columns": [
+            "MangaId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__MangaSta__367DEB17AF820B79",
+          "table_name": "MangaStatistics",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "StatisticId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "StatisticId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Source",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Follows",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "AverageRating",
+          "sql_type": "float",
+          "mssql_type_full": "float",
+          "postgres_type": "DOUBLE PRECISION",
+          "max_length": 8,
+          "precision": 53,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "BayesianRating",
+          "sql_type": "float",
+          "mssql_type_full": "float",
+          "postgres_type": "DOUBLE PRECISION",
+          "max_length": 8,
+          "precision": 53,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UnavailableChapters",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "FetchedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "StatisticId": "f8aa7ce7-e951-428d-9494-000002b34237",
+          "MangaId": "f8aa7ce7-e951-428d-9494-000002b34237",
+          "Source": "mangadex",
+          "Follows": 229,
+          "AverageRating": 8.5,
+          "BayesianRating": 8.161097841581737,
+          "UnavailableChapters": 0,
+          "FetchedAt": "2025-08-09T22:58:22.593333"
+        },
+        {
+          "StatisticId": "23bf6825-ad23-48d8-bba8-00012a1eca0a",
+          "MangaId": "23bf6825-ad23-48d8-bba8-00012a1eca0a",
+          "Source": "mangadex",
+          "Follows": 1,
+          "AverageRating": null,
+          "BayesianRating": 8.088479834969645,
+          "UnavailableChapters": 0,
+          "FetchedAt": "2025-08-09T23:20:46.610000"
+        },
+        {
+          "StatisticId": "e7bc63e3-6c25-4162-887a-0002e997ad6d",
+          "MangaId": "e7bc63e3-6c25-4162-887a-0002e997ad6d",
+          "Source": "mangadex",
+          "Follows": 157,
+          "AverageRating": 8.6667,
+          "BayesianRating": 8.174414987053648,
+          "UnavailableChapters": 5,
+          "FetchedAt": "2025-08-09T23:09:04.566666"
+        },
+        {
+          "StatisticId": "7930c35c-fdb7-43e7-adb3-0003068313f5",
+          "MangaId": "7930c35c-fdb7-43e7-adb3-0003068313f5",
+          "Source": "mangadex",
+          "Follows": 314,
+          "AverageRating": null,
+          "BayesianRating": 8.08243795405425,
+          "UnavailableChapters": 0,
+          "FetchedAt": "2025-08-09T23:02:32.786666"
+        },
+        {
+          "StatisticId": "ded474e8-dec2-4d59-89b7-0003f8a6ac73",
+          "MangaId": "ded474e8-dec2-4d59-89b7-0003f8a6ac73",
+          "Source": "mangadex",
+          "Follows": 37,
+          "AverageRating": 6.3333,
+          "BayesianRating": 8.163739413910264,
+          "UnavailableChapters": 0,
+          "FetchedAt": "2025-08-09T22:36:53.666666"
+        }
+      ]
+    },
+    "MangaTag": {
+      "schema": "dbo",
+      "table_name": "MangaTag",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 416406,
+      "reserved_mb": 16.76,
+      "used_mb": 16.7,
+      "primary_key": [
+        "MangaId",
+        "TagId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__MangaTag__MangaI__208CD6FA",
+          "from_table": "MangaTag",
+          "from_columns": [
+            "MangaId"
+          ],
+          "to_table": "Manga",
+          "to_columns": [
+            "MangaId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK__MangaTag__TagId__2180FB33",
+          "from_table": "MangaTag",
+          "from_columns": [
+            "TagId"
+          ],
+          "to_table": "Tag",
+          "to_columns": [
+            "TagId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__MangaTag__4D53C05469203A87",
+          "table_name": "MangaTag",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "MangaId",
+              "desc": false
+            },
+            {
+              "column": "TagId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "TagId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "MangaId": "f8aa7ce7-e951-428d-9494-000002b34237",
+          "TagId": "eabc5b4c-6aff-42f3-b657-3e90cbd00b75"
+        },
+        {
+          "MangaId": "f8aa7ce7-e951-428d-9494-000002b34237",
+          "TagId": "256c8bd9-4904-4360-bf4f-508a76d67183"
+        },
+        {
+          "MangaId": "f8aa7ce7-e951-428d-9494-000002b34237",
+          "TagId": "da2d50ca-3018-4cc0-ac7a-6b7d472a29ea"
+        },
+        {
+          "MangaId": "f8aa7ce7-e951-428d-9494-000002b34237",
+          "TagId": "ac72833b-c4e9-4878-b9db-6c8a4a99444a"
+        },
+        {
+          "MangaId": "f8aa7ce7-e951-428d-9494-000002b34237",
+          "TagId": "b29d6a3d-1569-4e7a-8caf-7557bc92cd5d"
+        }
+      ]
+    },
+    "MangaTopicAnalysis": {
+      "schema": "dbo",
+      "table_name": "MangaTopicAnalysis",
+      "topological_level": 0,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": true,
+      "exact_rows": 72945,
+      "reserved_mb": 9.57,
+      "used_mb": 9.57,
+      "primary_key": [
+        "MangaId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "name": "PK_MangaTopicAnalysis",
+          "table_name": "MangaTopicAnalysis",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "MangaId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "TopicId",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "OriginalTags",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "MangaId": "f8aa7ce7-e951-428d-9494-000002b34237",
+          "TopicId": -1,
+          "OriginalTags": "Supernatural, Sci-Fi, Delinquents, Military, Gore, School Life, Martial Arts, Action, Thriller, Magic"
+        },
+        {
+          "MangaId": "e7bc63e3-6c25-4162-887a-0002e997ad6d",
+          "TopicId": 0,
+          "OriginalTags": "Long Strip, Web Comic, Fantasy, Full Color, Action"
+        },
+        {
+          "MangaId": "7930c35c-fdb7-43e7-adb3-0003068313f5",
+          "TopicId": -1,
+          "OriginalTags": "Web Comic, Slice of Life, Fantasy, School Life, Comedy"
+        },
+        {
+          "MangaId": "ded474e8-dec2-4d59-89b7-0003f8a6ac73",
+          "TopicId": 95,
+          "OriginalTags": "School Life, Romance, Comedy"
+        },
+        {
+          "MangaId": "d7f70d5b-bb5e-4fea-8f29-0004148df5cf",
+          "TopicId": 0,
+          "OriginalTags": "Long Strip, Web Comic, Fantasy, Supernatural, Gore, Action, Adventure, Drama, Video Games, Mystery"
+        }
+      ]
+    },
+    "Rating": {
+      "schema": "dbo",
+      "table_name": "Rating",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 5295,
+      "reserved_mb": 0.57,
+      "used_mb": 0.46,
+      "primary_key": [
+        "RatingId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__Rating__MangaId__22751F6C",
+          "from_table": "Rating",
+          "from_columns": [
+            "MangaId"
+          ],
+          "to_table": "Manga",
+          "to_columns": [
+            "MangaId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK__Rating__UserId__236943A5",
+          "from_table": "Rating",
+          "from_columns": [
+            "UserId"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__Rating__FCCDF87CD7550436",
+          "table_name": "Rating",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "RatingId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        },
+        {
+          "name": "UQ_Rating_User_Manga",
+          "table_name": "Rating",
+          "type_desc": "NONCLUSTERED",
+          "is_unique": true,
+          "is_primary_key": false,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "UserId",
+              "desc": false
+            },
+            {
+              "column": "MangaId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "RatingId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UserId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Score",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "RatingId": "e9ac3da1-24c5-4fad-a7cc-003211d2408b",
+          "UserId": "a8663e43-b5b1-4303-bf0a-0c12f9722634",
+          "MangaId": "834374fe-6a8a-4279-a4cc-db0423934457",
+          "Score": 8
+        },
+        {
+          "RatingId": "d6a45bf0-bfb2-499d-a6c0-004526ebf460",
+          "UserId": "73ceb047-2b6f-48a7-a457-6d3e92fb29af",
+          "MangaId": "010abcb5-c705-4dcb-a51d-49b2c518b673",
+          "Score": 8
+        },
+        {
+          "RatingId": "bceee09f-0079-471c-853c-0046baf5c402",
+          "UserId": "9064a073-bd0c-49d8-8a14-aad7719e2537",
+          "MangaId": "ca0130c6-f20c-414e-848c-d13eaa14d485",
+          "Score": 10
+        },
+        {
+          "RatingId": "f80f075f-5bc4-4693-97cb-0048b561cf9e",
+          "UserId": "8dea9416-47af-4021-974b-f32b2ff67ced",
+          "MangaId": "0eefe0f3-ecd6-4766-8ad5-55efd0bee50b",
+          "Score": 9
+        },
+        {
+          "RatingId": "92f87aea-2870-49fe-b9b7-005194629733",
+          "UserId": "64faef35-3bb9-4c19-baae-34722f5c7e54",
+          "MangaId": "ca2691a6-ab38-4df7-90c6-785bbbdb8258",
+          "Score": 8
+        }
+      ]
+    },
+    "ReadingHistory": {
+      "schema": "dbo",
+      "table_name": "ReadingHistory",
+      "topological_level": 2,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 15307,
+      "reserved_mb": 1.95,
+      "used_mb": 1.88,
+      "primary_key": [
+        "HistoryId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__ReadingHi__Chapt__245D67DE",
+          "from_table": "ReadingHistory",
+          "from_columns": [
+            "ChapterId"
+          ],
+          "to_table": "Chapter",
+          "to_columns": [
+            "ChapterId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK__ReadingHi__Manga__25518C17",
+          "from_table": "ReadingHistory",
+          "from_columns": [
+            "MangaId"
+          ],
+          "to_table": "Manga",
+          "to_columns": [
+            "MangaId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK__ReadingHi__UserI__2645B050",
+          "from_table": "ReadingHistory",
+          "from_columns": [
+            "UserId"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__ReadingH__4D7B4ABD9C2D2606",
+          "table_name": "ReadingHistory",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "HistoryId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        },
+        {
+          "name": "UQ_ReadingHistory_User_Manga_Chapter",
+          "table_name": "ReadingHistory",
+          "type_desc": "NONCLUSTERED",
+          "is_unique": true,
+          "is_primary_key": false,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "UserId",
+              "desc": false
+            },
+            {
+              "column": "MangaId",
+              "desc": false
+            },
+            {
+              "column": "ChapterId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "HistoryId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UserId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "ChapterId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "LastPageRead",
+          "sql_type": "int",
+          "mssql_type_full": "int",
+          "postgres_type": "INTEGER",
+          "max_length": 4,
+          "precision": 10,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "ReadAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "HistoryId": "163db1af-ce60-4691-a7d7-000648798234",
+          "UserId": "2406a86c-f7e0-4b55-945b-9dc1a6785942",
+          "MangaId": "0e620699-0033-4b54-beb6-1bd82e6ee02e",
+          "ChapterId": "bde4d6d2-5656-4dcf-9530-d4f8e44b5c6d",
+          "LastPageRead": 25,
+          "ReadAt": "2026-08-28T23:32:50"
+        },
+        {
+          "HistoryId": "044a9739-2590-4eb7-9257-000871854994",
+          "UserId": "d9154c38-be99-495a-9b52-9162f1714eca",
+          "MangaId": "0015dc62-5b46-469a-8138-e32a043e60f9",
+          "ChapterId": "10208f04-a8c7-40ee-9766-031d2fc0cf82",
+          "LastPageRead": 40,
+          "ReadAt": "2026-10-19T09:37:37"
+        },
+        {
+          "HistoryId": "6d24b400-0643-4bea-b6e0-000cb2103d7e",
+          "UserId": "27543a42-1bb7-4bf5-91de-8e3de8ef2a7b",
+          "MangaId": "02f827bd-c817-4e80-b63f-94a44b2eb504",
+          "ChapterId": "1f767cca-6d19-4d9c-9fc7-56f96a52493d",
+          "LastPageRead": 13,
+          "ReadAt": "2026-11-06T00:20:17"
+        },
+        {
+          "HistoryId": "3bd292be-d6bf-4b2a-b041-000d08e40a28",
+          "UserId": "8577ac5d-4c84-420d-a9a1-777bc336f03b",
+          "MangaId": "03abaa1a-be69-4779-b629-41b2f1a8cc94",
+          "ChapterId": "afbd65c1-36a3-46ac-ae08-2678148029cb",
+          "LastPageRead": 9,
+          "ReadAt": "2026-11-03T08:03:45"
+        },
+        {
+          "HistoryId": "f77eb185-a9ee-485e-9b9b-000d280ef05b",
+          "UserId": "4cda6dbc-39ee-4e8e-9aaa-0eba29797e50",
+          "MangaId": "2570e0c8-f9ea-46b4-81bc-d9a1f55daaea",
+          "ChapterId": "0c32ed66-74de-41d3-b1a1-d505bd06f537",
+          "LastPageRead": 26,
+          "ReadAt": "2026-11-04T21:23:00"
+        }
+      ]
+    },
+    "Report": {
+      "schema": "dbo",
+      "table_name": "Report",
+      "topological_level": 3,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 44,
+      "reserved_mb": 0.07,
+      "used_mb": 0.02,
+      "primary_key": [
+        "ReportId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__Report__CommentI__2739D489",
+          "from_table": "Report",
+          "from_columns": [
+            "CommentId"
+          ],
+          "to_table": "Comment",
+          "to_columns": [
+            "CommentId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK__Report__UserId__282DF8C2",
+          "from_table": "Report",
+          "from_columns": [
+            "UserId"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__Report__D5BD4805996F6FC8",
+          "table_name": "Report",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "ReportId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "ReportId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UserId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CommentId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Reason",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Status",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(50)",
+          "postgres_type": "VARCHAR(50)",
+          "max_length": 100,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CreatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "ReportId": "2ac19a9f-1b54-4963-86b8-16f8e137c07a",
+          "UserId": "351e4344-63a8-4e6b-9dfc-7faa5ec9e6db",
+          "CommentId": "5ab99035-d0a0-48af-9274-5a429af13ce7",
+          "Reason": "banned langs",
+          "Status": "ignored",
+          "CreatedAt": "2025-10-06T11:24:46.098270"
+        },
+        {
+          "ReportId": "b82e5ae0-8358-4683-bd41-18555f278f98",
+          "UserId": "8fa0d0c7-ed84-437b-aad5-a0ab4917ba06",
+          "CommentId": "76d846b4-4850-4651-84ee-aac8b3dec459",
+          "Reason": "Misinformation (Thông tin sai lệch)",
+          "Status": "pending",
+          "CreatedAt": "2026-11-13T04:12:30.861376"
+        },
+        {
+          "ReportId": "562c27e8-64f9-4279-a8af-222b3c7a8694",
+          "UserId": "96ecaa10-c63c-4b95-b1a7-e6d43f36b022",
+          "CommentId": "135d8bb9-0035-4f43-8a45-053e3bb84416",
+          "Reason": "Harassment (Quấy rối / Công kích)",
+          "Status": "pending",
+          "CreatedAt": "2026-11-01T06:27:06"
+        },
+        {
+          "ReportId": "6df099c8-f05c-400e-95b1-31be858703d1",
+          "UserId": "94ba35ec-253d-4e21-8e53-13d25481ed7b",
+          "CommentId": "c3481b14-8e1c-4421-ad27-d175c6bbbf1e",
+          "Reason": "Harassment (Quấy rối / Công kích)",
+          "Status": "pending",
+          "CreatedAt": "2026-11-06T06:46:21"
+        },
+        {
+          "ReportId": "325e3991-ec54-4318-a865-3261840c7f15",
+          "UserId": "a4d7159c-6280-4b17-9a87-b7d6533442c3",
+          "CommentId": "bcb9459e-be97-4c50-94d4-27e6d89cae78",
+          "Reason": "Spam (Nội dung rác)",
+          "Status": "pending",
+          "CreatedAt": "2026-10-30T13:23:01"
+        }
+      ]
+    },
+    "sysdiagrams": {
+      "schema": "dbo",
+      "table_name": "sysdiagrams",
+      "topological_level": 0,
+      "is_system_metadata": true,
+      "is_legacy_unmapped_in_orm": true,
+      "exact_rows": 1,
+      "reserved_mb": 0.27,
+      "used_mb": 0.19,
+      "primary_key": [],
+      "unique_constraints": [],
+      "foreign_keys": [],
+      "indexes": [],
+      "columns": [
+        {
+          "name": "name",
+          "sql_type": "varchar",
+          "mssql_type_full": "varchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "principal_id",
+          "sql_type": "bigint",
+          "mssql_type_full": "bigint",
+          "postgres_type": "BIGINT",
+          "max_length": 8,
+          "precision": 19,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "diagram_id",
+          "sql_type": "bigint",
+          "mssql_type_full": "bigint",
+          "postgres_type": "BIGINT",
+          "max_length": 8,
+          "precision": 19,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "version",
+          "sql_type": "bigint",
+          "mssql_type_full": "bigint",
+          "postgres_type": "BIGINT",
+          "max_length": 8,
+          "precision": 19,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "definition",
+          "sql_type": "varchar",
+          "mssql_type_full": "varchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": []
+    },
+    "Tag": {
+      "schema": "dbo",
+      "table_name": "Tag",
+      "topological_level": 0,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 76,
+      "reserved_mb": 0.07,
+      "used_mb": 0.02,
+      "primary_key": [
+        "TagId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "name": "PK__Tag__657CF9AC89B024BD",
+          "table_name": "Tag",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "TagId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "TagId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "GroupName",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(100)",
+          "postgres_type": "VARCHAR(100)",
+          "max_length": 200,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "NameEn",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(200)",
+          "postgres_type": "VARCHAR(200)",
+          "max_length": 400,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "TagId": "3e2b8dae-350e-4ab8-a8ce-016e844b9f0d",
+          "GroupName": "format",
+          "NameEn": "Long Strip"
+        },
+        {
+          "TagId": "292e862b-2d17-4062-90a2-0356caa4ae27",
+          "GroupName": "theme",
+          "NameEn": "Time Travel"
+        },
+        {
+          "TagId": "3b60b75c-a2d7-4860-ab56-05f391bb889c",
+          "GroupName": "genre",
+          "NameEn": "Psychological"
+        },
+        {
+          "TagId": "5fff9cde-849c-4d78-aab0-0d52b2ee1d25",
+          "GroupName": "theme",
+          "NameEn": "Survival"
+        },
+        {
+          "TagId": "97893a4c-12af-4dac-b6be-0dffb353568e",
+          "GroupName": "content",
+          "NameEn": "Sexual Violence"
+        }
+      ]
+    },
+    "User": {
+      "schema": "dbo",
+      "table_name": "User",
+      "topological_level": 0,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 614,
+      "reserved_mb": 0.32,
+      "used_mb": 0.22,
+      "primary_key": [
+        "UserId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "name": "PK__User__1788CC4C23F12121",
+          "table_name": "User",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "UserId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "UserId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Username",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(100)",
+          "postgres_type": "VARCHAR(100)",
+          "max_length": 200,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Email",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(255)",
+          "postgres_type": "VARCHAR(255)",
+          "max_length": 510,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "PasswordHash",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(255)",
+          "postgres_type": "VARCHAR(255)",
+          "max_length": 510,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Avatar",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(max)",
+          "postgres_type": "TEXT",
+          "max_length": -1,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Role",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(20)",
+          "postgres_type": "VARCHAR(20)",
+          "max_length": 40,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "IsLocked",
+          "sql_type": "bit",
+          "mssql_type_full": "bit",
+          "postgres_type": "BOOLEAN",
+          "max_length": 1,
+          "precision": 1,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "CreatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Bio",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(500)",
+          "postgres_type": "VARCHAR(500)",
+          "max_length": 1000,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "DisplayName",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(100)",
+          "postgres_type": "VARCHAR(100)",
+          "max_length": 200,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "AvatarObjectKey",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(500)",
+          "postgres_type": "VARCHAR(500)",
+          "max_length": 1000,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UpdatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "IsVerified",
+          "sql_type": "bit",
+          "mssql_type_full": "bit",
+          "postgres_type": "BOOLEAN",
+          "max_length": 1,
+          "precision": 1,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "((0))",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "UserId": "ee5e2c0c-b22c-4369-85ac-00450e03751c",
+          "Username": "user_18",
+          "Email": "user18@example.com",
+          "PasswordHash": "<bcrypt_hash len=60>",
+          "Avatar": null,
+          "Role": "user",
+          "IsLocked": false,
+          "CreatedAt": "2025-09-21T19:24:21.334686",
+          "Bio": null,
+          "DisplayName": null,
+          "AvatarObjectKey": null,
+          "UpdatedAt": "2026-11-11T10:24:07.138442",
+          "IsVerified": true
+        },
+        {
+          "UserId": "5507d294-546f-4f41-82e2-00470a71e984",
+          "Username": "user_248",
+          "Email": "user248@example.com",
+          "PasswordHash": "<bcrypt_hash len=60>",
+          "Avatar": null,
+          "Role": "user",
+          "IsLocked": false,
+          "CreatedAt": "2025-09-28T19:24:21.334686",
+          "Bio": null,
+          "DisplayName": null,
+          "AvatarObjectKey": null,
+          "UpdatedAt": "2026-11-11T10:24:07.138442",
+          "IsVerified": true
+        },
+        {
+          "UserId": "58675116-8916-49d1-a037-004f607ef51a",
+          "Username": "user_163",
+          "Email": "user163@example.com",
+          "PasswordHash": "<bcrypt_hash len=60>",
+          "Avatar": null,
+          "Role": "user",
+          "IsLocked": false,
+          "CreatedAt": "2025-09-21T19:24:21.334686",
+          "Bio": null,
+          "DisplayName": null,
+          "AvatarObjectKey": null,
+          "UpdatedAt": "2026-11-11T10:24:07.138442",
+          "IsVerified": true
+        },
+        {
+          "UserId": "4b52bc26-26a0-4473-897b-009ab9e38992",
+          "Username": "user_112",
+          "Email": "user112@example.com",
+          "PasswordHash": "<bcrypt_hash len=60>",
+          "Avatar": null,
+          "Role": "user",
+          "IsLocked": false,
+          "CreatedAt": "2025-09-04T19:24:21.334686",
+          "Bio": null,
+          "DisplayName": null,
+          "AvatarObjectKey": null,
+          "UpdatedAt": "2026-11-11T10:24:07.138442",
+          "IsVerified": true
+        },
+        {
+          "UserId": "679935f3-8875-4a51-b599-009e6e6ee81d",
+          "Username": "user_282",
+          "Email": "user282@example.com",
+          "PasswordHash": "<bcrypt_hash len=60>",
+          "Avatar": null,
+          "Role": "user",
+          "IsLocked": false,
+          "CreatedAt": "2025-09-27T19:24:21.334686",
+          "Bio": null,
+          "DisplayName": null,
+          "AvatarObjectKey": null,
+          "UpdatedAt": "2026-11-11T10:24:07.138442",
+          "IsVerified": true
+        }
+      ]
+    },
+    "UserMangaStatus": {
+      "schema": "dbo",
+      "table_name": "UserMangaStatus",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 6347,
+      "reserved_mb": 0.7,
+      "used_mb": 0.64,
+      "primary_key": [
+        "UserId",
+        "MangaId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK_UserMangaStatus_Manga",
+          "from_table": "UserMangaStatus",
+          "from_columns": [
+            "MangaId"
+          ],
+          "to_table": "Manga",
+          "to_columns": [
+            "MangaId"
+          ],
+          "on_delete": "CASCADE",
+          "on_update": "NO_ACTION"
+        },
+        {
+          "name": "FK_UserMangaStatus_User",
+          "from_table": "UserMangaStatus",
+          "from_columns": [
+            "UserId"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "CASCADE",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK_UserMangaStatus",
+          "table_name": "UserMangaStatus",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "UserId",
+              "desc": false
+            },
+            {
+              "column": "MangaId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "UserId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "MangaId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "Status",
+          "sql_type": "nvarchar",
+          "mssql_type_full": "nvarchar(30)",
+          "postgres_type": "VARCHAR(30)",
+          "max_length": 60,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "UpdatedAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": "(getutcdate())",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "UserId": "ee5e2c0c-b22c-4369-85ac-00450e03751c",
+          "MangaId": "27f8edcf-20b9-435a-9c4b-01049c026cfe",
+          "Status": "reading",
+          "UpdatedAt": "2026-11-13T07:23:40.430168"
+        },
+        {
+          "UserId": "ee5e2c0c-b22c-4369-85ac-00450e03751c",
+          "MangaId": "10e86bce-9c74-460b-81ff-2a430acd5372",
+          "Status": "reading",
+          "UpdatedAt": "2026-11-13T07:23:40.430168"
+        },
+        {
+          "UserId": "ee5e2c0c-b22c-4369-85ac-00450e03751c",
+          "MangaId": "6a7c117a-a473-4a93-903b-34189c4261c8",
+          "Status": "reading",
+          "UpdatedAt": "2026-11-13T07:23:40.430168"
+        },
+        {
+          "UserId": "ee5e2c0c-b22c-4369-85ac-00450e03751c",
+          "MangaId": "1d3900d5-0453-4c3c-9c99-37190ac10644",
+          "Status": "reading",
+          "UpdatedAt": "2026-11-13T07:23:40.430168"
+        },
+        {
+          "UserId": "ee5e2c0c-b22c-4369-85ac-00450e03751c",
+          "MangaId": "6cb9a577-2226-4971-bc79-506895715c57",
+          "Status": "reading",
+          "UpdatedAt": "2026-11-13T07:23:40.430168"
+        }
+      ]
+    },
+    "UserPresence": {
+      "schema": "dbo",
+      "table_name": "UserPresence",
+      "topological_level": 1,
+      "is_system_metadata": false,
+      "is_legacy_unmapped_in_orm": false,
+      "exact_rows": 3,
+      "reserved_mb": 0.07,
+      "used_mb": 0.02,
+      "primary_key": [
+        "UserId"
+      ],
+      "unique_constraints": [],
+      "foreign_keys": [
+        {
+          "name": "FK__UserPrese__UserI__29221CFB",
+          "from_table": "UserPresence",
+          "from_columns": [
+            "UserId"
+          ],
+          "to_table": "User",
+          "to_columns": [
+            "UserId"
+          ],
+          "on_delete": "NO_ACTION",
+          "on_update": "NO_ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__UserPres__1788CC4C4BF1167B",
+          "table_name": "UserPresence",
+          "type_desc": "CLUSTERED",
+          "is_unique": true,
+          "is_primary_key": true,
+          "is_unique_constraint": false,
+          "key_columns": [
+            {
+              "column": "UserId",
+              "desc": false
+            }
+          ],
+          "included_columns": []
+        }
+      ],
+      "columns": [
+        {
+          "name": "UserId",
+          "sql_type": "uniqueidentifier",
+          "mssql_type_full": "uniqueidentifier",
+          "postgres_type": "UUID",
+          "max_length": 16,
+          "precision": 0,
+          "scale": 0,
+          "is_nullable": false,
+          "is_identity": false,
+          "default_definition": null,
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "IsOnline",
+          "sql_type": "bit",
+          "mssql_type_full": "bit",
+          "postgres_type": "BOOLEAN",
+          "max_length": 1,
+          "precision": 1,
+          "scale": 0,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": "((0))",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        },
+        {
+          "name": "LastSeenAt",
+          "sql_type": "datetime2",
+          "mssql_type_full": "datetime2(7)",
+          "postgres_type": "TIMESTAMP",
+          "max_length": 8,
+          "precision": 27,
+          "scale": 7,
+          "is_nullable": true,
+          "is_identity": false,
+          "default_definition": "(sysutcdatetime())",
+          "is_binary_blob": false,
+          "is_datetimeoffset": false
+        }
+      ],
+      "sample_rows": [
+        {
+          "UserId": "ee5e2c0c-b22c-4369-85ac-00450e03751c",
+          "IsOnline": false,
+          "LastSeenAt": "2026-05-13T18:27:56.473066"
+        },
+        {
+          "UserId": "fbf74bea-9b1c-46cf-ad9e-7ec72c026354",
+          "IsOnline": false,
+          "LastSeenAt": "2026-11-10T17:12:45.743959"
+        },
+        {
+          "UserId": "8fa0d0c7-ed84-437b-aad5-a0ab4917ba06",
+          "IsOnline": false,
+          "LastSeenAt": "2026-11-13T09:25:13.521820"
+        }
+      ]
+    }
+  },
+  "distributions": {
+    "Manga.Status": {
+      "completed": 62805,
+      "ongoing": 20643,
+      "cancelled": 2270,
+      "hiatus": 1148
+    },
+    "Manga.ContentRating": {
+      "safe": 67441,
+      "suggestive": 11009,
+      "erotica": 8416
+    },
+    "Manga.PublicationDemographic": {
+      "<NULL>": 39435,
+      "shounen": 16043,
+      "seinen": 13467,
+      "shoujo": 11886,
+      "josei": 6035
+    },
+    "Manga.OriginalLanguage": {
+      "ja": 69189,
+      "ko": 8243,
+      "zh": 5838,
+      "en": 2170,
+      "id": 472,
+      "zh-hk": 281,
+      "fr": 133,
+      "th": 81,
+      "pt-br": 76,
+      "es-la": 75,
+      "vi": 74,
+      "tl": 41,
+      "ru": 41,
+      "ms": 38,
+      "de": 26
+    },
+    "Chapter.TranslatedLang_top15": {
+      "en": 773744,
+      "pt-br": 212981,
+      "es-la": 211275,
+      "vi": 91275,
+      "ru": 88829,
+      "fr": 85997,
+      "pl": 79032,
+      "id": 48057,
+      "tr": 43149,
+      "it": 35798,
+      "es": 34012,
+      "uk": 10681,
+      "zh-hk": 10112,
+      "ar": 8683,
+      "hu": 7499
+    },
+    "Covers.locale_top15": {
+      "ja": 53964,
+      "ko": 6050,
+      "zh": 4257,
+      "en": 2622,
+      "id": 398,
+      "zh-hk": 305,
+      "fr": 214,
+      "<NULL>": 204,
+      "pt-br": 108,
+      "th": 94,
+      "vi": 85,
+      "es": 82,
+      "es-la": 72,
+      "ru": 68,
+      "uk": 49
+    },
+    "Tag.GroupName": {
+      "theme": 37,
+      "genre": 25,
+      "format": 12,
+      "content": 2
+    },
+    "User.Role": {
+      "user": 611,
+      "Admin": 3
+    },
+    "List.Visibility": {
+      "public": 14,
+      "private": 6
+    },
+    "UserMangaStatus.Status": {
+      "reading": 6229,
+      "completed": 73,
+      "plan_to_read": 45
+    },
+    "Friendship.Status": {
+      "pending": 1
+    },
+    "Report.Status": {
+      "pending": 34,
+      "ignored": 6,
+      "resolved": 4
+    },
+    "ChatRoom.Type": {
+      "direct": 3,
+      "group": 1
+    },
+    "ChatMessage.MessageType": {
+      "image": 20,
+      "text": 18
+    }
+  },
+  "covers_storage_breakdown": {
+    "total_rows": 68787,
+    "minio_proxy_rows": 1097,
+    "legacy_blob_rows": 681,
+    "has_filename_rows": 68787
+  },
+  "logical_reference_integrity": {
+    "Covers.manga_id_missing_in_Manga": 0,
+    "MangaRelated.RelatedId_missing_in_Manga": 330813,
+    "CreatorRelationship.RelatedId_missing_in_Manga": 8218,
+    "MangaCovers.manga_id_missing_in_Manga": 560
+  }
+}
