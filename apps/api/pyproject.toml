@@ -1,0 +1,79 @@
+[build-system]
+requires = ["hatchling>=1.26.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "manga-reader-api"
+version = "0.1.0"
+description = "Manga Reader Web Application Backend (FastAPI Modular Monolith Foundation)"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "fastapi>=0.115.8",
+    "uvicorn[standard]>=0.34.0",
+    "pydantic>=2.10.6",
+    "pydantic-settings>=2.8.0",
+    "sqlalchemy[asyncio]>=2.0.38",
+    "alembic>=1.14.1",
+    "aiosqlite>=0.21.0",
+    "aioodbc>=0.5.0",
+    "pyodbc>=5.2.0",
+    "jsonschema[format-nongpl]>=4.23.0",
+    "redis>=5.2.1",
+    "argon2-cffi>=23.1.0",
+    "PyJWT>=2.10.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+    "pytest-asyncio>=0.25.3",
+    "httpx>=0.28.1",
+    "ruff>=0.9.9",
+    "mypy>=1.15.0",
+    "types-jsonschema>=4.23.0.20241208",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/manga_reader"]
+
+[tool.uv]
+# Keep uv cache on Drive D: to protect Drive C: free space
+cache-dir = ".uv-cache"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "S", "ASYNC", "RUF"]
+ignore = [
+    "S101",  # Allow assert in tests and internal invariants
+    "B008",  # FastAPI Depends() in function defaults
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S105", "S106", "S108"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_any_generics = true
+mypy_path = "src"
+packages = ["manga_reader"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "../../tests/integration"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["src"]
+addopts = "-q --strict-markers"
+markers = [
+    "unit: fast isolated unit tests",
+    "integration: API, database, and migration integration tests",
+    "contract: manga-reader-package v2.0 JSON Schema contract tests",
+    "live_mssql: optional connectivity check against local SQL Server QL_DocTruyen",
+]
