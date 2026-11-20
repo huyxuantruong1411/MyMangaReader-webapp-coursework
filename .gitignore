@@ -58,6 +58,7 @@ npm-debug.log*
 pnpm-debug.log*
 tmp/
 .tmp/
+exports/
 
 # OS & Editor artifacts
 .DS_Store

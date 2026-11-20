@@ -33,6 +33,7 @@
     "db:current": "uv --project apps/api run alembic -c database/alembic.ini current",
     "db:seed": "uv --project apps/api run python database/seeds/seed_dev.py",
     "db:import-local": "uv --project apps/api run python database/seeds/import_local_mangalibrary.py",
+    "dump:context": "uv --project apps/api run python infrastructure/scripts/dump_codebase_for_ai.py --also-single",
     "check:all": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
   }
 }

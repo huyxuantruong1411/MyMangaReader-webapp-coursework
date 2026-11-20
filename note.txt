@@ -126,6 +126,9 @@ pnpm test:api          # Pytest cho Backend & E2E Acceptance Suite (24 tests)
 pnpm build             # Build contracts + web (tạo bundle trong apps/web/dist/)
 pnpm --filter @manga-reader/web preview   # Xem trước bản build production trên cổng 4173
 
+# Xuất toàn bộ source code ra Markdown để gửi AI khác review/thẩm định (exports/codebase-dump/)
+pnpm dump:context
+
 --------------------------------------------------------------------------------
 7. XỬ LÝ NHANH MỘT SỐ LỖI THƯỜNG GẶP
 --------------------------------------------------------------------------------
