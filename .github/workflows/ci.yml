@@ -1,0 +1,72 @@
+name: CI — Foundation Quality Gates
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  contracts-and-web:
+    name: Contracts & Frontend (Node + pnpm)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install JS/TS workspace dependencies
+        run: pnpm install --frozen-lockfile || pnpm install
+
+      - name: Lint JS/TS
+        run: pnpm lint:js
+
+      - name: Format check JS/TS
+        run: pnpm format:check:js
+
+      - name: Typecheck JS/TS
+        run: pnpm typecheck:js
+
+      - name: Run Contracts & Web tests
+        run: pnpm test:contracts && pnpm test:web
+
+      - name: Build Contracts & Web
+        run: pnpm build
+
+  backend-api:
+    name: Backend API (Python 3.13 + uv)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Setup Python 3.13
+        run: uv python install 3.13
+
+      - name: Sync API dependencies
+        run: uv --project apps/api sync
+
+      - name: Lint API (ruff)
+        run: pnpm lint:api
+
+      - name: Format check API (ruff)
+        run: pnpm format:check:api
+
+      - name: Typecheck API (mypy)
+        run: pnpm typecheck:api
+
+      - name: Run API & Contract tests (pytest)
+        run: pnpm test:api

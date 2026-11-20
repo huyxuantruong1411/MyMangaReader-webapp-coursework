@@ -1,0 +1,56 @@
+# =============================================================================
+# Manga Reader — Local Development Infrastructure (Docker Compose)
+# =============================================================================
+# IMPORTANT FOR THIS HOST MACHINE:
+#   - Local Microsoft SQL Server 2022 (`QL_DocTruyen`) is already running natively.
+#   - Local Memurai (Redis-compatible) is already running natively on 127.0.0.1:6379.
+#   - Local MinIO (`mangalibrary-minio`) is already running on 127.0.0.1:9010/9011
+#     using the already-pulled `elestio/minio:latest` image.
+#   - Drive C: has limited free space; therefore services below use `profiles`
+#     so you ONLY start isolated containers when needed and bind-mount data on D:.
+#
+# Usage (optional standalone MinIO on ports 9020/9021 if mangalibrary-minio is off):
+#   docker compose -f infrastructure/docker/docker-compose.dev.yml --profile minio up -d
+# Usage (optional standalone Redis on port 6380 if Memurai is off):
+#   docker compose -f infrastructure/docker/docker-compose.dev.yml --profile redis up -d
+# =============================================================================
+
+name: manga-reader-dev
+
+services:
+  minio:
+    image: elestio/minio:latest
+    pull_policy: if_not_present
+    profiles: ["minio"]
+    container_name: manga-reader-minio
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-mreaderadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-ChangeMeMinioDev2026!}
+    ports:
+      - "127.0.0.1:9020:9000"
+      - "127.0.0.1:9021:9001"
+    volumes:
+      - type: bind
+        source: ../../storage/local-dev/minio-data
+        target: /data
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["redis"]
+    container_name: manga-reader-redis
+    command: ["redis-server", "--appendonly", "no", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "127.0.0.1:6380:6379"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
