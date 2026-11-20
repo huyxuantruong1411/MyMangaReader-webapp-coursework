@@ -10,6 +10,8 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from manga_reader.config.settings import Settings
+from manga_reader.infrastructure import orm as _orm  # noqa: F401
+from manga_reader.infrastructure.database import Base
 from manga_reader.main import create_app
 
 
@@ -35,6 +37,8 @@ def test_settings(tmp_path: Path) -> Settings:
 async def app(test_settings: Settings) -> AsyncIterator[FastAPI]:
     application = create_app(test_settings)
     async with application.router.lifespan_context(application):
+        async with application.state.container.db.engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
         yield application
 
 

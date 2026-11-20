@@ -203,3 +203,25 @@ class MediaUrlSigner:
         encoded_key = quote(ref.object_key, safe="/")
         rev_query = f"&rev={revision}" if revision is not None else ""
         return f"{self._base_url}/{ref.bucket}/{encoded_key}?exp={exp}{rev_query}&sig={sig}"
+
+    def verify_signed_proxy_url(
+        self,
+        ref: MediaObjectRef,
+        *,
+        exp: int,
+        sig: str,
+        revision: int | None = None,
+    ) -> bool:
+        """Verify HMAC signature and expiry for proxy media streaming."""
+        if ref.bucket not in self._allowed_buckets:
+            return False
+        if exp < int(utc_now().timestamp()):
+            return False
+        rev_part = f":{revision}" if revision is not None else ""
+        canonical = f"{ref.bucket}/{ref.object_key}:{exp}{rev_part}"
+        expected = hmac.new(
+            self._secret.encode("utf-8"),
+            canonical.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()[:32]
+        return hmac.compare_digest(expected, sig)
