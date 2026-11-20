@@ -12,6 +12,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from manga_reader.config.settings import Settings
+from manga_reader.infrastructure import orm as _orm  # noqa: F401
 from manga_reader.infrastructure.database import Base
 
 config = context.config
