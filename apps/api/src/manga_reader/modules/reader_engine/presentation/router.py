@@ -14,12 +14,19 @@ from manga_reader.api.v1.dependencies import (
     get_current_principal,
 )
 from manga_reader.api.v1.envelopes import PaginatedEnvelope, PaginatedMeta, SuccessEnvelope
-from manga_reader.common.errors import ForbiddenError
+from manga_reader.common.errors import ForbiddenError, StorageUnavailableError
 from manga_reader.common.identities import MediaObjectRef
 from manga_reader.common.pagination import PaginationParams
 from manga_reader.common.security import SecurityPrincipal
 from manga_reader.infrastructure.container import AppContainer
+from manga_reader.infrastructure.orm import ChapterModel, MangaModel
 from manga_reader.modules.reader_engine.application.service import ReaderService
+from manga_reader.modules.reader_engine.infrastructure.mangadex_fallback import (
+    fetch_mangadex_at_home,
+    fetch_remote_image_bytes,
+    is_mangadex_uuid,
+    render_manga_demo_page_webp,
+)
 
 router = APIRouter(tags=["Reader Engine, Progress, Status & Media"])
 
@@ -225,6 +232,76 @@ async def list_my_reading_statuses(
         return SuccessEnvelope(data=await svc.list_my_reading_statuses(db, principal=principal))
 
 
+async def _resolve_lazy_chapter_page(
+    container: AppContainer,
+    ref: MediaObjectRef,
+) -> tuple[bytes, str] | None:
+    """Resolve `mangadex-cache/` via live MangaDex proxy or render `demo-pages/` fallback WebP."""
+    parts = ref.object_key.split("/")
+    if len(parts) != 3 or parts[0] not in ("mangadex-cache", "demo-pages"):
+        return None
+    prefix, chapter_id_raw, filename = parts
+    try:
+        ch_uuid = UUID(chapter_id_raw)
+        page_num = int(filename.split(".", 1)[0])
+    except (ValueError, IndexError):
+        return None
+
+    # 1. Try MangaDex live CDN proxy + disk cache for `mangadex-cache/`
+    if prefix == "mangadex-cache" and container.settings.mangadex_fallback_enabled:
+        remote_url = await container.cache.get(f"mdex:page:{ch_uuid}:{page_num:03d}")
+        if remote_url is None:
+            async with container.db.session() as db:
+                ch = await db.get(ChapterModel, ch_uuid)
+                if ch is not None and is_mangadex_uuid(ch.source_chapter_id):
+                    assert ch.source_chapter_id is not None
+                    remote_pages = await fetch_mangadex_at_home(
+                        ch.source_chapter_id,
+                        cache=container.cache,
+                        use_data_saver=container.settings.mangadex_data_saver,
+                    )
+                    if remote_pages and 1 <= page_num <= len(remote_pages):
+                        remote_url = remote_pages[page_num - 1]["remote_url"]
+                        await container.cache.set(
+                            f"mdex:page:{ch_uuid}:{page_num:03d}", remote_url, ttl_seconds=1200
+                        )
+        if remote_url:
+            fetched = await fetch_remote_image_bytes(remote_url)
+            if fetched is not None:
+                raw_bytes, ct = fetched
+                await container.storage.put_bytes(ref, raw_bytes, content_type=ct)
+                return raw_bytes, ct
+
+    # 2. Render crisp illustrated fallback WebP page using chapter/manga metadata
+    manga_title = "Manga Reader"
+    ch_number = "1"
+    ch_title = ""
+    language = "en"
+    total_pages = max(page_num, 6)
+    async with container.db.session() as db:
+        ch = await db.get(ChapterModel, ch_uuid)
+        if ch is not None:
+            ch_number = ch.chapter_number
+            ch_title = ch.title or ""
+            language = ch.language
+            total_pages = max(ch.page_count, page_num, 1)
+            manga = await db.get(MangaModel, ch.manga_id)
+            if manga is not None:
+                manga_title = manga.title
+
+    demo_bytes = render_manga_demo_page_webp(
+        manga_title=manga_title,
+        chapter_number=ch_number,
+        chapter_title=ch_title,
+        language=language,
+        page_number=page_num,
+        total_pages=total_pages,
+    )
+    if prefix == "demo-pages":
+        await container.storage.put_bytes(ref, demo_bytes, content_type="image/webp")
+    return demo_bytes, "image/webp"
+
+
 @router.get("/media/{bucket}/{object_key:path}")
 async def stream_signed_media(
     bucket: str,
@@ -243,7 +320,15 @@ async def stream_signed_media(
     if not container.media_signer.verify_signed_proxy_url(ref, exp=exp, sig=sig, revision=rev):
         raise ForbiddenError("Media signature invalid or expired.", error_code="MEDIA_FORBIDDEN")
 
-    data = await container.storage.get_bytes(ref)
+    mime_override: str | None = None
+    try:
+        data = await container.storage.get_bytes(ref)
+    except StorageUnavailableError:
+        resolved = await _resolve_lazy_chapter_page(container, ref)
+        if resolved is None:
+            raise
+        data, mime_override = resolved
+
     ext = object_key.rsplit(".", 1)[-1].lower() if "." in object_key else ""
     mime_map = {
         "webp": "image/webp",
@@ -253,6 +338,6 @@ async def stream_signed_media(
     }
     return Response(
         content=data,
-        media_type=mime_map.get(ext, "application/octet-stream"),
+        media_type=mime_override or mime_map.get(ext, "application/octet-stream"),
         headers={"Cache-Control": "public, max-age=300"},
     )

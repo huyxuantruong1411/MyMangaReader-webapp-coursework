@@ -32,6 +32,7 @@
     "db:migrate:sql": "uv --project apps/api run alembic -c database/alembic.ini upgrade head --sql",
     "db:current": "uv --project apps/api run alembic -c database/alembic.ini current",
     "db:seed": "uv --project apps/api run python database/seeds/seed_dev.py",
+    "db:import-local": "uv --project apps/api run python database/seeds/import_local_mangalibrary.py",
     "check:all": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
   }
 }

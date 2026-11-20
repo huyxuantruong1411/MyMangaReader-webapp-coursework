@@ -28,7 +28,7 @@ class EmailAdapter(Protocol):
 
 
 class DevConsoleEmailAdapter:
-    """Development-safe email sink that redacts sensitive bodies (e.g., OTPs)."""
+    """Development-safe email sink that redacts sensitive bodies unless dev OTP logging is enabled."""
 
     def __init__(self, *, allow_dev_otp_log: bool = False) -> None:
         self._allow_dev_otp_log = allow_dev_otp_log
@@ -44,14 +44,17 @@ class DevConsoleEmailAdapter:
 
     async def send(self, message: EmailMessage) -> None:
         self._sent.append(message)
+        should_redact = message.contains_sensitive_secret and not self._allow_dev_otp_log
         logger.info(
             "Dev email dispatched",
             extra={
                 "recipient_domain": message.to_email.split("@")[-1],
                 "subject": message.subject,
-                "body_redacted": message.contains_sensitive_secret and not self._allow_dev_otp_log,
+                "body_redacted": should_redact,
             },
         )
+        if not should_redact:
+            print(f"[DEV-EMAIL] To={message.to_email} | {message.subject} | {message.body_text}")
 
     @property
     def sent_messages(self) -> tuple[EmailMessage, ...]:

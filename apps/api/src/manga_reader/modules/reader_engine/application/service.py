@@ -37,6 +37,10 @@ from manga_reader.modules.reader_engine import (
     ReaderOpenAction,
     ReadingDirection,
 )
+from manga_reader.modules.reader_engine.infrastructure.mangadex_fallback import (
+    fetch_mangadex_at_home,
+    is_mangadex_uuid,
+)
 from manga_reader.modules.reading_status_history import ReadingStatus
 
 
@@ -85,17 +89,119 @@ class ReaderService:
             ).all()
         )
 
+    async def _maybe_upgrade_mangadex_pages(
+        self,
+        session: AsyncSession,
+        chapter: ChapterModel,
+        existing_rows: list[Any],
+    ) -> list[Any]:
+        """Lazily hydrate real MangaDex At-Home page manifest for local-imported chapters."""
+        if not self._container.settings.mangadex_fallback_enabled:
+            return existing_rows
+        if not is_mangadex_uuid(chapter.source_chapter_id):
+            return existing_rows
+
+        already_upgraded = existing_rows and all(
+            str(media.object_key).startswith("mangadex-cache/") for _, media in existing_rows
+        )
+        is_lazy_demo = (not existing_rows) or all(
+            str(media.object_key).startswith("demo-pages/") for _, media in existing_rows
+        )
+        if not (is_lazy_demo or already_upgraded):
+            return existing_rows
+
+        assert chapter.source_chapter_id is not None
+        remote_pages = await fetch_mangadex_at_home(
+            chapter.source_chapter_id,
+            cache=self._container.cache,
+            use_data_saver=self._container.settings.mangadex_data_saver,
+        )
+        if not remote_pages:
+            return existing_rows
+
+        bucket = self._container.settings.s3_default_bucket
+        for idx, item in enumerate(remote_pages, start=1):
+            await self._container.cache.set(
+                f"mdex:page:{chapter.chapter_id}:{idx:03d}",
+                item["remote_url"],
+                ttl_seconds=1200,
+            )
+
+        if already_upgraded and len(existing_rows) == len(remote_pages):
+            return existing_rows
+
+        # Replace lazy placeholder manifest with exact MangaDex page count & canonical MediaObject rows
+        now = utc_now()
+        await session.execute(
+            delete(ChapterPageModel).where(ChapterPageModel.chapter_id == chapter.chapter_id)
+        )
+        for idx, item in enumerate(remote_pages, start=1):
+            fname = item["filename"]
+            ext = fname.rsplit(".", 1)[-1].lower() if "." in fname else "jpg"
+            if ext not in ("jpg", "jpeg", "png", "webp"):
+                ext = "jpg"
+            mime = {
+                "jpg": "image/jpeg",
+                "jpeg": "image/jpeg",
+                "png": "image/png",
+                "webp": "image/webp",
+            }[ext]
+            obj_key = f"mangadex-cache/{chapter.chapter_id}/{idx:03d}.{ext}"
+            media = await session.scalar(
+                select(MediaObjectModel).where(
+                    MediaObjectModel.bucket == bucket,
+                    MediaObjectModel.object_key == obj_key,
+                )
+            )
+            if media is None:
+                media = MediaObjectModel(
+                    bucket=bucket,
+                    object_key=obj_key,
+                    content_type=mime,
+                    created_at=now,
+                )
+                session.add(media)
+                await session.flush()
+
+            session.add(
+                ChapterPageModel(
+                    chapter_id=chapter.chapter_id,
+                    page_uid=f"mdex_{chapter.chapter_id.hex[:12]}_{idx:03d}",
+                    page_number=idx,
+                    filename=f"{idx:03d}.{ext}",
+                    media_id=media.media_id,
+                )
+            )
+
+        chapter.page_count = len(remote_pages)
+        chapter.updated_at = now
+        await session.commit()
+
+        return list(
+            (
+                await session.execute(
+                    select(ChapterPageModel, MediaObjectModel)
+                    .join(MediaObjectModel, MediaObjectModel.media_id == ChapterPageModel.media_id)
+                    .where(ChapterPageModel.chapter_id == chapter.chapter_id)
+                    .order_by(ChapterPageModel.page_number.asc())
+                )
+            ).all()
+        )
+
     async def _build_page_manifest(
         self, session: AsyncSession, chapter: ChapterModel
     ) -> list[dict[str, Any]]:
-        rows = (
-            await session.execute(
-                select(ChapterPageModel, MediaObjectModel)
-                .join(MediaObjectModel, MediaObjectModel.media_id == ChapterPageModel.media_id)
-                .where(ChapterPageModel.chapter_id == chapter.chapter_id)
-                .order_by(ChapterPageModel.page_number.asc())
-            )
-        ).all()
+        rows = list(
+            (
+                await session.execute(
+                    select(ChapterPageModel, MediaObjectModel)
+                    .join(MediaObjectModel, MediaObjectModel.media_id == ChapterPageModel.media_id)
+                    .where(ChapterPageModel.chapter_id == chapter.chapter_id)
+                    .order_by(ChapterPageModel.page_number.asc())
+                )
+            ).all()
+        )
+        rows = await self._maybe_upgrade_mangadex_pages(session, chapter, rows)
 
         # Verify contiguous 1..N manifest integrity (READ-010 / READ-011)
         expected = list(range(1, len(rows) + 1))

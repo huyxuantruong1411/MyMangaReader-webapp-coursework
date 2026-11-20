@@ -8,6 +8,7 @@ import {
   type EtlJobDetail,
   type ReaderStatsPayload,
 } from "../../services/apiClient";
+import { frontendConfig } from "../../services/config";
 
 /* ============================================================================
  * 1. Admin Dashboard & Manga Interaction Statistics (/admin)
@@ -413,8 +414,9 @@ export function AdminMangaPage() {
       <div>
         <h1 className="text-2xl font-bold">Admin — Manga Catalog Management</h1>
         <p className="text-xs" style={{ color: "var(--mr-text-secondary)" }}>
-          Toggle visibility (`PUBLIC`/`HIDDEN`), manage CDC subscriptions, or permanently delete
-          with tombstone protection.
+          {frontendConfig.externalEtlEnabled
+            ? "Toggle visibility (`PUBLIC`/`HIDDEN`), manage CDC subscriptions, or permanently delete with tombstone protection."
+            : "Toggle visibility (`PUBLIC`/`HIDDEN`) or permanently delete titles with tombstone protection. (External CDC sync is currently on hold.)"}
         </p>
       </div>
 
@@ -487,7 +489,7 @@ export function AdminMangaPage() {
               <tr>
                 <th className="px-3 py-2">Title</th>
                 <th className="px-3 py-2">Visibility</th>
-                <th className="px-3 py-2">CDC</th>
+                {frontendConfig.externalEtlEnabled ? <th className="px-3 py-2">CDC</th> : null}
                 <th className="px-3 py-2">Actions</th>
               </tr>
             </thead>
@@ -501,7 +503,9 @@ export function AdminMangaPage() {
                     </p>
                   </td>
                   <td className="px-3 py-2 font-mono">{m.visibilityStatus}</td>
-                  <td className="px-3 py-2 font-mono">{m.isCdcEnabled ? "ENABLED" : "OFF"}</td>
+                  {frontendConfig.externalEtlEnabled ? (
+                    <td className="px-3 py-2 font-mono">{m.isCdcEnabled ? "ENABLED" : "OFF"}</td>
+                  ) : null}
                   <td className="px-3 py-2">
                     <div className="flex flex-wrap gap-1.5">
                       {m.visibilityStatus === "PUBLIC" ? (
@@ -533,19 +537,21 @@ export function AdminMangaPage() {
                           Show
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void runAction(
-                            () => apiClient.adminToggleCdc(m.mangaId, !m.isCdcEnabled),
-                            `CDC ${!m.isCdcEnabled ? "enabled" : "disabled"} for "${m.title}".`,
-                          )
-                        }
-                        className="cursor-pointer rounded border px-2 py-1"
-                        style={{ borderColor: "var(--mr-accent)", color: "var(--mr-accent)" }}
-                      >
-                        {m.isCdcEnabled ? "Disable CDC" : "Enable CDC"}
-                      </button>
+                      {frontendConfig.externalEtlEnabled ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void runAction(
+                              () => apiClient.adminToggleCdc(m.mangaId, !m.isCdcEnabled),
+                              `CDC ${!m.isCdcEnabled ? "enabled" : "disabled"} for "${m.title}".`,
+                            )
+                          }
+                          className="cursor-pointer rounded border px-2 py-1"
+                          style={{ borderColor: "var(--mr-accent)", color: "var(--mr-accent)" }}
+                        >
+                          {m.isCdcEnabled ? "Disable CDC" : "Enable CDC"}
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() =>
@@ -843,12 +849,44 @@ export function AdminEtlPage() {
   const sourcesQuery = useQuery({
     queryKey: ["admin", "external-sources"],
     queryFn: () => apiClient.adminListExternalSources(),
+    enabled: frontendConfig.externalEtlEnabled,
   });
 
   const jobsQuery = useQuery({
     queryKey: ["admin", "etl-jobs"],
     queryFn: () => apiClient.adminListEtlJobs(1),
+    enabled: frontendConfig.externalEtlEnabled,
   });
+
+  if (!frontendConfig.externalEtlEnabled) {
+    return (
+      <section
+        className="space-y-3 rounded-[var(--mr-radius-lg)] border p-6"
+        style={{
+          backgroundColor: "var(--mr-bg-surface)",
+          borderColor: "var(--mr-border-strong)",
+        }}
+      >
+        <p
+          className="text-xs font-semibold tracking-wider uppercase"
+          style={{ color: "var(--mr-warning)" }}
+        >
+          On Hold · Local Reading Mode
+        </p>
+        <h1 className="text-xl font-bold">External ETL &amp; CDC Integration Paused</h1>
+        <p className="text-sm" style={{ color: "var(--mr-text-secondary)" }}>
+          Third-party external ETL ingestion and CDC webhook sync are temporarily on hold in this
+          local build. The catalog is currently populated from your local <code>MangaLibrary</code>{" "}
+          database and MinIO cover storage, with live MangaDex At-Home + illustrated demo page
+          fallback for seamless reading.
+        </p>
+        <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
+          To re-enable this console later, set <code>VITE_EXTERNAL_ETL_ENABLED=true</code> and{" "}
+          <code>EXTERNAL_ETL_ENABLED=true</code> in <code>.env</code>.
+        </p>
+      </section>
+    );
+  }
 
   async function handleRunSelected() {
     const items = Object.entries(selectedIds)

@@ -178,6 +178,7 @@ export class ApiClient {
       status: string;
       verificationRequired: boolean;
       otpTtlSeconds: number;
+      devOtpPreview?: string;
     }>("/auth/register", { method: "POST", body: JSON.stringify(body) });
   }
 
@@ -189,10 +190,13 @@ export class ApiClient {
   }
 
   public resendOtp(email: string) {
-    return this.request<{ sent: boolean; otpTtlSeconds: number }>("/auth/resend-otp", {
-      method: "POST",
-      body: JSON.stringify({ email }),
-    });
+    return this.request<{ sent: boolean; otpTtlSeconds: number; devOtpPreview?: string }>(
+      "/auth/resend-otp",
+      {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      },
+    );
   }
 
   public login(body: { identifier: string; password: string }) {

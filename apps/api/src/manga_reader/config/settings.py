@@ -104,7 +104,10 @@ class Settings(BaseSettings):
     smtp_from_address: str = "noreply@manga-reader.local"
     email_dev_log_otp: bool = False
 
-    # External Source / ETL / CDC
+    # External Source / ETL / CDC & Local Reading Fallbacks
+    external_etl_enabled: bool = True
+    mangadex_fallback_enabled: bool = False
+    mangadex_data_saver: bool = True
     upstream_source_base_url: str = ""
     upstream_webhook_secret: SecretStr = SecretStr("")
     etl_max_package_bytes: int = Field(default=52_428_800, ge=1024)

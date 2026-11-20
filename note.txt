@@ -1,0 +1,145 @@
+================================================================================
+MANGA READER WEB APPLICATION (QL-DocTruyen) — GHI CHÚ LỆNH & CÁCH CHẠY PROJECT
+================================================================================
+
+Thư mục dự án: d:\work\TH-PTTK\QL-DocTruyen
+Môi trường khuyến nghị: Windows PowerShell (đứng tại thư mục gốc dự án)
+
+Trạng thái hiện tại (SẴN SÀNG CHẠY & TEST NGAY):
+- Đã cấu hình sẵn `.env` cho môi trường local đọc truyện hoàn chỉnh.
+- Đã khởi tạo database sạch 47 bảng (`storage/local-dev/dev.sqlite3`) và nạp sẵn:
+    * 80 bộ truyện phổ biến thật từ SQL Server `MangaLibrary` + 1 bộ test `unknown`
+    * 80 ảnh bìa thật đồng bộ từ MinIO `manga-media` vào `storage/local-dev/`
+    * 1,291 chương thật (`vi` / `en`), 76 tags, 119 tác giả/họa sĩ
+    * Bình luận cộng đồng, đánh giá, lịch sử đọc, 3 danh sách đọc mẫu & 2 báo cáo mẫu
+- Trang đọc truyện hỗ trợ **Hybrid Page Engine**:
+    1) Tự động lấy trang truyện thật từ MangaDex At-Home API (cache đĩa local) khi online
+    2) Tự động fallback sang trang truyện demo minh họa WebP nếu chapter hết hạn / offline
+- Tính năng ETL/CDC đồng bộ bên thứ ba tạm thời đặt **ON HOLD** (`VITE_EXTERNAL_ETL_ENABLED=false`).
+
+--------------------------------------------------------------------------------
+1. ĐỊA CHỈ TRUY CẬP KHI CHẠY LOCAL
+--------------------------------------------------------------------------------
+- Web Frontend (React + Vite):   http://127.0.0.1:5173
+- Backend API (FastAPI):         http://127.0.0.1:8020
+- Swagger UI (API Docs):         http://127.0.0.1:8020/docs
+- ReDoc (API Docs):              http://127.0.0.1:8020/redoc
+- Health Check (qua Vite proxy): http://127.0.0.1:5173/api/v1/health
+
+Lưu ý: Vite tự động proxy mọi request `/api/*` sang `http://127.0.0.1:8020`.
+
+--------------------------------------------------------------------------------
+2. CÁCH CHẠY WEB-APP NGAY BÂY GIỜ (MỞ 2 TERMINAL TẠI THƯ MỤC GỐC)
+--------------------------------------------------------------------------------
+# Terminal 1 — Chạy Backend API (FastAPI + hot reload trên cổng 8020):
+pnpm dev:api
+
+# Terminal 2 — Chạy Frontend Web (Vite React trên cổng 5173):
+pnpm dev:web
+
+Sau khi cả 2 terminal báo ready, mở trình duyệt vào:
+    http://127.0.0.1:5173
+
+Để dừng server: nhấn Ctrl + C tại mỗi terminal.
+
+--------------------------------------------------------------------------------
+3. TÀI KHOẢN DEMO & ĐĂNG KÝ TÀI KHOẢN MỚI
+--------------------------------------------------------------------------------
+Vai trò        | Username | Email                      | Mật khẩu
+---------------+----------+----------------------------+---------------
+Administrator  | admin    | admin@manga-reader.local   | Admin@123456
+Reader 1       | reader1  | reader1@manga-reader.local | Reader@123456
+Reader 2       | reader2  | reader2@manga-reader.local | Reader@123456
+
+Mẹo nhanh:
+- Tại trang /login có nút autofill 1-click cho 3 tài khoản trên.
+- Tại trang /register (tạo tài khoản mới thật): file `.env` đã bật sẵn
+  `EMAIL_DEV_LOG_OTP="true"`, nên mã OTP 6 số vừa in ra Terminal Backend vừa
+  hiển thị khung "Local Dev OTP Preview" và tự điền sẵn để test kích hoạt ngay!
+
+--------------------------------------------------------------------------------
+4. CÁC CHỨC NĂNG ĐỌC TRUYỆN SẴN SÀNG TEST
+--------------------------------------------------------------------------------
+[Public]
+- /                                : Trang chủ (Gợi ý cá nhân, Mới cập nhật, Đánh giá cao)
+- /explore                         : Khám phá 81 bộ truyện + Lọc đa Tag Include/Exclude (`safe` loại trừ `unknown`)
+- /search                          : Tìm kiếm truyện (tên chính/tên phụ/không dấu) & tác giả/họa sĩ + Autocomplete trên header
+- /manga/:slug                     : Chi tiết truyện, bìa thật, danh sách chương `vi`/`en`, đánh giá 1-10, bình luận, gợi ý
+- /manga/:slug/chapter/:chapterId  : Trình đọc đa chế độ (Webtoon dọc / 1 trang / 2 trang LTR-RTL), giữ đúng trang khi đổi mode
+- /author/:creatorId/:slug         : Trang tác giả / họa sĩ
+- /profile/:username               : Hồ sơ công khai người đọc
+- /login  &  /register             : Đăng nhập, Đăng ký & Xác thực OTP
+
+[Yêu cầu đăng nhập Reader]
+- /history                         : Lịch sử đọc + nút đọc tiếp đúng số trang đã dừng
+- /reading-lists                   : Danh sách đọc riêng tư + Clone/Merge danh sách
+- /reading-lists/:listId           : Chi tiết danh sách + Thống kê metadata động
+- /settings                        : Sửa hồ sơ, Upload Avatar, Đổi mật khẩu, Cài đặt trình đọc, Lịch sử đánh giá, Thống kê cá nhân
+
+[Yêu cầu quyền Administrator]
+- /admin                           : Dashboard thống kê tương tác & Reconcile bộ đếm
+- /admin/accounts                  : Quản lý tài khoản, Khóa/Mở khóa (thu hồi session ngay) & Activity Logs
+- /admin/manga                     : Quản lý truyện (Ẩn/Hiện/Xóa có Tombstone)
+- /admin/reports                   : Hàng đợi xử lý báo cáo vi phạm (Account / Manga / Comment)
+- /admin/etl                       : Đang ON HOLD (tạm dừng ETL/CDC bên thứ ba trong bản local)
+
+--------------------------------------------------------------------------------
+5. CÁC LỆNH DATABASE (MIGRATION, IMPORT DỮ LIỆU LOCAL & RESET)
+--------------------------------------------------------------------------------
+# Áp dụng migration mới nhất lên DB hiện tại
+pnpm db:migrate
+
+# Import lại 80 truyện thật + ảnh bìa MinIO từ SQL Server `MangaLibrary` (an toàn chạy lại - idempotent)
+pnpm db:import-local
+
+# (Tùy chọn) Seed chỉ 5 truyện mẫu gọn nhẹ không cần SQL Server/MinIO
+pnpm db:seed
+
+# Xem revision migration hiện tại của DB
+pnpm db:current
+
+# Reset hoàn toàn DB SQLite local và nạp lại 80 truyện thật từ `MangaLibrary`:
+Remove-Item -Force -ErrorAction SilentlyContinue "storage/local-dev/dev.sqlite3"
+pnpm db:migrate
+pnpm db:import-local
+
+--------------------------------------------------------------------------------
+6. CÁC LỆNH CÀI ĐẶT LẠI, KIỂM THỬ, LINT, FORMAT, TYPECHECK & BUILD
+--------------------------------------------------------------------------------
+# Cài lại dependencies (nếu cần)
+pnpm install
+uv --project apps/api sync
+
+# Chạy toàn bộ cổng chất lượng cùng lúc (lint + format:check + typecheck + test + build)
+pnpm check:all
+
+# Tự động format toàn bộ code (Prettier + Ruff)
+pnpm format:write
+
+# Chạy lẻ từng bộ test
+pnpm test              # Toàn bộ (Contracts + Web + API/E2E)
+pnpm test:contracts    # Vitest cho JSON Schema Package v2.0 (7 tests)
+pnpm test:web          # Vitest + Testing Library cho Frontend React (11 tests)
+pnpm test:api          # Pytest cho Backend & E2E Acceptance Suite (24 tests)
+
+# Build bản Production
+pnpm build             # Build contracts + web (tạo bundle trong apps/web/dist/)
+pnpm --filter @manga-reader/web preview   # Xem trước bản build production trên cổng 4173
+
+--------------------------------------------------------------------------------
+7. XỬ LÝ NHANH MỘT SỐ LỖI THƯỜNG GẶP
+--------------------------------------------------------------------------------
+1) PowerShell 5.1 báo lỗi toán tử `&&`:
+   - Chạy từng lệnh trên từng dòng hoặc dùng dấu `;`.
+
+2) Lỗi cổng 8020 hoặc 5173 đang bị chiếm:
+   - Kiểm tra PID: `netstat -ano | findstr :8020` hoặc `findstr :5173`
+   - Dừng tiến trình: `taskkill /PID <PID> /T /F`
+
+3) Muốn bật lại giao diện ETL/CDC bên thứ ba sau này:
+   - Trong file `.env`, đổi `EXTERNAL_ETL_ENABLED="true"` và `VITE_EXTERNAL_ETL_ENABLED="true"`,
+     rồi khởi động lại cả `pnpm dev:api` và `pnpm dev:web`.
+
+4) Muốn tắt MangaDex At-Home fallback (chỉ dùng ảnh trang truyện demo offline 100%):
+   - Trong file `.env`, đổi `MANGADEX_FALLBACK_ENABLED="false"` và khởi động lại `pnpm dev:api`.
+================================================================================

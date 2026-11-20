@@ -73,7 +73,14 @@ export function LoginPage() {
     setError(null);
     try {
       const res = await apiClient.resendOtp(pendingEmail);
-      setOtpMessage(`A new OTP code was issued (valid for ${res.data.otpTtlSeconds}s).`);
+      if (res.data.devOtpPreview) {
+        setOtpCode(res.data.devOtpPreview);
+        setOtpMessage(
+          `A new OTP code was issued: ${res.data.devOtpPreview} (dev preview, valid for ${res.data.otpTtlSeconds}s).`,
+        );
+      } else {
+        setOtpMessage(`A new OTP code was issued (valid for ${res.data.otpTtlSeconds}s).`);
+      }
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : "Could not resend OTP.");
     }
@@ -278,6 +285,7 @@ export function RegisterPage() {
   const [step, setStep] = useState<"FORM" | "OTP" | "DONE">("FORM");
   const [otpCode, setOtpCode] = useState("");
   const [otpTtl, setOtpTtl] = useState(120);
+  const [devOtpPreview, setDevOtpPreview] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
   async function handleRegister(e: FormEvent) {
@@ -292,9 +300,13 @@ export function RegisterPage() {
         displayName: displayName.trim() || undefined,
       });
       setOtpTtl(res.data.otpTtlSeconds);
+      setDevOtpPreview(res.data.devOtpPreview ?? null);
+      if (res.data.devOtpPreview) {
+        setOtpCode(res.data.devOtpPreview);
+      }
       setStep("OTP");
       setInfo(
-        `Registration created for ${res.data.username}. Enter the 6-digit OTP sent to ${email} (expires in ${res.data.otpTtlSeconds}s; check backend logs in local dev).`,
+        `Registration created for ${res.data.username}. Enter the 6-digit OTP sent to ${email} (expires in ${res.data.otpTtlSeconds}s).`,
       );
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : "Registration failed.");
@@ -322,6 +334,10 @@ export function RegisterPage() {
     try {
       const res = await apiClient.resendOtp(email.trim());
       setOtpTtl(res.data.otpTtlSeconds);
+      setDevOtpPreview(res.data.devOtpPreview ?? null);
+      if (res.data.devOtpPreview) {
+        setOtpCode(res.data.devOtpPreview);
+      }
       setInfo(`New OTP issued (valid for ${res.data.otpTtlSeconds}s).`);
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : "Could not resend OTP.");
@@ -360,6 +376,19 @@ export function RegisterPage() {
             <p className="text-xs" style={{ color: "var(--mr-text-secondary)" }}>
               {info}
             </p>
+          ) : null}
+          {devOtpPreview ? (
+            <div
+              className="rounded border px-3 py-2 text-xs"
+              style={{
+                backgroundColor: "rgba(251, 191, 36, 0.12)",
+                borderColor: "var(--mr-warning)",
+                color: "var(--mr-warning)",
+              }}
+            >
+              Local Dev OTP Preview: <strong className="font-mono">{devOtpPreview}</strong>{" "}
+              (auto-filled for quick testing)
+            </div>
           ) : null}
           <div>
             <label className="mb-1 block text-xs font-medium">6-digit OTP (TTL: {otpTtl}s)</label>

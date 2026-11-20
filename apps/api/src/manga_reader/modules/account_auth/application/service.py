@@ -100,7 +100,7 @@ class AuthService:
         token = jwt.encode(payload, self._pepper, algorithm=self._settings.jwt_algorithm)
         return token, ttl_seconds
 
-    async def _create_and_dispatch_otp(self, normalized_email: str, account_id: UUID) -> None:
+    async def _create_and_dispatch_otp(self, normalized_email: str, account_id: UUID) -> str:
         otp_length = self._settings.otp_length
         raw_code = str(secrets.randbelow(10**otp_length)).zfill(otp_length)
         challenge_payload = json.dumps(
@@ -123,6 +123,7 @@ class AuthService:
                 contains_sensitive_secret=True,
             )
         )
+        return raw_code
 
     async def register(
         self,
@@ -221,15 +222,18 @@ class AuthService:
         await session.commit()
 
         # OTP strictly stored in cache/Redis with 120s TTL (never SQL per ADR-004)
-        await self._create_and_dispatch_otp(norm_email, account.account_id)
+        raw_code = await self._create_and_dispatch_otp(norm_email, account.account_id)
 
-        return {
+        response_data: dict[str, Any] = {
             "accountId": str(account.account_id),
             "username": account.username,
             "status": account.status,
             "verificationRequired": True,
             "otpTtlSeconds": self._settings.otp_ttl_seconds,
         }
+        if self._settings.app_env == "development" and self._settings.email_dev_log_otp:
+            response_data["devOtpPreview"] = raw_code
+        return response_data
 
     async def verify_otp(
         self,
@@ -323,13 +327,19 @@ class AuthService:
             return {"sent": True, "otpTtlSeconds": self._settings.otp_ttl_seconds}
 
         await self._container.cache.delete(self._otp_cache_key(norm_email))
-        await self._create_and_dispatch_otp(norm_email, account.account_id)
+        raw_code = await self._create_and_dispatch_otp(norm_email, account.account_id)
         await self._container.cache.set(
             cooldown_key,
             "1",
             ttl_seconds=self._settings.otp_resend_cooldown_seconds,
         )
-        return {"sent": True, "otpTtlSeconds": self._settings.otp_ttl_seconds}
+        response_data: dict[str, Any] = {
+            "sent": True,
+            "otpTtlSeconds": self._settings.otp_ttl_seconds,
+        }
+        if self._settings.app_env == "development" and self._settings.email_dev_log_otp:
+            response_data["devOtpPreview"] = raw_code
+        return response_data
 
     async def _resolve_user_summary(
         self, session: AsyncSession, account: AccountModel

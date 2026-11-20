@@ -2,14 +2,18 @@ import { NavLink, Outlet } from "react-router-dom";
 import { AppHeader } from "../components/AppHeader";
 import { ForbiddenState } from "../components/StateViews";
 import { useAuth } from "../hooks/useAuth";
+import { frontendConfig } from "../services/config";
 
-const ADMIN_NAV_ITEMS = [
+const BASE_ADMIN_NAV_ITEMS = [
   { to: "/admin", label: "Dashboard", end: true },
   { to: "/admin/accounts", label: "Accounts & Logs", end: false },
   { to: "/admin/manga", label: "Manga Catalog", end: false },
   { to: "/admin/reports", label: "Moderation Reports", end: false },
-  { to: "/admin/etl", label: "Source ETL & CDC", end: false },
 ];
+
+const ADMIN_NAV_ITEMS = frontendConfig.externalEtlEnabled
+  ? [...BASE_ADMIN_NAV_ITEMS, { to: "/admin/etl", label: "Source ETL & CDC", end: false }]
+  : BASE_ADMIN_NAV_ITEMS;
 
 /**
  * Isolated Admin layout boundary (`01_PRODUCT_SCOPE_AND_REQUIREMENTS.md` §3.2).

@@ -309,14 +309,22 @@ describe("Manga Reader Frontend Application", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders admin console routes for active admin user", async () => {
+  it("renders admin console routes for active admin user and holds external ETL UI", async () => {
     renderRoute("/admin/reports", ACTIVE_ADMIN);
     expect(
       screen.getByRole("heading", { name: /Admin — Moderation Reports Queue/i }),
     ).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Source ETL & CDC/i })).not.toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/No reports in this queue/i)).toBeInTheDocument();
     });
+  });
+
+  it("displays explicit on-hold state when navigating directly to /admin/etl", () => {
+    renderRoute("/admin/etl", ACTIVE_ADMIN);
+    expect(
+      screen.getByRole("heading", { name: /External ETL & CDC Integration Paused/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders 404 NotFound fallback for unknown routes", () => {
