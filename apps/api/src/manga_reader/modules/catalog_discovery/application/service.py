@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from difflib import SequenceMatcher
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import asc, desc, func, select
+from sqlalchemy import asc, desc, false, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from manga_reader.common.clock import format_rfc3339
+from manga_reader.common.clock import format_rfc3339, utc_now
 from manga_reader.common.errors import ResourceNotFoundError, ValidationAppError
 from manga_reader.common.identities import MediaObjectRef
 from manga_reader.common.security import SecurityPrincipal
@@ -20,6 +21,7 @@ from manga_reader.infrastructure.orm import (
     CreatorBiographyModel,
     CreatorLinkModel,
     CreatorModel,
+    ListItemModel,
     MangaAltTitleModel,
     MangaCoverArtModel,
     MangaCreatorModel,
@@ -32,12 +34,27 @@ from manga_reader.infrastructure.orm import (
     RatingModel,
     ReaderProgressModel,
     ReadingHistoryModel,
+    ReadingListModel,
     ReadingStatusRecordModel,
     TagModel,
     TagNameModel,
 )
 
-VALID_SORTS = frozenset({"UPDATED_DESC", "VIEWS_DESC", "RATING_DESC", "TITLE_ASC"})
+VALID_SORTS = frozenset(
+    {
+        "UPDATED_DESC",
+        "VIEWS_DESC",
+        "RATING_DESC",
+        "TITLE_ASC",
+        "TITLE_DESC",
+        "CREATED_DESC",
+        "YEAR_DESC",
+        "YEAR_ASC",
+        "CHAPTERS_DESC",
+        "RELEVANCE",
+    }
+)
+VALID_TAG_MODES = frozenset({"GROUP_OR", "ALL_AND", "AND", "ANY_OR", "OR"})
 VALID_STATUSES = frozenset({"ongoing", "completed", "hiatus", "cancelled", "unknown"})
 VALID_DEMOGRAPHICS = frozenset({"shounen", "shoujo", "seinen", "josei", "kodomo", "unknown"})
 VALID_CONTENT_RATINGS = frozenset({"safe", "suggestive", "erotica", "pornographic", "unknown"})
@@ -117,32 +134,92 @@ class CatalogDiscoveryService:
                 {"slug": tslug, "name": tname, "group": tgroup}
             )
 
-        # Batch load latest chapter label via canonical numeric ordering
-        ch_rows = (
-            await session.scalars(
-                select(ChapterModel)
-                .where(ChapterModel.manga_id.in_(manga_ids))
-                .order_by(
-                    ChapterModel.manga_id,
+        # Batch load latest chapter label via window function (avoids scanning thousands of chapters)
+        rn_col = (
+            func.row_number()
+            .over(
+                partition_by=ChapterModel.manga_id,
+                order_by=(
                     ChapterModel.chapter_numeric.desc(),
                     ChapterModel.language.asc(),
                     ChapterModel.pool_chapter_id.desc(),
+                ),
+            )
+            .label("rn")
+        )
+        latest_subq = (
+            select(ChapterModel.chapter_id, rn_col)
+            .where(ChapterModel.manga_id.in_(manga_ids))
+            .subquery()
+        )
+        ch_rows = (
+            await session.scalars(
+                select(ChapterModel).join(
+                    latest_subq,
+                    (latest_subq.c.chapter_id == ChapterModel.chapter_id) & (latest_subq.c.rn == 1),
                 )
             )
         ).all()
         latest_ch_by_manga: dict[UUID, ChapterModel] = {}
+        langs_by_manga: dict[UUID, set[str]] = {}
         for ch in ch_rows:
             if ch.manga_id not in latest_ch_by_manga:
                 latest_ch_by_manga[ch.manga_id] = ch
+            if ch.language:
+                langs_by_manga.setdefault(ch.manga_id, set()).add(ch.language)
+
+        # Batch load exported chapter stats and materialized language rows
+        stats_rows = (
+            await session.scalars(
+                select(MangaStatsModel).where(MangaStatsModel.manga_id.in_(manga_ids))
+            )
+        ).all()
+        stats_by_manga = {s.manga_id: s for s in stats_rows}
+
+        stat_lang_rows = (
+            await session.execute(
+                select(
+                    MangaStatsLanguageModel.manga_id, MangaStatsLanguageModel.language_code
+                ).where(MangaStatsLanguageModel.manga_id.in_(manga_ids))
+            )
+        ).all()
+        for mid, lang_code in stat_lang_rows:
+            if lang_code:
+                langs_by_manga.setdefault(mid, set()).add(lang_code)
+
+        # Batch load deduplicated creators for horizontal/list cards
+        creator_rows = (
+            await session.execute(
+                select(MangaCreatorModel.manga_id, CreatorModel, MangaCreatorModel.role)
+                .join(CreatorModel, CreatorModel.creator_id == MangaCreatorModel.creator_id)
+                .where(MangaCreatorModel.manga_id.in_(manga_ids))
+            )
+        ).all()
+        creators_by_manga: dict[UUID, dict[str, dict[str, Any]]] = {}
+        for mid, creator_obj, role in creator_rows:
+            m_map = creators_by_manga.setdefault(mid, {})
+            entry = m_map.setdefault(
+                creator_obj.creator_id,
+                {
+                    "creatorId": creator_obj.creator_id,
+                    "slug": creator_obj.slug,
+                    "name": creator_obj.name,
+                    "roles": [],
+                },
+            )
+            if role not in entry["roles"]:
+                entry["roles"].append(role)
 
         cards: list[dict[str, Any]] = []
         for m in mangas:
             latest = latest_ch_by_manga.get(m.manga_id)
+            st = stats_by_manga.get(m.manga_id)
             cards.append(
                 {
                     "mangaId": str(m.manga_id),
                     "slug": m.slug,
                     "title": m.title,
+                    "description": m.description[:280] if m.description else "",
                     "coverUrl": self._sign_media(
                         media_map.get(m.primary_cover_media_id)
                         if m.primary_cover_media_id is not None
@@ -155,6 +232,9 @@ class CatalogDiscoveryService:
                     "year": m.year,
                     "totalViews": m.total_views,
                     "averageRating": float(m.average_rating),
+                    "exportedChapterCount": st.chapter_count if st else 0,
+                    "chapterLanguages": sorted(langs_by_manga.get(m.manga_id, set())),
+                    "creators": list(creators_by_manga.get(m.manga_id, {}).values()),
                     "latestChapter": (
                         {
                             "chapterId": str(latest.chapter_id),
@@ -193,31 +273,151 @@ class CatalogDiscoveryService:
             for t in tags
         ]
 
+    def _normalize_enum_values(
+        self,
+        raw: list[str] | str | None,
+        valid_set: frozenset[str],
+        field_name: str,
+    ) -> list[str]:
+        if raw is None:
+            return []
+        parts = raw.split(",") if isinstance(raw, str) else raw
+        values: list[str] = []
+        for item in parts:
+            val = item.strip().lower()
+            if not val:
+                continue
+            if val not in valid_set:
+                raise ValidationAppError(
+                    f"Invalid {field_name} '{val}'.", error_code="INVALID_FILTER"
+                )
+            if val not in values:
+                values.append(val)
+        return values
+
+    def _score_title_match(self, norm_q: str, title: str, alt_titles: list[str]) -> float:
+        candidates = [title, *alt_titles]
+        best = 0.0
+        for idx, cand in enumerate(candidates):
+            norm_c = normalize_search_text(cand)
+            if not norm_c:
+                continue
+            bonus = 5.0 if idx == 0 else 0.0
+            if norm_c == norm_q:
+                best = max(best, 100.0 + bonus)
+            elif norm_c.startswith(norm_q):
+                best = max(best, 85.0 + bonus)
+            elif norm_q in norm_c:
+                best = max(best, 70.0 + bonus)
+            else:
+                ratio = SequenceMatcher(None, norm_q, norm_c).ratio()
+                word_best = max(
+                    (SequenceMatcher(None, norm_q, w).ratio() for w in norm_c.split()),
+                    default=0.0,
+                )
+                fuzzy = max(ratio, word_best)
+                if fuzzy >= 0.72:
+                    best = max(best, fuzzy * 60.0 + bonus)
+        return best
+
+    async def _is_large_table(
+        self, session: AsyncSession, col: Any, *, threshold: int = 500
+    ) -> bool:
+        subq = select(col).limit(threshold + 1).subquery()
+        cnt = int(await session.scalar(select(func.count()).select_from(subq)) or 0)
+        return cnt > threshold
+
+    async def _find_matching_creator_ids(
+        self, session: AsyncSession, query_or_ids: str
+    ) -> list[str]:
+        terms = [part.strip() for part in query_or_ids.split(",") if part.strip()]
+        if not terms:
+            return []
+        norm_terms = [normalize_search_text(t) for t in terms if normalize_search_text(t)]
+        if await self._is_large_table(session, CreatorModel.creator_id):
+            filters = [CreatorModel.creator_id.in_(terms), CreatorModel.slug.in_(terms)]
+            for term in terms:
+                filters.append(CreatorModel.name.ilike(f"%{term}%"))
+            for nterm in norm_terms:
+                if nterm not in terms:
+                    filters.append(CreatorModel.name.ilike(f"%{nterm}%"))
+            creators = (
+                await session.scalars(select(CreatorModel).where(or_(*filters)).limit(200))
+            ).all()
+        else:
+            creators = (await session.scalars(select(CreatorModel))).all()
+        matched: list[str] = []
+        for c in creators:
+            if c.creator_id in terms or c.slug in terms:
+                matched.append(c.creator_id)
+                continue
+            norm_name = normalize_search_text(c.name)
+            if any(nt in norm_name for nt in norm_terms):
+                matched.append(c.creator_id)
+        return matched[:200]
+
     async def list_catalog(
         self,
         session: AsyncSession,
         *,
+        q: str | None = None,
         sort: str = "UPDATED_DESC",
         include_tags: list[str] | None = None,
         exclude_tags: list[str] | None = None,
         tag_mode: str = "GROUP_OR",
-        demographic: str | None = None,
-        status: str | None = None,
+        demographic: list[str] | str | None = None,
+        status: list[str] | str | None = None,
         content_rating: list[str] | None = None,
-        language: str | None = None,
+        language: list[str] | str | None = None,
+        chapter_language: list[str] | None = None,
+        author: str | None = None,
+        artist: str | None = None,
         year_from: int | None = None,
         year_to: int | None = None,
+        chapters_min: int | None = None,
+        chapters_max: int | None = None,
+        rating_min: float | None = None,
+        include_unrated: bool = False,
+        views_min: int | None = None,
+        added_days: int | None = None,
+        hide_in_status: bool = False,
+        hide_in_lists: bool = False,
+        viewer: SecurityPrincipal | None = None,
         page: int = 1,
         page_size: int = 24,
     ) -> tuple[list[dict[str, Any]], int]:
-        if sort not in VALID_SORTS:
+        sort_key = sort.strip().upper()
+        if sort_key not in VALID_SORTS:
             raise ValidationAppError(f"Invalid sort '{sort}'.", error_code="INVALID_FILTER")
-        if status and status not in VALID_STATUSES:
-            raise ValidationAppError(f"Invalid status '{status}'.", error_code="INVALID_FILTER")
-        if demographic and demographic not in VALID_DEMOGRAPHICS:
+
+        mode_key = tag_mode.strip().upper()
+        if mode_key not in VALID_TAG_MODES:
+            raise ValidationAppError(f"Invalid tagMode '{tag_mode}'.", error_code="INVALID_FILTER")
+
+        status_filter = self._normalize_enum_values(status, VALID_STATUSES, "status")
+        demo_filter = self._normalize_enum_values(demographic, VALID_DEMOGRAPHICS, "demographic")
+        ratings_filter = self._normalize_enum_values(
+            content_rating, VALID_CONTENT_RATINGS, "contentRating"
+        )
+
+        if year_from is not None and year_to is not None and year_from > year_to:
+            raise ValidationAppError("yearFrom cannot exceed yearTo.", error_code="INVALID_FILTER")
+        if chapters_min is not None and chapters_min < 0:
+            raise ValidationAppError("chaptersMin must be >= 0.", error_code="INVALID_FILTER")
+        if chapters_max is not None and chapters_max < 0:
+            raise ValidationAppError("chaptersMax must be >= 0.", error_code="INVALID_FILTER")
+        if chapters_min is not None and chapters_max is not None and chapters_min > chapters_max:
             raise ValidationAppError(
-                f"Invalid demographic '{demographic}'.", error_code="INVALID_FILTER"
+                "chaptersMin cannot exceed chaptersMax.", error_code="INVALID_FILTER"
             )
+        if rating_min is not None and (rating_min < 0 or rating_min > 10):
+            raise ValidationAppError(
+                "ratingMin must be between 0 and 10.", error_code="INVALID_FILTER"
+            )
+        if views_min is not None and views_min < 0:
+            raise ValidationAppError("viewsMin must be >= 0.", error_code="INVALID_FILTER")
+        if added_days is not None and added_days < 1:
+            raise ValidationAppError("addedDays must be >= 1.", error_code="INVALID_FILTER")
 
         inc = [t.strip().lower() for t in (include_tags or []) if t.strip()]
         exc = [t.strip().lower() for t in (exclude_tags or []) if t.strip()]
@@ -228,26 +428,40 @@ class CatalogDiscoveryService:
                 details={"conflictingTags": sorted(set(inc) & set(exc))},
             )
 
-        ratings_filter: list[str] = []
-        for cr in content_rating or []:
-            val = cr.strip().lower()
-            if val not in VALID_CONTENT_RATINGS:
-                raise ValidationAppError(
-                    f"Invalid contentRating '{val}'.", error_code="INVALID_FILTER"
-                )
-            ratings_filter.append(val)
-
         stmt = select(MangaModel).where(
             MangaModel.visibility_status == "PUBLIC",
             MangaModel.deletion_status == "ACTIVE",
         )
 
-        if status:
-            stmt = stmt.where(MangaModel.publication_status == status)
-        if demographic:
-            stmt = stmt.where(MangaModel.publication_demographic == demographic)
-        if language:
-            stmt = stmt.where(MangaModel.original_language == language.strip().lower())
+        needs_stats_join = (
+            chapters_min is not None or chapters_max is not None or sort_key == "CHAPTERS_DESC"
+        )
+        if needs_stats_join:
+            stmt = stmt.outerjoin(MangaStatsModel, MangaStatsModel.manga_id == MangaModel.manga_id)
+
+        if status_filter:
+            stmt = stmt.where(MangaModel.publication_status.in_(status_filter))
+        if demo_filter:
+            stmt = stmt.where(MangaModel.publication_demographic.in_(demo_filter))
+
+        orig_langs = (
+            [p.strip().lower() for p in language.split(",") if p.strip()]
+            if isinstance(language, str)
+            else [p.strip().lower() for p in (language or []) if p.strip()]
+        )
+        if orig_langs:
+            stmt = stmt.where(MangaModel.original_language.in_(orig_langs))
+
+        ch_langs = [p.strip().lower() for p in (chapter_language or []) if p.strip()]
+        if ch_langs:
+            if await self._is_large_table(session, MangaStatsLanguageModel.manga_id, threshold=0):
+                ch_subq = select(MangaStatsLanguageModel.manga_id).where(
+                    MangaStatsLanguageModel.language_code.in_(ch_langs)
+                )
+            else:
+                ch_subq = select(ChapterModel.manga_id).where(ChapterModel.language.in_(ch_langs))
+            stmt = stmt.where(MangaModel.manga_id.in_(ch_subq))
+
         if year_from is not None:
             stmt = stmt.where(MangaModel.year >= year_from)
         if year_to is not None:
@@ -256,19 +470,70 @@ class CatalogDiscoveryService:
             # Strict inclusion: `safe` NEVER includes `unknown` (CAT-019)
             stmt = stmt.where(MangaModel.content_rating.in_(ratings_filter))
 
-        # Include tags: OR within same tag_group, AND across groups (or AND across all if tag_mode=AND)
+        if chapters_min is not None and chapters_min > 0:
+            stmt = stmt.where(MangaStatsModel.chapter_count >= chapters_min)
+        if chapters_max is not None:
+            if chapters_max == 0:
+                stmt = stmt.where(func.coalesce(MangaStatsModel.chapter_count, 0) == 0)
+            else:
+                stmt = stmt.where(MangaStatsModel.chapter_count <= chapters_max)
+
+        if rating_min is not None and rating_min > 0:
+            if include_unrated:
+                stmt = stmt.where(
+                    (MangaModel.average_rating >= rating_min) | (MangaModel.average_rating == 0)
+                )
+            else:
+                stmt = stmt.where(MangaModel.average_rating >= rating_min)
+        if views_min is not None and views_min > 0:
+            stmt = stmt.where(MangaModel.total_views >= views_min)
+        if added_days is not None:
+            cutoff = utc_now() - timedelta(days=added_days)
+            stmt = stmt.where(MangaModel.created_at >= cutoff)
+
+        if author and author.strip():
+            author_ids = await self._find_matching_creator_ids(session, author)
+            if not author_ids:
+                return [], 0
+            author_subq = select(MangaCreatorModel.manga_id).where(
+                MangaCreatorModel.creator_id.in_(author_ids),
+                MangaCreatorModel.role == "author",
+            )
+            stmt = stmt.where(MangaModel.manga_id.in_(author_subq))
+
+        if artist and artist.strip():
+            artist_ids = await self._find_matching_creator_ids(session, artist)
+            if not artist_ids:
+                return [], 0
+            artist_subq = select(MangaCreatorModel.manga_id).where(
+                MangaCreatorModel.creator_id.in_(artist_ids),
+                MangaCreatorModel.role == "artist",
+            )
+            stmt = stmt.where(MangaModel.manga_id.in_(artist_subq))
+
+        # Include tags:
+        # - ALL_AND / AND: every selected tag must exist on the manga (BUG-01 fix)
+        # - ANY_OR / OR: any selected tag across any group matches
+        # - GROUP_OR (canonical default): OR within same tag_group, AND across different groups
         if inc:
             matched_tags = (
                 await session.scalars(select(TagModel).where(TagModel.slug.in_(inc)))
             ).all()
             if not matched_tags:
                 return [], 0
-            if tag_mode.upper() == "AND":
+            if mode_key in ("AND", "ALL_AND"):
+                if len(matched_tags) < len(set(inc)):
+                    return [], 0
                 for tag_obj in matched_tags:
                     subq = select(MangaTagModel.manga_id).where(
                         MangaTagModel.tag_id == tag_obj.tag_id
                     )
                     stmt = stmt.where(MangaModel.manga_id.in_(subq))
+            elif mode_key in ("OR", "ANY_OR"):
+                any_subq = select(MangaTagModel.manga_id).where(
+                    MangaTagModel.tag_id.in_([t.tag_id for t in matched_tags])
+                )
+                stmt = stmt.where(MangaModel.manga_id.in_(any_subq))
             else:
                 groups: dict[str, list[int]] = {}
                 for tag_obj in matched_tags:
@@ -290,25 +555,123 @@ class CatalogDiscoveryService:
                 )
                 stmt = stmt.where(~MangaModel.manga_id.in_(exc_subq))
 
-        order_map = {
+        # Personal exclusion filters (`04_ADVANCED_SEARCH_UX_SPEC.md` §3.15)
+        if viewer and viewer.is_authenticated and viewer.account_id is not None:
+            if hide_in_status:
+                rs_subq = select(ReadingStatusRecordModel.manga_id).where(
+                    ReadingStatusRecordModel.reader_account_id == viewer.account_id
+                )
+                stmt = stmt.where(~MangaModel.manga_id.in_(rs_subq))
+            if hide_in_lists:
+                list_subq = (
+                    select(ListItemModel.manga_id)
+                    .join(ReadingListModel, ReadingListModel.list_id == ListItemModel.list_id)
+                    .where(ReadingListModel.owner_reader_account_id == viewer.account_id)
+                )
+                stmt = stmt.where(~MangaModel.manga_id.in_(list_subq))
+
+        effective_sort = (
+            "UPDATED_DESC" if (sort_key == "RELEVANCE" and not (q and q.strip())) else sort_key
+        )
+        order_map: dict[str, tuple[Any, ...]] = {
             "UPDATED_DESC": (
-                desc(func.coalesce(MangaModel.latest_chapter_at, MangaModel.updated_at)),
+                desc(MangaModel.latest_chapter_at),
+                desc(MangaModel.updated_at),
                 asc(MangaModel.manga_id),
             ),
             "VIEWS_DESC": (desc(MangaModel.total_views), asc(MangaModel.manga_id)),
             "RATING_DESC": (desc(MangaModel.average_rating), asc(MangaModel.manga_id)),
             "TITLE_ASC": (asc(MangaModel.title), asc(MangaModel.manga_id)),
+            "TITLE_DESC": (desc(MangaModel.title), asc(MangaModel.manga_id)),
+            "CREATED_DESC": (desc(MangaModel.created_at), asc(MangaModel.manga_id)),
+            "YEAR_DESC": (desc(func.coalesce(MangaModel.year, 0)), asc(MangaModel.manga_id)),
+            "YEAR_ASC": (asc(func.coalesce(MangaModel.year, 9999)), asc(MangaModel.manga_id)),
+            "CHAPTERS_DESC": (
+                desc(func.coalesce(MangaStatsModel.chapter_count, 0)),
+                asc(MangaModel.manga_id),
+            ),
+            "RELEVANCE": (
+                desc(MangaModel.latest_chapter_at),
+                desc(MangaModel.updated_at),
+                asc(MangaModel.manga_id),
+            ),
         }
-        order_clauses = order_map[sort]
+        order_clauses = order_map[effective_sort]
 
-        count_stmt = select(func.count()).select_from(stmt.subquery())
+        norm_q = normalize_search_text(q) if q else ""
+        if norm_q:
+            if await self._is_large_table(session, MangaModel.manga_id):
+                raw_q = (q or "").strip()
+                alt_match_subq = select(MangaAltTitleModel.manga_id).where(
+                    or_(
+                        MangaAltTitleModel.alternative_title.ilike(f"%{raw_q}%"),
+                        MangaAltTitleModel.alternative_title.ilike(f"%{norm_q}%"),
+                    )
+                )
+                slug_q = norm_q.replace(" ", "-")
+                q_stmt = stmt.where(
+                    or_(
+                        MangaModel.title.ilike(f"%{raw_q}%"),
+                        MangaModel.title.ilike(f"%{norm_q}%"),
+                        MangaModel.slug.ilike(f"%{slug_q}%"),
+                        MangaModel.manga_id.in_(alt_match_subq),
+                    )
+                )
+                candidates = (
+                    await session.scalars(q_stmt.order_by(*order_clauses).limit(200))
+                ).all()
+            else:
+                candidates = (await session.scalars(stmt.order_by(*order_clauses))).all()
+            if not candidates:
+                return [], 0
+            cand_ids = [m.manga_id for m in candidates]
+            alt_rows = (
+                await session.scalars(
+                    select(MangaAltTitleModel).where(MangaAltTitleModel.manga_id.in_(cand_ids))
+                )
+            ).all()
+            alts_by_manga: dict[UUID, list[str]] = {}
+            for a in alt_rows:
+                alts_by_manga.setdefault(a.manga_id, []).append(a.alternative_title)
+
+            scored_matches: list[tuple[float, MangaModel]] = []
+            for m in candidates:
+                score = self._score_title_match(norm_q, m.title, alts_by_manga.get(m.manga_id, []))
+                if score > 0:
+                    scored_matches.append((score, m))
+
+            if effective_sort == "RELEVANCE":
+                scored_matches.sort(
+                    key=lambda pair: (-pair[0], -pair[1].total_views, str(pair[1].manga_id))
+                )
+
+            total = len(scored_matches)
+            start = (page - 1) * page_size
+            page_mangas = [m for _, m in scored_matches[start : start + page_size]]
+            return await self.build_manga_cards(session, page_mangas), total
+
+        count_stmt = stmt.with_only_columns(func.count(MangaModel.manga_id)).order_by(None)
         total = int(await session.scalar(count_stmt) or 0)
-        mangas = (
-            await session.scalars(
-                stmt.order_by(*order_clauses).offset((page - 1) * page_size).limit(page_size)
-            )
+        if total == 0:
+            return [], 0
+        page_ids = list(
+            (
+                await session.scalars(
+                    stmt.with_only_columns(MangaModel.manga_id)
+                    .order_by(*order_clauses)
+                    .offset((page - 1) * page_size)
+                    .limit(page_size)
+                )
+            ).all()
+        )
+        if not page_ids:
+            return [], total
+        fetched = (
+            await session.scalars(select(MangaModel).where(MangaModel.manga_id.in_(page_ids)))
         ).all()
-        return await self.build_manga_cards(session, list(mangas)), total
+        by_id = {m.manga_id: m for m in fetched}
+        ordered_mangas = [by_id[mid] for mid in page_ids if mid in by_id]
+        return await self.build_manga_cards(session, ordered_mangas), total
 
     async def autocomplete(self, session: AsyncSession, *, q: str) -> list[dict[str, Any]]:
         norm_q = normalize_search_text(q)
@@ -316,15 +679,66 @@ class CatalogDiscoveryService:
             return []
 
         limit = self._container.settings.autocomplete_max_results
-        public_mangas = (
-            await session.scalars(
-                select(MangaModel).where(
-                    MangaModel.visibility_status == "PUBLIC",
-                    MangaModel.deletion_status == "ACTIVE",
+        raw_q = q.strip()
+        if await self._is_large_table(session, MangaModel.manga_id):
+            alt_match_subq = select(MangaAltTitleModel.manga_id).where(
+                or_(
+                    MangaAltTitleModel.alternative_title.ilike(f"%{raw_q}%"),
+                    MangaAltTitleModel.alternative_title.ilike(f"%{norm_q}%"),
                 )
             )
-        ).all()
-        alt_rows = (await session.scalars(select(MangaAltTitleModel))).all()
+            slug_q = norm_q.replace(" ", "-")
+            public_mangas = (
+                await session.scalars(
+                    select(MangaModel)
+                    .where(
+                        MangaModel.visibility_status == "PUBLIC",
+                        MangaModel.deletion_status == "ACTIVE",
+                        or_(
+                            MangaModel.title.ilike(f"%{raw_q}%"),
+                            MangaModel.title.ilike(f"%{norm_q}%"),
+                            MangaModel.slug.ilike(f"%{slug_q}%"),
+                            MangaModel.manga_id.in_(alt_match_subq),
+                        ),
+                    )
+                    .order_by(desc(MangaModel.total_views))
+                    .limit(60)
+                )
+            ).all()
+            cand_ids = [m.manga_id for m in public_mangas]
+            alt_rows = (
+                (
+                    await session.scalars(
+                        select(MangaAltTitleModel).where(MangaAltTitleModel.manga_id.in_(cand_ids))
+                    )
+                ).all()
+                if cand_ids
+                else []
+            )
+            creators = (
+                await session.scalars(
+                    select(CreatorModel)
+                    .where(
+                        or_(
+                            CreatorModel.name.ilike(f"%{raw_q}%"),
+                            CreatorModel.name.ilike(f"%{norm_q}%"),
+                        )
+                    )
+                    .limit(30)
+                )
+            ).all()
+        else:
+            public_mangas = (
+                await session.scalars(
+                    select(MangaModel).where(
+                        MangaModel.visibility_status == "PUBLIC",
+                        MangaModel.deletion_status == "ACTIVE",
+                    )
+                )
+            ).all()
+            alt_rows = (await session.scalars(select(MangaAltTitleModel))).all()
+            creators = (await session.scalars(select(CreatorModel))).all()
+
         alts_by_manga: dict[UUID, list[str]] = {}
         for a in alt_rows:
             alts_by_manga.setdefault(a.manga_id, []).append(a.alternative_title)
@@ -360,7 +774,6 @@ class CatalogDiscoveryService:
                     )
                 )
 
-        creators = (await session.scalars(select(CreatorModel))).all()
         for c in creators:
             norm_c = normalize_search_text(c.name)
             if norm_c.startswith(norm_q) or norm_q in norm_c:
@@ -393,42 +806,60 @@ class CatalogDiscoveryService:
         if not norm_q:
             return [], 0
 
-        public_mangas = (
-            await session.scalars(
-                select(MangaModel).where(
-                    MangaModel.visibility_status == "PUBLIC",
-                    MangaModel.deletion_status == "ACTIVE",
+        raw_q = q.strip()
+        if await self._is_large_table(session, MangaModel.manga_id):
+            alt_match_subq = select(MangaAltTitleModel.manga_id).where(
+                or_(
+                    MangaAltTitleModel.alternative_title.ilike(f"%{raw_q}%"),
+                    MangaAltTitleModel.alternative_title.ilike(f"%{norm_q}%"),
                 )
             )
-        ).all()
-        alt_rows = (await session.scalars(select(MangaAltTitleModel))).all()
+            slug_q = norm_q.replace(" ", "-")
+            public_mangas = (
+                await session.scalars(
+                    select(MangaModel)
+                    .where(
+                        MangaModel.visibility_status == "PUBLIC",
+                        MangaModel.deletion_status == "ACTIVE",
+                        or_(
+                            MangaModel.title.ilike(f"%{raw_q}%"),
+                            MangaModel.title.ilike(f"%{norm_q}%"),
+                            MangaModel.slug.ilike(f"%{slug_q}%"),
+                            MangaModel.manga_id.in_(alt_match_subq),
+                        ),
+                    )
+                    .order_by(desc(MangaModel.total_views))
+                    .limit(200)
+                )
+            ).all()
+            cand_ids = [m.manga_id for m in public_mangas]
+            alt_rows = (
+                (
+                    await session.scalars(
+                        select(MangaAltTitleModel).where(MangaAltTitleModel.manga_id.in_(cand_ids))
+                    )
+                ).all()
+                if cand_ids
+                else []
+            )
+        else:
+            public_mangas = (
+                await session.scalars(
+                    select(MangaModel).where(
+                        MangaModel.visibility_status == "PUBLIC",
+                        MangaModel.deletion_status == "ACTIVE",
+                    )
+                )
+            ).all()
+            alt_rows = (await session.scalars(select(MangaAltTitleModel))).all()
+
         alts_by_manga: dict[UUID, list[str]] = {}
         for a in alt_rows:
             alts_by_manga.setdefault(a.manga_id, []).append(a.alternative_title)
 
         ranked: list[tuple[float, MangaModel]] = []
         for m in public_mangas:
-            candidates = [m.title, *alts_by_manga.get(m.manga_id, [])]
-            best = 0.0
-            for idx, cand in enumerate(candidates):
-                norm_c = normalize_search_text(cand)
-                bonus = 5.0 if idx == 0 else 0.0
-                if norm_c == norm_q:
-                    best = max(best, 100.0 + bonus)
-                elif norm_c.startswith(norm_q):
-                    best = max(best, 85.0 + bonus)
-                elif norm_q in norm_c:
-                    best = max(best, 70.0 + bonus)
-                else:
-                    # Fuzzy typo tolerance across words or full string (CAT-009)
-                    ratio = SequenceMatcher(None, norm_q, norm_c).ratio()
-                    word_best = max(
-                        (SequenceMatcher(None, norm_q, w).ratio() for w in norm_c.split()),
-                        default=0.0,
-                    )
-                    fuzzy = max(ratio, word_best)
-                    if fuzzy >= 0.72:
-                        best = max(best, fuzzy * 60.0 + bonus)
+            best = self._score_title_match(norm_q, m.title, alts_by_manga.get(m.manga_id, []))
             if best > 0:
                 ranked.append((best, m))
 
@@ -448,13 +879,29 @@ class CatalogDiscoveryService:
         norm_q = normalize_search_text(q)
         if not norm_q:
             return []
-        if role and role not in ("author", "artist"):
+        norm_role = role.strip().lower() if role and role.strip() else None
+        if norm_role and norm_role not in ("author", "artist"):
             raise ValidationAppError(
                 "role must be 'author' or 'artist'.", error_code="INVALID_FILTER"
             )
 
-        creators = (await session.scalars(select(CreatorModel))).all()
-        matched = [c for c in creators if norm_q in normalize_search_text(c.name)]
+        raw_q = q.strip()
+        if await self._is_large_table(session, CreatorModel.creator_id):
+            creators = (
+                await session.scalars(
+                    select(CreatorModel)
+                    .where(
+                        or_(
+                            CreatorModel.name.ilike(f"%{raw_q}%"),
+                            CreatorModel.name.ilike(f"%{norm_q}%"),
+                        )
+                    )
+                    .limit(200)
+                )
+            ).all()
+        else:
+            creators = (await session.scalars(select(CreatorModel))).all()
+        matched = [c for c in creators if norm_q in normalize_search_text(c.name)][:200]
         if not matched:
             return []
 
@@ -468,8 +915,8 @@ class CatalogDiscoveryService:
                 MangaModel.deletion_status == "ACTIVE",
             )
         )
-        if role:
-            credit_stmt = credit_stmt.where(MangaCreatorModel.role == role)
+        if norm_role:
+            credit_stmt = credit_stmt.where(MangaCreatorModel.role == norm_role)
         credit_rows = (await session.execute(credit_stmt)).all()
 
         roles_by_creator: dict[str, set[str]] = {}
@@ -480,7 +927,7 @@ class CatalogDiscoveryService:
 
         results: list[dict[str, Any]] = []
         for c in matched:
-            if role and c.creator_id not in roles_by_creator:
+            if norm_role and c.creator_id not in roles_by_creator:
                 continue
             results.append(
                 {
@@ -507,9 +954,9 @@ class CatalogDiscoveryService:
             if manga.primary_cover_media_id is not None
             else None
         )
-        alt_titles = (
-            await session.scalars(
-                select(MangaAltTitleModel.alternative_title)
+        alt_rows = (
+            await session.execute(
+                select(MangaAltTitleModel.alternative_title, MangaAltTitleModel.language_code)
                 .where(MangaAltTitleModel.manga_id == manga.manga_id)
                 .order_by(MangaAltTitleModel.display_order.asc())
             )
@@ -555,6 +1002,7 @@ class CatalogDiscoveryService:
                 select(MangaCoverArtModel, MediaObjectModel)
                 .join(MediaObjectModel, MediaObjectModel.media_id == MangaCoverArtModel.media_id)
                 .where(MangaCoverArtModel.manga_id == manga.manga_id)
+                .order_by(MangaCoverArtModel.volume.asc(), MangaCoverArtModel.cover_art_id.asc())
             )
         ).all()
         stats = await session.get(MangaStatsModel, manga.manga_id)
@@ -569,7 +1017,7 @@ class CatalogDiscoveryService:
             await session.scalar(
                 select(func.count())
                 .select_from(RatingModel)
-                .where(RatingModel.manga_id == manga.manga_id, RatingModel.is_removed.is_(False))
+                .where(RatingModel.manga_id == manga.manga_id, RatingModel.is_removed == false())
             )
             or 0
         )
@@ -587,7 +1035,7 @@ class CatalogDiscoveryService:
                 select(RatingModel).where(
                     RatingModel.reader_account_id == viewer.account_id,
                     RatingModel.manga_id == manga.manga_id,
-                    RatingModel.is_removed.is_(False),
+                    RatingModel.is_removed == false(),
                 )
             )
             has_opened = (
@@ -622,7 +1070,8 @@ class CatalogDiscoveryService:
             "mangaId": str(manga.manga_id),
             "slug": manga.slug,
             "title": manga.title,
-            "altTitles": list(alt_titles),
+            "altTitles": [row[0] for row in alt_rows],
+            "altTitleEntries": [{"title": row[0], "languageCode": row[1]} for row in alt_rows],
             "description": manga.description,
             "publicationStatus": manga.publication_status,
             "contentRating": manga.content_rating,
@@ -765,7 +1214,9 @@ class CatalogDiscoveryService:
             return [], 0
 
         stmt = select(MangaModel).where(
-            MangaModel.manga_id.in_(list(roles_by_manga.keys())),
+            MangaModel.manga_id.in_(
+                select(MangaCreatorModel.manga_id).where(MangaCreatorModel.creator_id == creator_id)
+            ),
             MangaModel.visibility_status == "PUBLIC",
             MangaModel.deletion_status == "ACTIVE",
         )

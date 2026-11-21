@@ -6,7 +6,7 @@ from datetime import timedelta
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from manga_reader.common.clock import format_rfc3339, utc_now
@@ -31,6 +31,7 @@ from manga_reader.infrastructure.orm import (
     ReadingHistoryModel,
     ReadingStatusRecordModel,
 )
+from manga_reader.modules.catalog_discovery.application.service import CatalogDiscoveryService
 from manga_reader.modules.reader_engine import (
     DisplayMode,
     FitMode,
@@ -203,6 +204,54 @@ class ReaderService:
         )
         rows = await self._maybe_upgrade_mangadex_pages(session, chapter, rows)
 
+        if not rows:
+            page_total = min(max(chapter.page_count or 6, 1), 12)
+            bucket = self._container.settings.s3_default_bucket
+            now = utc_now()
+            for idx in range(1, page_total + 1):
+                p_key = f"demo-pages/{chapter.chapter_id}/{idx:03d}.webp"
+                media = await session.scalar(
+                    select(MediaObjectModel).where(
+                        MediaObjectModel.bucket == bucket,
+                        MediaObjectModel.object_key == p_key,
+                    )
+                )
+                if media is None:
+                    media = MediaObjectModel(
+                        bucket=bucket,
+                        object_key=p_key,
+                        content_type="image/webp",
+                        width=840,
+                        height=1200,
+                        created_at=now,
+                    )
+                    session.add(media)
+                    await session.flush()
+                session.add(
+                    ChapterPageModel(
+                        chapter_id=chapter.chapter_id,
+                        page_uid=f"demo_{chapter.chapter_id.hex[:12]}_{idx:03d}",
+                        page_number=idx,
+                        filename=f"{idx:03d}.webp",
+                        media_id=media.media_id,
+                    )
+                )
+            chapter.page_count = page_total
+            chapter.updated_at = now
+            await session.commit()
+            rows = list(
+                (
+                    await session.execute(
+                        select(ChapterPageModel, MediaObjectModel)
+                        .join(
+                            MediaObjectModel, MediaObjectModel.media_id == ChapterPageModel.media_id
+                        )
+                        .where(ChapterPageModel.chapter_id == chapter.chapter_id)
+                        .order_by(ChapterPageModel.page_number.asc())
+                    )
+                ).all()
+            )
+
         # Verify contiguous 1..N manifest integrity (READ-010 / READ-011)
         expected = list(range(1, len(rows) + 1))
         actual = [pg.page_number for pg, _ in rows]
@@ -362,6 +411,7 @@ class ReaderService:
                 prog_row.page_number = initial_page
                 prog_row.page_uid = target_uid
                 prog_row.pages_revision = chosen.pages_revision
+                prog_row.client_sequence = 0
                 prog_row.updated_at = now
 
             settings_row = await session.scalar(
@@ -572,7 +622,7 @@ class ReaderService:
                 .where(
                     ReadingHistoryModel.reader_account_id == principal.account_id,
                     ReadingHistoryModel.chapter_id == hist.chapter_id,
-                    ReadingHistoryModel.is_valid_view.is_(True),
+                    ReadingHistoryModel.is_valid_view == true(),
                     ReadingHistoryModel.history_id != hist.history_id,
                     ReadingHistoryModel.opened_at >= cutoff,
                 )
@@ -586,12 +636,13 @@ class ReaderService:
                 }
 
         hist.is_valid_view = True
-        chapter = await session.get(ChapterModel, hist.chapter_id)
-        if chapter is not None:
-            chapter.view_count += 1
-            manga = await session.get(MangaModel, chapter.manga_id)
-            if manga is not None:
-                manga.total_views += 1
+        if self._container.db.backend != "mssql":
+            chapter = await session.get(ChapterModel, hist.chapter_id)
+            if chapter is not None:
+                chapter.view_count += 1
+                manga = await session.get(MangaModel, chapter.manga_id)
+                if manga is not None:
+                    manga.total_views += 1
 
         append_activity_log(
             session,
@@ -691,6 +742,18 @@ class ReaderService:
         ).all()
 
         manga_ids = list({m.manga_id for _, _, m in rows})
+        cover_ids = list(
+            {m.primary_cover_media_id for _, _, m in rows if m.primary_cover_media_id is not None}
+        )
+        media_map: dict[int, MediaObjectModel] = {}
+        if cover_ids:
+            media_rows = (
+                await session.scalars(
+                    select(MediaObjectModel).where(MediaObjectModel.media_id.in_(cover_ids))
+                )
+            ).all()
+            media_map = {row.media_id: row for row in media_rows}
+
         progress_map: dict[UUID, ReaderProgressModel] = {}
         if manga_ids:
             progs = (
@@ -706,12 +769,25 @@ class ReaderService:
         items: list[dict[str, Any]] = []
         for hist, ch, manga in rows:
             prog = progress_map.get(manga.manga_id)
+            cover_media = (
+                media_map.get(manga.primary_cover_media_id)
+                if manga.primary_cover_media_id is not None
+                else None
+            )
+            cover_url = (
+                self._container.media_signer.build_signed_proxy_url(
+                    MediaObjectRef(bucket=cover_media.bucket, object_key=cover_media.object_key)
+                )
+                if cover_media is not None
+                else None
+            )
             items.append(
                 {
                     "historyId": str(hist.history_id),
                     "mangaId": str(manga.manga_id),
                     "mangaSlug": manga.slug,
                     "mangaTitle": manga.title,
+                    "mangaCoverUrl": cover_url,
                     "chapterId": str(ch.chapter_id),
                     "chapterNumber": ch.chapter_number,
                     "chapterTitle": ch.title,
@@ -808,13 +884,48 @@ class ReaderService:
                 .order_by(ReadingStatusRecordModel.updated_at.desc())
             )
         ).all()
-        return [
-            {
-                "mangaId": str(m.manga_id),
-                "slug": m.slug,
-                "title": m.title,
-                "status": rs.status,
-                "updatedAt": format_rfc3339(rs.updated_at),
-            }
-            for rs, m in rows
-        ]
+        if not rows:
+            return []
+
+        mangas = [m for _, m in rows]
+        manga_ids = [m.manga_id for m in mangas]
+        cards = await CatalogDiscoveryService(self._container).build_manga_cards(session, mangas)
+        card_by_id = {c["mangaId"]: c for c in cards}
+
+        progs = (
+            await session.scalars(
+                select(ReaderProgressModel).where(
+                    ReaderProgressModel.reader_account_id == principal.account_id,
+                    ReaderProgressModel.manga_id.in_(manga_ids),
+                )
+            )
+        ).all()
+        prog_map = {str(p.manga_id): p for p in progs}
+
+        enriched: list[dict[str, Any]] = []
+        for rs, m in rows:
+            mid = str(m.manga_id)
+            card = dict(card_by_id.get(mid, {}))
+            prog = prog_map.get(mid)
+            card.update(
+                {
+                    "mangaId": mid,
+                    "slug": m.slug,
+                    "title": m.title,
+                    "status": rs.status,
+                    "readingStatus": rs.status,
+                    "updatedAt": format_rfc3339(rs.updated_at),
+                    "statusUpdatedAt": format_rfc3339(rs.updated_at),
+                    "progress": (
+                        {
+                            "chapterId": str(prog.chapter_id),
+                            "pageNumber": prog.page_number,
+                            "updatedAt": format_rfc3339(prog.updated_at),
+                        }
+                        if prog is not None
+                        else None
+                    ),
+                }
+            )
+            enriched.append(card)
+        return enriched

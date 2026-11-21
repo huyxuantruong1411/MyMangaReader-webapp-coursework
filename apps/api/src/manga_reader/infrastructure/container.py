@@ -58,14 +58,16 @@ class AppContainer:
     @staticmethod
     def _build_storage(settings: Settings) -> ObjectStorageAdapter:
         if settings.storage_backend in ("minio", "s3"):
-            has_creds = bool(
-                settings.s3_access_key.get_secret_value()
-                and settings.s3_secret_key.get_secret_value()
-            )
+            access_key = settings.s3_access_key.get_secret_value()
+            secret_key = settings.s3_secret_key.get_secret_value()
+            has_creds = bool(access_key and secret_key)
             return S3CompatibleStorageAdapter(
                 endpoint_url=settings.s3_endpoint_url,
                 allowed_buckets=settings.allowed_buckets_set,
                 credentials_configured=has_creds,
+                access_key=access_key,
+                secret_key=secret_key,
+                region=settings.s3_region,
             )
         return LocalDevStorageAdapter(
             settings.resolved_local_storage_root,

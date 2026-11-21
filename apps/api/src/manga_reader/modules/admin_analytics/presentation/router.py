@@ -8,8 +8,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 
 from manga_reader.api.v1.dependencies import (
-    get_active_reader_principal,
     get_admin_principal,
+    get_authenticated_principal,
     get_container,
 )
 from manga_reader.api.v1.envelopes import PaginatedEnvelope, PaginatedMeta, SuccessEnvelope
@@ -23,7 +23,7 @@ router = APIRouter(tags=["Admin Analytics & Activity Logs"])
 
 @router.get("/account/me/reading-statistics", response_model=SuccessEnvelope[dict[str, Any]])
 async def get_my_reading_statistics(
-    principal: SecurityPrincipal = Depends(get_active_reader_principal),
+    principal: SecurityPrincipal = Depends(get_authenticated_principal),
     container: AppContainer = Depends(get_container),
 ) -> SuccessEnvelope[dict[str, Any]]:
     assert principal.account_id is not None

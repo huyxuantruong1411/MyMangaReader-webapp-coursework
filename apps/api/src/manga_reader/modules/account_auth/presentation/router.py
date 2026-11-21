@@ -224,7 +224,7 @@ async def get_profile_by_username(
 async def update_my_profile(
     body: UpdateProfileRequest,
     request: Request,
-    principal: SecurityPrincipal = Depends(get_active_reader_principal),
+    principal: SecurityPrincipal = Depends(get_authenticated_principal),
     container: AppContainer = Depends(get_container),
 ) -> SuccessEnvelope[dict[str, Any]]:
     svc = AuthService(container)
@@ -245,7 +245,7 @@ async def update_my_profile(
 async def upload_my_avatar(
     request: Request,
     file: UploadFile = File(...),
-    principal: SecurityPrincipal = Depends(get_active_reader_principal),
+    principal: SecurityPrincipal = Depends(get_authenticated_principal),
     container: AppContainer = Depends(get_container),
 ) -> SuccessEnvelope[dict[str, Any]]:
     raw = await file.read()

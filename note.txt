@@ -6,12 +6,11 @@ Thư mục dự án: d:\work\TH-PTTK\QL-DocTruyen
 Môi trường khuyến nghị: Windows PowerShell (đứng tại thư mục gốc dự án)
 
 Trạng thái hiện tại (SẴN SÀNG CHẠY & TEST NGAY):
-- Đã cấu hình sẵn `.env` cho môi trường local đọc truyện hoàn chỉnh.
-- Đã khởi tạo database sạch 47 bảng (`storage/local-dev/dev.sqlite3`) và nạp sẵn:
-    * 80 bộ truyện phổ biến thật từ SQL Server `MangaLibrary` + 1 bộ test `unknown`
-    * 80 ảnh bìa thật đồng bộ từ MinIO `manga-media` vào `storage/local-dev/`
-    * 1,291 chương thật (`vi` / `en`), 76 tags, 119 tác giả/họa sĩ
-    * Bình luận cộng đồng, đánh giá, lịch sử đọc, 3 danh sách đọc mẫu & 2 báo cáo mẫu
+- Đã cấu hình sẵn `.env` kết nối trực tiếp tới SQL Server `QL_DocTruyen` (`data/QL_DocTruyen.mdf` + `QL_DocTruyen_log.ldf`) và MinIO `manga-media` (`http://127.0.0.1:9010`):
+    * **86,867** bộ truyện (`86,866` bộ thật từ `MangaLibrary` + `1` bộ test `unknown`) = **3,620 trang** (24 truyện/trang)
+    * **70,012** địa chỉ media trong MinIO `manga-media` (**zero-copy**, stream trực tiếp từ MinIO + fallback WebP/CDN trong bộ nhớ, không nhân bản file ảnh ra ổ đĩa)
+    * **1,762,156** chương thật (`chapters` nạp batch set-based; sinh page manifest lười khi mở đọc), **76** tags, **49,937** tác giả/họa sĩ
+    * **617** tài khoản (`admin`/`reader1`/`reader2` + người dùng thật), **6,347** trạng thái đọc, **15,191** lịch sử đọc, **5,295** đánh giá, **4,972** bình luận, **1,195** cảm xúc bình luận, **23** danh sách đọc & **40** báo cáo.
 - Trang đọc truyện hỗ trợ **Hybrid Page Engine**:
     1) Tự động lấy trang truyện thật từ MangaDex At-Home API (cache đĩa local) khi online
     2) Tự động fallback sang trang truyện demo minh họa WebP nếu chapter hết hạn / offline
@@ -61,19 +60,20 @@ Mẹo nhanh:
 4. CÁC CHỨC NĂNG ĐỌC TRUYỆN SẴN SÀNG TEST
 --------------------------------------------------------------------------------
 [Public]
-- /                                : Trang chủ (Gợi ý cá nhân, Mới cập nhật, Đánh giá cao)
-- /explore                         : Khám phá 81 bộ truyện + Lọc đa Tag Include/Exclude (`safe` loại trừ `unknown`)
-- /search                          : Tìm kiếm truyện (tên chính/tên phụ/không dấu) & tác giả/họa sĩ + Autocomplete trên header
-- /manga/:slug                     : Chi tiết truyện, bìa thật, danh sách chương `vi`/`en`, đánh giá 1-10, bình luận, gợi ý
-- /manga/:slug/chapter/:chapterId  : Trình đọc đa chế độ (Webtoon dọc / 1 trang / 2 trang LTR-RTL), giữ đúng trang khi đổi mode
+- /                                : Trang chủ (Hero badge tổng số truyện, Continue Reading, phân trang đầy đủ 86,867 truyện / 3,620 trang cho Latest Updated, Recently Added, Top Rated, Recommendations)
+- /explore  &  /search/advanced    : Khám phá toàn bộ 86,867 bộ truyện + Advanced Search đa tiêu chí (Author/Artist, Year, Exported Chapters, Min Rating + Unrated, Ngôn ngữ gốc vs Ngôn ngữ chương, Lọc đa Tag Include/Exclude 3 trạng thái, View Grid/Compact/List, phân trang nhảy trang trực tiếp)
+- /search                          : Tìm kiếm truyện (tên chính/tên phụ/không dấu) & tác giả/họa sĩ (`author`/`artist`) + Autocomplete trên header (`Ctrl+K`)
+- /manga/:slug                     : Chi tiết truyện, bìa MinIO/fallback, danh sách chương (tìm/lọc volume), đánh giá 1-10, bình luận (`TOP`/`TOP_LIKED`/`NEWEST`), gợi ý
+- /manga/:slug/chapter/:chapterId  : Trình đọc đa chế độ (Webtoon dọc / 1 trang / 2 trang LTR-RTL / Solo Cover / Focus `F` / nền đọc độc lập), giữ đúng trang khi đổi mode
 - /author/:creatorId/:slug         : Trang tác giả / họa sĩ
 - /profile/:username               : Hồ sơ công khai người đọc
 - /login  &  /register             : Đăng nhập, Đăng ký & Xác thực OTP
 
 [Yêu cầu đăng nhập Reader]
-- /history                         : Lịch sử đọc + nút đọc tiếp đúng số trang đã dừng
-- /reading-lists                   : Danh sách đọc riêng tư + Clone/Merge danh sách
-- /reading-lists/:listId           : Chi tiết danh sách + Thống kê metadata động
+- /library                         : Thư viện cá nhân 5 trạng thái (`READING`, `PLAN_TO_READ`, `COMPLETED`, `ON_HOLD`, `DROPPED`) tách biệt khỏi Reading Lists
+- /history                         : Lịch sử đọc phân nhóm theo ngày + nút đọc tiếp đúng số trang đã dừng
+- /reading-lists  &  /lists        : Danh sách đọc riêng tư + Clone/Merge danh sách
+- /reading-lists/:listId           : Chi tiết danh sách + Thống kê metadata động + Xác nhận xóa 2 bước
 - /settings                        : Sửa hồ sơ, Upload Avatar, Đổi mật khẩu, Cài đặt trình đọc, Lịch sử đánh giá, Thống kê cá nhân
 
 [Yêu cầu quyền Administrator]
@@ -89,19 +89,17 @@ Mẹo nhanh:
 # Áp dụng migration mới nhất lên DB hiện tại
 pnpm db:migrate
 
-# Import lại 80 truyện thật + ảnh bìa MinIO từ SQL Server `MangaLibrary` (an toàn chạy lại - idempotent)
+# Đồng bộ lại toàn bộ 86,866 truyện, 1.76M chương và địa chỉ MinIO từ `MangaLibrary` vào SQL Server `QL_DocTruyen` (idempotent, không copy file ảnh)
 pnpm db:import-local
 
-# (Tùy chọn) Seed chỉ 5 truyện mẫu gọn nhẹ không cần SQL Server/MinIO
+# (Tùy chọn) Seed chỉ 5 truyện mẫu gọn nhẹ vào DB cấu hình hiện tại
 pnpm db:seed
 
 # Xem revision migration hiện tại của DB
 pnpm db:current
 
-# Reset hoàn toàn DB SQLite local và nạp lại 80 truyện thật từ `MangaLibrary`:
-Remove-Item -Force -ErrorAction SilentlyContinue "storage/local-dev/dev.sqlite3"
-pnpm db:migrate
-pnpm db:import-local
+# Kiểm tra kết nối trực tiếp tới SQL Server `QL_DocTruyen`:
+uv --directory apps/api run pytest -m live_mssql
 
 --------------------------------------------------------------------------------
 6. CÁC LỆNH CÀI ĐẶT LẠI, KIỂM THỬ, LINT, FORMAT, TYPECHECK & BUILD
@@ -119,8 +117,8 @@ pnpm format:write
 # Chạy lẻ từng bộ test
 pnpm test              # Toàn bộ (Contracts + Web + API/E2E)
 pnpm test:contracts    # Vitest cho JSON Schema Package v2.0 (7 tests)
-pnpm test:web          # Vitest + Testing Library cho Frontend React (11 tests)
-pnpm test:api          # Pytest cho Backend & E2E Acceptance Suite (24 tests)
+pnpm test:web          # Vitest + Testing Library cho Frontend React (14 tests)
+pnpm test:api          # Pytest cho Backend & E2E Acceptance Suite (25 tests)
 
 # Build bản Production
 pnpm build             # Build contracts + web (tạo bundle trong apps/web/dist/)

@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import { NotFoundState } from "../components/StateViews";
 import { ReadingHistoryPage } from "../features/account/HistoryPage";
+import { LibraryPage } from "../features/account/LibraryPage";
 import { ProfilePage } from "../features/account/ProfilePage";
 import { AccountSettingsPage } from "../features/account/SettingsPage";
 import {
@@ -33,6 +34,7 @@ export function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/explore" element={<ExplorePage />} />
+        <Route path="/search/advanced" element={<ExplorePage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/manga/:slug" element={<MangaDetailPage />} />
         <Route path="/author/:creatorId/:slug" element={<AuthorDetailPage />} />
@@ -47,6 +49,7 @@ export function AppRoutes() {
 
       {/* Authenticated Reader Boundary */}
       <Route element={<AuthenticatedLayout />}>
+        <Route path="/library" element={<LibraryPage />} />
         <Route path="/history" element={<ReadingHistoryPage />} />
         <Route path="/reading-lists" element={<ReadingListsPage />} />
         <Route path="/reading-lists/:listId" element={<ReadingListDetailPage />} />

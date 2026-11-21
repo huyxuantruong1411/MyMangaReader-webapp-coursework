@@ -145,6 +145,7 @@ class MangaAltTitleModel(Base):
     manga_id: Mapped[UUID] = mapped_column(
         GUID(), ForeignKey("mangas.manga_id", ondelete="CASCADE"), nullable=False
     )
+    language_code: Mapped[str | None] = mapped_column(String(16), nullable=True)
     alternative_title: Mapped[str] = mapped_column(String(500), nullable=False)
     display_order: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0)
 

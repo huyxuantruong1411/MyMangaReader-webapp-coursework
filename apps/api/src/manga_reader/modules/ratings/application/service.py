@@ -6,7 +6,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import Numeric, cast, false, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from manga_reader.common.clock import format_rfc3339, utc_now
@@ -15,11 +15,14 @@ from manga_reader.common.errors import (
     ResourceNotFoundError,
     ValidationAppError,
 )
+from manga_reader.common.identities import MediaObjectRef
 from manga_reader.common.security import SecurityPrincipal
 from manga_reader.infrastructure.audit_outbox import append_activity_log
+from manga_reader.infrastructure.container import AppContainer
 from manga_reader.infrastructure.orm import (
     ChapterModel,
     MangaModel,
+    MediaObjectModel,
     RatingHistoryModel,
     RatingModel,
     ReadingHistoryModel,
@@ -30,14 +33,20 @@ from manga_reader.modules.ratings import RATING_MAX_SCORE, RATING_MIN_SCORE
 class RatingService:
     """Application service for Module 7 (`ratings`)."""
 
+    def __init__(self, container: AppContainer | None = None) -> None:
+        self._container = container
+
     async def _recompute_average(
         self, session: AsyncSession, manga: MangaModel
     ) -> tuple[float, int]:
         row = (
             await session.execute(
-                select(func.avg(RatingModel.score), func.count(RatingModel.rating_id)).where(
+                select(
+                    func.avg(cast(RatingModel.score, Numeric(9, 3))),
+                    func.count(RatingModel.rating_id),
+                ).where(
                     RatingModel.manga_id == manga.manga_id,
-                    RatingModel.is_removed.is_(False),
+                    RatingModel.is_removed == false(),
                 )
             )
         ).one()
@@ -66,7 +75,7 @@ class RatingService:
             await session.scalar(
                 select(func.count())
                 .select_from(RatingModel)
-                .where(RatingModel.manga_id == manga_id, RatingModel.is_removed.is_(False))
+                .where(RatingModel.manga_id == manga_id, RatingModel.is_removed == false())
             )
             or 0
         )
@@ -77,7 +86,7 @@ class RatingService:
                 select(RatingModel).where(
                     RatingModel.reader_account_id == viewer.account_id,
                     RatingModel.manga_id == manga_id,
-                    RatingModel.is_removed.is_(False),
+                    RatingModel.is_removed == false(),
                 )
             )
             my_score = r.score if r is not None else None
@@ -288,16 +297,43 @@ class RatingService:
                 .limit(page_size)
             )
         ).all()
-        return [
-            {
-                "ratingHistoryId": str(rh.rating_history_id),
-                "mangaId": str(m.manga_id),
-                "mangaSlug": m.slug,
-                "mangaTitle": m.title,
-                "actionType": rh.action_type,
-                "previousScore": rh.previous_score,
-                "newScore": rh.new_score,
-                "recordedAt": format_rfc3339(rh.recorded_at),
-            }
-            for rh, _r, m in rows
-        ], total
+        cover_ids = list(
+            {m.primary_cover_media_id for _, _, m in rows if m.primary_cover_media_id is not None}
+        )
+        media_map: dict[int, MediaObjectModel] = {}
+        if cover_ids and self._container is not None:
+            media_rows = (
+                await session.scalars(
+                    select(MediaObjectModel).where(MediaObjectModel.media_id.in_(cover_ids))
+                )
+            ).all()
+            media_map = {row.media_id: row for row in media_rows}
+
+        items: list[dict[str, Any]] = []
+        for rh, _r, m in rows:
+            cover_media = (
+                media_map.get(m.primary_cover_media_id)
+                if m.primary_cover_media_id is not None
+                else None
+            )
+            cover_url = (
+                self._container.media_signer.build_signed_proxy_url(
+                    MediaObjectRef(bucket=cover_media.bucket, object_key=cover_media.object_key)
+                )
+                if cover_media is not None and self._container is not None
+                else None
+            )
+            items.append(
+                {
+                    "ratingHistoryId": str(rh.rating_history_id),
+                    "mangaId": str(m.manga_id),
+                    "mangaSlug": m.slug,
+                    "mangaTitle": m.title,
+                    "mangaCoverUrl": cover_url,
+                    "actionType": rh.action_type,
+                    "previousScore": rh.previous_score,
+                    "newScore": rh.new_score,
+                    "recordedAt": format_rfc3339(rh.recorded_at),
+                }
+            )
+        return items, total

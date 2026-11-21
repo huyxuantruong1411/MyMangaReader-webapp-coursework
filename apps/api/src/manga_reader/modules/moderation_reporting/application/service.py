@@ -28,6 +28,7 @@ from manga_reader.infrastructure.orm import (
     CommentReportModel,
     MangaModel,
     MangaReportModel,
+    ReaderModel,
     ReportActionHistoryModel,
     ReportModel,
 )
@@ -210,6 +211,24 @@ class ModerationReportingService:
         comment = await session.get(CommentModel, target_comment_id)
         if comment is None or comment.is_deleted:
             raise ResourceNotFoundError("Comment not found.")
+        if comment.reader_account_id == principal.account_id:
+            raise BusinessRuleError(
+                "You cannot report your own comment.", error_code="SELF_REPORT_FORBIDDEN"
+            )
+        dup_report = await session.scalar(
+            select(CommentReportModel.report_id)
+            .join(ReportModel, ReportModel.report_id == CommentReportModel.report_id)
+            .where(
+                CommentReportModel.target_comment_id == comment.comment_id,
+                ReportModel.reporter_reader_account_id == principal.account_id,
+                ReportModel.status == "PENDING",
+            )
+        )
+        if dup_report is not None:
+            raise ConflictError(
+                "You already have a pending report for this comment.",
+                error_code="DUPLICATE_REPORT",
+            )
 
         clean_cat = reason_category.strip()
         if not clean_cat or len(clean_cat) > 100:
@@ -254,10 +273,18 @@ class ModerationReportingService:
                 if sub and sub.target_account_id
                 else None
             )
+            reader = (
+                await session.get(ReaderModel, target.account_id) if target is not None else None
+            )
             return target is not None, {
                 "targetId": str(sub.target_account_id) if sub and sub.target_account_id else None,
                 "snapshot": sub.target_account_snapshot if sub else "",
                 "currentStatus": target.status if target else "MISSING",
+                "username": target.username if target else None,
+                "displayName": reader.display_name
+                if reader
+                else (target.username if target else None),
+                "email": target.email if target else None,
             }
         if report.report_type == "MANGA":
             sub_m = await session.get(MangaReportModel, report.report_id)
@@ -276,6 +303,10 @@ class ModerationReportingService:
                 "chapterSnapshot": sub_m.target_chapter_snapshot if sub_m else None,
                 "currentVisibility": target_m.visibility_status if target_m else "DELETED",
                 "ignoreAllReports": target_m.ignore_all_reports if target_m else False,
+                "mangaTitle": target_m.title if target_m else None,
+                "mangaSlug": target_m.slug if target_m else None,
+                "publicationStatus": target_m.publication_status if target_m else None,
+                "contentRating": target_m.content_rating if target_m else None,
             }
         sub_c = await session.get(CommentReportModel, report.report_id)
         target_c = (
@@ -283,10 +314,38 @@ class ModerationReportingService:
             if sub_c and sub_c.target_comment_id
             else None
         )
+        author_acc = (
+            await session.get(AccountModel, target_c.reader_account_id)
+            if target_c is not None
+            else None
+        )
+        author_reader = (
+            await session.get(ReaderModel, target_c.reader_account_id)
+            if target_c is not None
+            else None
+        )
+        manga_c = await session.get(MangaModel, target_c.manga_id) if target_c is not None else None
+        chapter_c = (
+            await session.get(ChapterModel, target_c.chapter_id)
+            if target_c is not None and target_c.chapter_id is not None
+            else None
+        )
         exists_c = target_c is not None and not target_c.is_deleted
         return exists_c, {
             "targetId": str(sub_c.target_comment_id) if sub_c and sub_c.target_comment_id else None,
             "commentAuthorId": str(target_c.reader_account_id) if target_c else None,
+            "commentAuthorUsername": author_acc.username if author_acc else None,
+            "commentAuthorDisplayName": (
+                author_reader.display_name
+                if author_reader
+                else (author_acc.username if author_acc else None)
+            ),
+            "mangaId": str(target_c.manga_id) if target_c else None,
+            "mangaTitle": manga_c.title if manga_c else None,
+            "mangaSlug": manga_c.slug if manga_c else None,
+            "chapterId": str(target_c.chapter_id) if target_c and target_c.chapter_id else None,
+            "chapterNumber": chapter_c.chapter_number if chapter_c else None,
+            "createdAt": format_rfc3339(target_c.created_at) if target_c else None,
             "snapshot": sub_c.target_comment_snapshot if sub_c else "",
             "isDeleted": target_c.is_deleted if target_c else True,
             "isSpoilerLocked": target_c.is_spoiler_locked_by_admin if target_c else False,
@@ -319,9 +378,19 @@ class ModerationReportingService:
             )
         ).all()
 
+        reporter_ids = list({r.reporter_reader_account_id for r in rows})
+        reporter_map: dict[UUID, AccountModel] = {}
+        if reporter_ids:
+            rep_rows = (
+                await session.scalars(
+                    select(AccountModel).where(AccountModel.account_id.in_(reporter_ids))
+                )
+            ).all()
+            reporter_map = {acc.account_id: acc for acc in rep_rows}
+
         items: list[dict[str, Any]] = []
         for r in rows:
-            reporter = await session.get(AccountModel, r.reporter_reader_account_id)
+            reporter = reporter_map.get(r.reporter_reader_account_id)
             target_exists, target_info = await self._inspect_target_state(session, r)
             items.append(
                 {

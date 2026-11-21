@@ -15,6 +15,12 @@ class CatalogSortOption(StrEnum):
     VIEWS_DESC = "VIEWS_DESC"
     RATING_DESC = "RATING_DESC"
     TITLE_ASC = "TITLE_ASC"
+    TITLE_DESC = "TITLE_DESC"
+    CREATED_DESC = "CREATED_DESC"
+    YEAR_DESC = "YEAR_DESC"
+    YEAR_ASC = "YEAR_ASC"
+    CHAPTERS_DESC = "CHAPTERS_DESC"
+    RELEVANCE = "RELEVANCE"
 
 
 __all__ = ["CatalogSortOption"]

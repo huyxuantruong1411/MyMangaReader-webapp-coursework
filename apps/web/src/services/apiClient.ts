@@ -24,6 +24,7 @@ import type {
   ReaderSettingsData,
   ReaderStatsPayload,
   ReadingHistoryEntry,
+  ReadingLibraryEntry,
   ReadingListItem,
   RecommendationPayload,
   TagItem,
@@ -251,9 +252,9 @@ export class ApiClient {
     return this.request<ReaderStatsPayload>("/account/me/reading-statistics");
   }
 
-  public getMyRatingHistory(page: number = 1) {
+  public getMyRatingHistory(page: number = 1, pageSize: number = 20) {
     return this.requestRaw<ApiPaginatedEnvelope<RatingHistoryEntry>>(
-      `/account/me/rating-history${toQuery({ page, pageSize: 20 })}`,
+      `/account/me/rating-history${toQuery({ page, pageSize })}`,
     );
   }
 
@@ -263,6 +264,7 @@ export class ApiClient {
   }
 
   public listCatalog(params: {
+    q?: string;
     sort?: string;
     includeTags?: string;
     excludeTags?: string;
@@ -271,8 +273,20 @@ export class ApiClient {
     status?: string;
     contentRating?: string;
     language?: string;
+    originalLanguage?: string;
+    chapterLanguage?: string;
+    author?: string;
+    artist?: string;
     yearFrom?: number;
     yearTo?: number;
+    chaptersMin?: number;
+    chaptersMax?: number;
+    ratingMin?: number;
+    includeUnrated?: boolean;
+    viewsMin?: number;
+    addedDays?: number;
+    hideInStatus?: boolean;
+    hideInLists?: boolean;
     page?: number;
     pageSize?: number;
   }) {
@@ -358,9 +372,9 @@ export class ApiClient {
     });
   }
 
-  public getReadingHistory(page: number = 1) {
+  public getReadingHistory(page: number = 1, pageSize: number = 24) {
     return this.requestRaw<ApiPaginatedEnvelope<ReadingHistoryEntry>>(
-      `/reader/history${toQuery({ page, pageSize: 24 })}`,
+      `/reader/history${toQuery({ page, pageSize })}`,
     );
   }
 
@@ -376,6 +390,10 @@ export class ApiClient {
       `/manga/${encodeURIComponent(mangaId)}/reading-status`,
       { method: "DELETE" },
     );
+  }
+
+  public listMyReadingStatuses() {
+    return this.request<ReadingLibraryEntry[]>("/account/me/reading-status");
   }
 
   // Ratings
@@ -497,6 +515,8 @@ export class ApiClient {
       status?: string;
       readingStatus?: string;
       sort?: string;
+      page?: number;
+      pageSize?: number;
     } = {},
   ) {
     return this.requestRaw<ApiPaginatedEnvelope<MangaCardItem>>(

@@ -53,6 +53,7 @@ from manga_reader.infrastructure.orm import (
     MangaSyncSubscriptionModel,
     MangaTagModel,
     MediaObjectModel,
+    ReaderProgressModel,
     TagModel,
     TagNameModel,
 )
@@ -197,6 +198,7 @@ class EtlCdcService:
                     updated_at=now,
                 )
             )
+            await session.flush()
         else:
             stats.chapter_count = chapter_count
             stats.page_count = page_count
@@ -628,6 +630,7 @@ class EtlCdcService:
                 started_at=now,
             )
             db.add(job)
+            await db.flush()
             item_rows: list[tuple[UUID, dict[str, Any]]] = []
             for spec in items:
                 item_id = uuid4()
@@ -976,6 +979,11 @@ class EtlCdcService:
                         )
                     )
                     if ch_del is not None:
+                        await session.execute(
+                            delete(ReaderProgressModel).where(
+                                ReaderProgressModel.chapter_id == ch_del.chapter_id
+                            )
+                        )
                         await session.delete(ch_del)
                         await self._recompute_manga_stats(session, manga.manga_id)
             else:

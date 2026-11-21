@@ -1,12 +1,21 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { CatalogPagination } from "../../components/CatalogPagination";
 import { EmptyState, ErrorState, LoadingState } from "../../components/StateViews";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { ApiClientError, apiClient } from "../../services/apiClient";
+
+const LISTS_PAGE_SIZE = 12;
 
 export function ReadingListsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 250);
+  const [sort, setSort] = useState<"UPDATED_DESC" | "ITEMS_DESC" | "NAME_ASC" | "NAME_DESC">(
+    "UPDATED_DESC",
+  );
+  const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
@@ -21,8 +30,8 @@ export function ReadingListsPage() {
   const [busy, setBusy] = useState(false);
 
   const listsQuery = useQuery({
-    queryKey: ["lists", "my", search],
-    queryFn: () => apiClient.listMyLists(search.trim() || undefined),
+    queryKey: ["lists", "my", debouncedSearch],
+    queryFn: () => apiClient.listMyLists(debouncedSearch.trim() || undefined),
   });
 
   function refresh() {
@@ -87,7 +96,30 @@ export function ReadingListsPage() {
     setNeedsEmptyConfirm(false);
   }
 
-  const lists = listsQuery.data?.data ?? [];
+  const lists = useMemo(() => listsQuery.data?.data ?? [], [listsQuery.data]);
+
+  const sortedLists = useMemo(() => {
+    const copy = [...lists];
+    if (sort === "ITEMS_DESC") {
+      copy.sort((a, b) => b.itemCount - a.itemCount);
+    } else if (sort === "NAME_ASC") {
+      copy.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sort === "NAME_DESC") {
+      copy.sort((a, b) => b.name.localeCompare(a.name));
+    } else {
+      copy.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    }
+    return copy;
+  }, [lists, sort]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, sort]);
+
+  const pagedLists = useMemo(() => {
+    const start = (page - 1) * LISTS_PAGE_SIZE;
+    return sortedLists.slice(start, start + LISTS_PAGE_SIZE);
+  }, [sortedLists, page]);
 
   return (
     <div className="space-y-6">
@@ -130,18 +162,39 @@ export function ReadingListsPage() {
         </div>
       </div>
 
-      <input
-        type="search"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search your lists by name..."
-        className="w-full max-w-sm rounded-[var(--mr-radius-sm)] border px-3 py-1.5 text-sm"
-        style={{
-          backgroundColor: "var(--mr-bg-surface)",
-          borderColor: "var(--mr-border-strong)",
-          color: "var(--mr-text-primary)",
-        }}
-      />
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+        <input
+          type="search"
+          aria-label="Search reading lists"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search your lists by name..."
+          className="w-full max-w-sm rounded-[var(--mr-radius-sm)] border px-3 py-1.5 text-sm"
+          style={{
+            backgroundColor: "var(--mr-bg-surface)",
+            borderColor: "var(--mr-border-strong)",
+            color: "var(--mr-text-primary)",
+          }}
+        />
+        <select
+          aria-label="Sort reading lists"
+          value={sort}
+          onChange={(e) =>
+            setSort(e.target.value as "UPDATED_DESC" | "ITEMS_DESC" | "NAME_ASC" | "NAME_DESC")
+          }
+          className="rounded-[var(--mr-radius-sm)] border px-2.5 py-1.5"
+          style={{
+            backgroundColor: "var(--mr-bg-surface)",
+            borderColor: "var(--mr-border-strong)",
+            color: "var(--mr-text-primary)",
+          }}
+        >
+          <option value="UPDATED_DESC">Recently Updated</option>
+          <option value="ITEMS_DESC">Most Manga</option>
+          <option value="NAME_ASC">Name (A–Z)</option>
+          <option value="NAME_DESC">Name (Z–A)</option>
+        </select>
+      </div>
 
       {error ? (
         <p role="alert" className="text-xs font-medium" style={{ color: "var(--mr-danger)" }}>
@@ -313,47 +366,57 @@ export function ReadingListsPage() {
           description="Create your first private reading list to organize manga and view metadata analytics."
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {lists.map((lst) => (
-            <Link
-              key={lst.listId}
-              to={`/reading-lists/${lst.listId}`}
-              className="flex flex-col justify-between rounded-[var(--mr-radius-md)] border p-4 transition-colors"
-              style={{
-                backgroundColor: "var(--mr-bg-surface)",
-                borderColor: "var(--mr-border-subtle)",
-              }}
-            >
-              <div>
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="font-semibold" style={{ color: "var(--mr-text-primary)" }}>
-                    {lst.name}
-                  </h2>
-                  <span
-                    className="rounded px-2 py-0.5 font-mono text-xs"
-                    style={{
-                      backgroundColor: "var(--mr-bg-elevated)",
-                      color: "var(--mr-accent)",
-                    }}
-                  >
-                    {lst.itemCount} titles
-                  </span>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {pagedLists.map((lst) => (
+              <Link
+                key={lst.listId}
+                to={`/reading-lists/${lst.listId}`}
+                className="flex flex-col justify-between rounded-[var(--mr-radius-md)] border p-4 transition-colors"
+                style={{
+                  backgroundColor: "var(--mr-bg-surface)",
+                  borderColor: "var(--mr-border-subtle)",
+                }}
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="font-semibold" style={{ color: "var(--mr-text-primary)" }}>
+                      {lst.name}
+                    </h2>
+                    <span
+                      className="rounded px-2 py-0.5 font-mono text-xs"
+                      style={{
+                        backgroundColor: "var(--mr-bg-elevated)",
+                        color: "var(--mr-accent)",
+                      }}
+                    >
+                      {lst.itemCount} titles
+                    </span>
+                  </div>
+                  {lst.description ? (
+                    <p
+                      className="mt-1.5 line-clamp-2 text-xs"
+                      style={{ color: "var(--mr-text-secondary)" }}
+                    >
+                      {lst.description}
+                    </p>
+                  ) : null}
                 </div>
-                {lst.description ? (
-                  <p
-                    className="mt-1.5 line-clamp-2 text-xs"
-                    style={{ color: "var(--mr-text-secondary)" }}
-                  >
-                    {lst.description}
-                  </p>
-                ) : null}
-              </div>
-              <p className="mt-3 text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
-                Private · Updated {new Date(lst.updatedAt).toLocaleDateString()}
-              </p>
-            </Link>
-          ))}
-        </div>
+                <p className="mt-3 text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
+                  Private · Updated {new Date(lst.updatedAt).toLocaleDateString()}
+                </p>
+              </Link>
+            ))}
+          </div>
+          <CatalogPagination
+            page={page}
+            total={sortedLists.length}
+            pageSize={LISTS_PAGE_SIZE}
+            hasNext={page * LISTS_PAGE_SIZE < sortedLists.length}
+            onPageChange={setPage}
+            label="Reading lists pagination"
+          />
+        </>
       )}
     </div>
   );

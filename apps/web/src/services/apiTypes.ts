@@ -70,6 +70,7 @@ export interface MangaCardItem {
   mangaId: string;
   slug: string;
   title: string;
+  description?: string;
   coverUrl: string | null;
   publicationStatus: string;
   contentRating: string;
@@ -78,6 +79,14 @@ export interface MangaCardItem {
   year: number | null;
   totalViews: number;
   averageRating: number;
+  exportedChapterCount?: number;
+  chapterLanguages?: string[];
+  creators?: Array<{
+    creatorId: string;
+    slug: string;
+    name: string;
+    roles: string[];
+  }>;
   latestChapter: {
     chapterId: string;
     chapterNumber: string;
@@ -93,8 +102,23 @@ export interface MangaCardItem {
   recommendationScore?: number;
 }
 
+export interface ReadingLibraryEntry extends MangaCardItem {
+  status: string;
+  readingStatus: string;
+  statusUpdatedAt?: string;
+  progress: {
+    chapterId: string;
+    pageNumber: number;
+    updatedAt: string;
+  } | null;
+}
+
 export interface MangaDetail extends MangaCardItem {
   altTitles: string[];
+  altTitleEntries?: Array<{
+    title: string;
+    languageCode: string | null;
+  }>;
   description: string;
   publishedStartDate: string | null;
   publishedEndDate: string | null;
@@ -229,7 +253,12 @@ export interface CommentItem {
   mangaId: string;
   chapterId: string | null;
   parentCommentId: string | null;
-  author: { accountId: string; username: string; displayName: string };
+  author: {
+    accountId: string;
+    username: string;
+    displayName: string;
+    avatarUrl?: string | null;
+  };
   content: string;
   isDeleted: boolean;
   isSpoiler: boolean;
@@ -257,6 +286,7 @@ export interface ReadingHistoryEntry {
   mangaId: string;
   mangaSlug: string;
   mangaTitle: string;
+  mangaCoverUrl?: string | null;
   chapterId: string;
   chapterNumber: string;
   chapterTitle: string;
@@ -272,6 +302,7 @@ export interface RatingHistoryEntry {
   mangaId: string;
   mangaSlug: string;
   mangaTitle: string;
+  mangaCoverUrl?: string | null;
   actionType: "CREATE" | "UPDATE" | "REMOVE";
   previousScore: number | null;
   newScore: number | null;

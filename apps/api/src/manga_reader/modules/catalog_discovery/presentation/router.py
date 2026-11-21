@@ -33,6 +33,7 @@ async def list_tags(
 
 @router.get("/manga", response_model=PaginatedEnvelope[dict[str, Any]])
 async def list_public_catalog(
+    q: str | None = Query(default=None),
     sort: str = Query(default="UPDATED_DESC"),
     include_tags: str | None = Query(default=None, alias="includeTags"),
     exclude_tags: str | None = Query(default=None, alias="excludeTags"),
@@ -41,10 +42,23 @@ async def list_public_catalog(
     status: str | None = Query(default=None),
     content_rating: str | None = Query(default=None, alias="contentRating"),
     language: str | None = Query(default=None),
+    original_language: str | None = Query(default=None, alias="originalLanguage"),
+    chapter_language: str | None = Query(default=None, alias="chapterLanguage"),
+    author: str | None = Query(default=None),
+    artist: str | None = Query(default=None),
     year_from: int | None = Query(default=None, alias="yearFrom"),
     year_to: int | None = Query(default=None, alias="yearTo"),
+    chapters_min: int | None = Query(default=None, alias="chaptersMin"),
+    chapters_max: int | None = Query(default=None, alias="chaptersMax"),
+    rating_min: float | None = Query(default=None, alias="ratingMin"),
+    include_unrated: bool = Query(default=False, alias="includeUnrated"),
+    views_min: int | None = Query(default=None, alias="viewsMin"),
+    added_days: int | None = Query(default=None, alias="addedDays"),
+    hide_in_status: bool = Query(default=False, alias="hideInStatus"),
+    hide_in_lists: bool = Query(default=False, alias="hideInLists"),
     page: int = Query(default=1, ge=1),
     page_size: int | None = Query(default=None, alias="pageSize"),
+    viewer: SecurityPrincipal = Depends(get_current_principal),
     container: AppContainer = Depends(get_container),
 ) -> PaginatedEnvelope[dict[str, Any]]:
     pg = PaginationParams.create(
@@ -54,19 +68,33 @@ async def list_public_catalog(
         max_page_size=container.settings.catalog_max_page_size,
     )
     svc = CatalogDiscoveryService(container)
+    resolved_orig_lang = original_language or language
     async with container.db.session() as db:
         items, total = await svc.list_catalog(
             db,
+            q=q,
             sort=sort,
             include_tags=_split_csv(include_tags),
             exclude_tags=_split_csv(exclude_tags),
             tag_mode=tag_mode,
-            demographic=demographic,
-            status=status,
+            demographic=_split_csv(demographic),
+            status=_split_csv(status),
             content_rating=_split_csv(content_rating),
-            language=language,
+            language=_split_csv(resolved_orig_lang),
+            chapter_language=_split_csv(chapter_language),
+            author=author,
+            artist=artist,
             year_from=year_from,
             year_to=year_to,
+            chapters_min=chapters_min,
+            chapters_max=chapters_max,
+            rating_min=rating_min,
+            include_unrated=include_unrated,
+            views_min=views_min,
+            added_days=added_days,
+            hide_in_status=hide_in_status,
+            hide_in_lists=hide_in_lists,
+            viewer=viewer,
             page=pg.page,
             page_size=pg.page_size,
         )

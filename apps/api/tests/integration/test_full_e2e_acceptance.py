@@ -564,3 +564,183 @@ async def test_e2e_1_3_4_5_full_platform_lifecycle(api_client: AsyncClient, app:
     assert reconcile_res.status_code == 200
     logs_res = await api_client.get("/api/v1/admin/activity-logs", headers=admin_hdr)
     assert logs_res.status_code == 200 and len(logs_res.json()["data"]) > 0
+
+
+async def test_advanced_search_and_bug_fixes(api_client: AsyncClient, app: FastAPI) -> None:
+    """Verify BUG-01..BUG-05 fixes, Advanced Search facets, and enriched Library endpoint."""
+    _admin_id, admin_pw = await _seed_admin(app, "admin_adv")
+    admin_tok = await _login_admin(api_client, "admin_adv", admin_pw)
+    admin_hdr = {"Authorization": f"Bearer {admin_tok}"}
+
+    sources = (await api_client.get("/api/v1/admin/external-sources", headers=admin_hdr)).json()[
+        "data"
+    ]
+    etl_res = await api_client.post(
+        "/api/v1/admin/etl-sync",
+        headers=admin_hdr,
+        json={
+            "items": [
+                {
+                    "poolMangaId": s["poolMangaId"],
+                    "sourceMangaId": s["sourceMangaId"],
+                    "enableCdc": False,
+                }
+                for s in sources
+            ]
+        },
+    )
+    assert etl_res.status_code == 202
+
+    _r_id, r_tok, _ = await _register_and_login_reader(
+        api_client, app, username="reader_adv", email="adv@test.local"
+    )
+    _r2_id, r2_tok, _ = await _register_and_login_reader(
+        api_client, app, username="reader_adv2", email="adv2@test.local"
+    )
+    r_hdr = {"Authorization": f"Bearer {r_tok}"}
+    r2_hdr = {"Authorization": f"Bearer {r2_tok}"}
+
+    # BUG-01: ALL_AND requires ALL included tags (only Azure Blade has action + fantasy)
+    group_or_res = await api_client.get("/api/v1/manga?includeTags=action,fantasy&tagMode=GROUP_OR")
+    assert group_or_res.status_code == 200
+    group_or_slugs = {m["slug"] for m in group_or_res.json()["data"]}
+    assert "chronicles-of-the-azure-blade" in group_or_slugs
+    assert "starlight-atelier" in group_or_slugs
+
+    all_and_res = await api_client.get("/api/v1/manga?includeTags=action,fantasy&tagMode=ALL_AND")
+    assert all_and_res.status_code == 200
+    all_and_slugs = {m["slug"] for m in all_and_res.json()["data"]}
+    assert all_and_slugs == {"chronicles-of-the-azure-blade"}
+
+    # BUG-02: Multi-demographic + kodomo/unknown support without error
+    demo_res = await api_client.get("/api/v1/manga?demographic=shounen,shoujo,kodomo")
+    assert demo_res.status_code == 200
+    assert {m["slug"] for m in demo_res.json()["data"]} >= {
+        "chronicles-of-the-azure-blade",
+        "starlight-atelier",
+    }
+
+    # BUG-03: Case-insensitive creator search role filter
+    cr_upper = await api_client.get("/api/v1/creators/search?q=Akira&role=AUTHOR")
+    assert cr_upper.status_code == 200
+    assert cr_upper.json()["data"][0]["slug"] == "akira-kuroda"
+
+    # Advanced search facets: chapterLanguage, author+artist, chaptersMin/Max, title q, sort
+    vi_ch = await api_client.get("/api/v1/manga?chapterLanguage=vi")
+    assert vi_ch.status_code == 200
+    assert {m["slug"] for m in vi_ch.json()["data"]} == {"chronicles-of-the-azure-blade"}
+
+    creator_filtered = await api_client.get(
+        "/api/v1/manga?author=Hana&artist=Ren&chaptersMin=3&chaptersMax=3"
+    )
+    assert creator_filtered.status_code == 200
+    assert [m["slug"] for m in creator_filtered.json()["data"]] == ["starlight-atelier"]
+
+    q_filtered = await api_client.get(
+        "/api/v1/manga?q=Bien+Nien+Su+Lam+Kiem&sort=RELEVANCE&originalLanguage=ja"
+    )
+    assert q_filtered.status_code == 200
+    assert q_filtered.json()["data"][0]["slug"] == "chronicles-of-the-azure-blade"
+    assert q_filtered.json()["data"][0]["exportedChapterCount"] == 5
+
+    # Invalid inverted ranges rejected cleanly with 400 INVALID_FILTER
+    bad_range = await api_client.get("/api/v1/manga?chaptersMin=10&chaptersMax=2")
+    assert bad_range.status_code == 400
+    assert bad_range.json()["error"]["code"] == "INVALID_FILTER"
+
+    # Personal Library + hideInStatus + hideInLists + TOP_LIKED comments (BUG-05)
+    azure_id = q_filtered.json()["data"][0]["mangaId"]
+    azure_detail = await api_client.get("/api/v1/manga/chronicles-of-the-azure-blade")
+    assert azure_detail.status_code == 200
+    assert isinstance(azure_detail.json()["data"].get("altTitleEntries"), list)
+    assert len(azure_detail.json()["data"]["altTitleEntries"]) >= 1
+    await api_client.put(
+        f"/api/v1/manga/{azure_id}/reading-status",
+        headers=r_hdr,
+        json={"status": "READING"},
+    )
+    lib_res = await api_client.get("/api/v1/account/me/reading-status", headers=r_hdr)
+    assert lib_res.status_code == 200
+    assert lib_res.json()["data"][0]["readingStatus"] == "READING"
+    assert lib_res.json()["data"][0]["slug"] == "chronicles-of-the-azure-blade"
+
+    hidden_status_res = await api_client.get("/api/v1/manga?hideInStatus=true", headers=r_hdr)
+    assert hidden_status_res.status_code == 200
+    assert azure_id not in {m["mangaId"] for m in hidden_status_res.json()["data"]}
+
+    c1 = (
+        await api_client.post(
+            "/api/v1/comments",
+            headers=r_hdr,
+            json={"mangaId": azure_id, "content": "First comment", "isSpoiler": False},
+        )
+    ).json()["data"]
+    c2 = (
+        await api_client.post(
+            "/api/v1/comments",
+            headers=r2_hdr,
+            json={"mangaId": azure_id, "content": "Second popular comment", "isSpoiler": False},
+        )
+    ).json()["data"]
+    await api_client.put(
+        f"/api/v1/comments/{c2['commentId']}/reaction",
+        headers=r_hdr,
+        json={"reactionType": "LIKE"},
+    )
+    top_liked = await api_client.get(f"/api/v1/comments?mangaId={azure_id}&sort=TOP_LIKED")
+    assert top_liked.status_code == 200
+    assert top_liked.json()["data"][0]["commentId"] == c2["commentId"]
+    assert top_liked.json()["data"][1]["commentId"] == c1["commentId"]
+
+
+async def test_admin_without_reader_row_can_upload_avatar_and_update_profile(
+    api_client: AsyncClient, app: FastAPI
+) -> None:
+    """Active ADMIN accounts without a pre-existing ReaderModel row can still upload avatars."""
+    container: AppContainer = app.state.container
+    now = utc_now()
+    aid = uuid4()
+    pw = "Admin@123456"
+    async with container.db.session() as db:
+        db.add(
+            AccountModel(
+                account_id=aid,
+                username="admin_no_reader",
+                email="admin_no_reader@test.local",
+                password_hash=container.password_hasher.hash(pw),
+                status="ACTIVE",
+                last_status_change_at=now,
+                created_at=now,
+            )
+        )
+        await db.flush()
+        db.add(AdminModel(account_id=aid, admin_code="ADM-NOREADER", role_level="SUPER_ADMIN"))
+        await db.commit()
+
+    admin_tok = await _login_admin(api_client, "admin_no_reader", pw)
+    admin_hdr = {"Authorization": f"Bearer {admin_tok}"}
+
+    img_buf = io.BytesIO()
+    Image.new("RGB", (64, 64), (200, 80, 40)).save(img_buf, format="PNG")
+    av_res = await api_client.post(
+        "/api/v1/account/avatar",
+        headers=admin_hdr,
+        files={"file": ("admin-avatar.png", img_buf.getvalue(), "image/png")},
+    )
+    assert av_res.status_code == 200, av_res.text
+    avatar_url = av_res.json()["data"]["avatarUrl"]
+    assert avatar_url and "/api/v1/media/" in avatar_url
+
+    prof_res = await api_client.patch(
+        "/api/v1/account/profile",
+        headers=admin_hdr,
+        json={"displayName": "Lead Moderator", "bio": "Platform steward"},
+    )
+    assert prof_res.status_code == 200, prof_res.text
+    assert prof_res.json()["data"]["displayName"] == "Lead Moderator"
+    assert prof_res.json()["data"]["bio"] == "Platform steward"
+    assert "/api/v1/media/" in (prof_res.json()["data"]["avatarUrl"] or "")
+
+    stats_res = await api_client.get("/api/v1/account/me/reading-statistics", headers=admin_hdr)
+    assert stats_res.status_code == 200, stats_res.text
+    assert stats_res.json()["data"]["accountId"] == str(aid)

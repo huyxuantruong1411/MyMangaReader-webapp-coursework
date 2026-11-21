@@ -20,8 +20,10 @@ from manga_reader.common.pagination import PaginationParams
 from manga_reader.common.security import SecurityPrincipal
 from manga_reader.infrastructure.container import AppContainer
 from manga_reader.infrastructure.orm import ChapterModel, MangaModel
+from manga_reader.modules.etl_cdc.infrastructure.sample_upstream import render_placeholder_webp
 from manga_reader.modules.reader_engine.application.service import ReaderService
 from manga_reader.modules.reader_engine.infrastructure.mangadex_fallback import (
+    _pick_accent_rgb,
     fetch_mangadex_at_home,
     fetch_remote_image_bytes,
     is_mangadex_uuid,
@@ -232,11 +234,79 @@ async def list_my_reading_statuses(
         return SuccessEnvelope(data=await svc.list_my_reading_statuses(db, principal=principal))
 
 
+async def _resolve_lazy_cover(
+    container: AppContainer,
+    ref: MediaObjectRef,
+) -> tuple[bytes, str] | None:
+    """Resolve missing cover objects in-memory via MangaDex cover CDN or WebP fallback (zero disk copy)."""
+    if not ref.object_key.startswith("covers/"):
+        return None
+    parts = ref.object_key.split("/")
+    manga_uuid: UUID | None = None
+    filename = parts[-1] if parts else ""
+    if len(parts) == 3:
+        try:
+            manga_uuid = UUID(parts[1])
+        except ValueError:
+            manga_uuid = None
+    elif len(parts) == 4 and parts[1] == "local":
+        try:
+            manga_uuid = UUID(parts[2])
+        except ValueError:
+            manga_uuid = None
+
+    if (
+        len(parts) == 3
+        and manga_uuid is not None
+        and not filename.startswith("cover.")
+        and container.settings.mangadex_fallback_enabled
+    ):
+        for candidate in (
+            f"https://uploads.mangadex.org/covers/{manga_uuid}/{filename}.256.jpg",
+            f"https://uploads.mangadex.org/covers/{manga_uuid}/{filename}",
+        ):
+            fetched = await fetch_remote_image_bytes(candidate)
+            if fetched is not None:
+                return fetched
+
+    manga_title = "Manga Library"
+    subtitle = "CATALOG COVER"
+    if manga_uuid is not None:
+        async with container.db.session() as db:
+            manga = await db.get(MangaModel, manga_uuid)
+            if manga is not None:
+                manga_title = manga.title
+                subtitle = (
+                    f"{manga.publication_demographic.upper()} | {manga.publication_status.upper()}"
+                )
+
+    raw, _, _ = render_placeholder_webp(
+        title=manga_title,
+        subtitle=subtitle,
+        accent_rgb=_pick_accent_rgb(manga_title),
+        width=600,
+        height=860,
+    )
+    return raw, "image/webp"
+
+
 async def _resolve_lazy_chapter_page(
     container: AppContainer,
     ref: MediaObjectRef,
 ) -> tuple[bytes, str] | None:
-    """Resolve `mangadex-cache/` via live MangaDex proxy or render `demo-pages/` fallback WebP."""
+    """Resolve `covers/` / `mangadex-cache/` / `demo-pages/` in-memory (no local disk bloat under MinIO)."""
+    if ref.object_key.startswith("covers/"):
+        return await _resolve_lazy_cover(container, ref)
+    if ref.object_key.startswith("avatars/"):
+        raw, _, _ = render_placeholder_webp(
+            title="Reader",
+            subtitle="AVATAR",
+            accent_rgb=(56, 189, 248),
+            width=256,
+            height=256,
+        )
+        return raw, "image/webp"
+
     parts = ref.object_key.split("/")
     if len(parts) != 3 or parts[0] not in ("mangadex-cache", "demo-pages"):
         return None
@@ -247,7 +317,9 @@ async def _resolve_lazy_chapter_page(
     except (ValueError, IndexError):
         return None
 
-    # 1. Try MangaDex live CDN proxy + disk cache for `mangadex-cache/`
+    is_local_dev = container.settings.storage_backend == "local-dev"
+
+    # 1. Try MangaDex live CDN proxy (disk-cached only in local-dev mode)
     if prefix == "mangadex-cache" and container.settings.mangadex_fallback_enabled:
         remote_url = await container.cache.get(f"mdex:page:{ch_uuid}:{page_num:03d}")
         if remote_url is None:
@@ -269,7 +341,8 @@ async def _resolve_lazy_chapter_page(
             fetched = await fetch_remote_image_bytes(remote_url)
             if fetched is not None:
                 raw_bytes, ct = fetched
-                await container.storage.put_bytes(ref, raw_bytes, content_type=ct)
+                if is_local_dev:
+                    await container.storage.put_bytes(ref, raw_bytes, content_type=ct)
                 return raw_bytes, ct
 
     # 2. Render crisp illustrated fallback WebP page using chapter/manga metadata
@@ -297,7 +370,7 @@ async def _resolve_lazy_chapter_page(
         page_number=page_num,
         total_pages=total_pages,
     )
-    if prefix == "demo-pages":
+    if prefix == "demo-pages" and is_local_dev:
         await container.storage.put_bytes(ref, demo_bytes, content_type="image/webp")
     return demo_bytes, "image/webp"
 

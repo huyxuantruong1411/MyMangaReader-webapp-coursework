@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, false, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from manga_reader.common.clock import format_rfc3339, utc_now
@@ -671,7 +671,7 @@ class ReadingListService:
                     select(RatingModel.manga_id)
                     .where(
                         RatingModel.manga_id.in_(manga_ids),
-                        RatingModel.is_removed.is_(False),
+                        RatingModel.is_removed == false(),
                     )
                     .distinct()
                 )

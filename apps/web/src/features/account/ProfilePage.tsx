@@ -1,15 +1,22 @@
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRef, useState, type ChangeEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ReportModal } from "../../components/ReportModal";
 import { ErrorState, LoadingState, NotFoundState } from "../../components/StateViews";
+import { UserAvatar } from "../../components/UserAvatar";
 import { useAuth } from "../../hooks/useAuth";
 import { ApiClientError, apiClient } from "../../services/apiClient";
 
 export function ProfilePage() {
   const { username = "" } = useParams();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, refreshProfile } = useAuth();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarNotice, setAvatarNotice] = useState<{ tone: "ok" | "err"; text: string } | null>(
+    null,
+  );
 
   const profileQuery = useQuery({
     queryKey: ["profile", username],
@@ -35,6 +42,31 @@ export function ProfilePage() {
 
   const isOwnProfile = user?.accountId === profile.accountId;
 
+  async function handleAvatarFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarNotice({ tone: "err", text: "Image file must be 5 MB or smaller." });
+      return;
+    }
+    setAvatarBusy(true);
+    setAvatarNotice(null);
+    try {
+      await apiClient.uploadAvatar(file);
+      await refreshProfile();
+      await queryClient.invalidateQueries({ queryKey: ["profile", username] });
+      setAvatarNotice({ tone: "ok", text: "Avatar image updated successfully." });
+    } catch (err) {
+      setAvatarNotice({
+        tone: "err",
+        text: err instanceof ApiClientError ? err.message : "Failed to upload avatar image.",
+      });
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
+
   return (
     <section
       className="mx-auto max-w-2xl space-y-5 rounded-[var(--mr-radius-lg)] border p-6"
@@ -43,24 +75,50 @@ export function ProfilePage() {
         borderColor: "var(--mr-border-subtle)",
       }}
     >
-      <div className="flex flex-wrap items-center gap-4">
+      {avatarNotice ? (
         <div
-          className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border text-xl font-bold"
+          role="status"
+          className="rounded-[var(--mr-radius-sm)] border px-3 py-2 text-xs font-medium"
           style={{
+            borderColor: avatarNotice.tone === "ok" ? "var(--mr-success)" : "var(--mr-danger)",
+            color: avatarNotice.tone === "ok" ? "var(--mr-success)" : "var(--mr-danger)",
             backgroundColor: "var(--mr-bg-elevated)",
-            borderColor: "var(--mr-border-strong)",
-            color: "var(--mr-accent)",
           }}
         >
-          {profile.avatarUrl ? (
-            <img
-              src={profile.avatarUrl}
-              alt={profile.displayName}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            profile.displayName.slice(0, 2).toUpperCase()
-          )}
+          {avatarNotice.text}
+        </div>
+      ) : null}
+
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="relative shrink-0">
+          <UserAvatar src={profile.avatarUrl} name={profile.displayName} size="lg" />
+          {isOwnProfile ? (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                aria-label="Upload new avatar image"
+                accept="image/png,image/jpeg,image/webp"
+                className="sr-only"
+                onChange={(e) => void handleAvatarFileChange(e)}
+              />
+              <button
+                type="button"
+                disabled={avatarBusy}
+                onClick={() => fileInputRef.current?.click()}
+                title="Upload new avatar image"
+                aria-label="Change avatar image"
+                className="absolute -right-1 -bottom-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border text-xs shadow disabled:opacity-50"
+                style={{
+                  backgroundColor: "var(--mr-accent)",
+                  borderColor: "var(--mr-bg-surface)",
+                  color: "#ffffff",
+                }}
+              >
+                {avatarBusy ? "…" : "📷"}
+              </button>
+            </>
+          ) : null}
         </div>
 
         <div className="flex-1">
@@ -77,15 +135,26 @@ export function ProfilePage() {
           ) : null}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {isOwnProfile ? (
-            <Link
-              to="/settings"
-              className="rounded-[var(--mr-radius-sm)] border px-3 py-1.5 text-xs font-semibold"
-              style={{ borderColor: "var(--mr-border-strong)", color: "var(--mr-text-primary)" }}
-            >
-              Edit Profile
-            </Link>
+            <>
+              <button
+                type="button"
+                disabled={avatarBusy}
+                onClick={() => fileInputRef.current?.click()}
+                className="cursor-pointer rounded-[var(--mr-radius-sm)] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                style={{ backgroundColor: "var(--mr-accent)" }}
+              >
+                {avatarBusy ? "Uploading Avatar..." : "Upload Avatar Image"}
+              </button>
+              <Link
+                to="/settings"
+                className="rounded-[var(--mr-radius-sm)] border px-3 py-1.5 text-xs font-semibold"
+                style={{ borderColor: "var(--mr-border-strong)", color: "var(--mr-text-primary)" }}
+              >
+                Edit Profile &amp; Settings
+              </Link>
+            </>
           ) : isAuthenticated && profile.role === "READER" ? (
             <button
               type="button"

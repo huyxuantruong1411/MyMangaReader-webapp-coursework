@@ -1,8 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { CatalogPagination } from "../../components/CatalogPagination";
 import { ReportModal, type ReportTarget } from "../../components/ReportModal";
 import { EmptyState, ErrorState, LoadingState } from "../../components/StateViews";
+import { UserAvatar } from "../../components/UserAvatar";
 import { useAuth } from "../../hooks/useAuth";
 import {
   ApiClientError,
@@ -140,10 +142,15 @@ function CommentCard({
         <div className="flex flex-wrap items-center gap-2">
           <Link
             to={`/profile/${comment.author.username}`}
-            className="font-semibold hover:underline"
+            className="flex items-center gap-2 font-semibold hover:underline"
             style={{ color: "var(--mr-text-primary)" }}
           >
-            {comment.author.displayName}
+            <UserAvatar
+              src={comment.author.avatarUrl}
+              name={comment.author.displayName}
+              size="sm"
+            />
+            <span>{comment.author.displayName}</span>
           </Link>
           <span style={{ color: "var(--mr-text-muted)" }}>
             @{comment.author.username} · {new Date(comment.createdAt).toLocaleString()}
@@ -450,22 +457,51 @@ export function CommentsSection({ mangaId, chapterId }: { mangaId: string; chapt
 
   const [scope, setScope] = useState<string>(chapterId ? "CHAPTER" : "ALL");
   const [sort, setSort] = useState<string>("NEWEST");
+  const [page, setPage] = useState(1);
+  const [keyword, setKeyword] = useState("");
+  const [spoilerFilter, setSpoilerFilter] = useState<"ALL" | "NON_SPOILER" | "SPOILER_ONLY">("ALL");
   const [content, setContent] = useState("");
   const [isSpoiler, setIsSpoiler] = useState(false);
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
 
+  useEffect(() => {
+    setPage(1);
+  }, [mangaId, chapterId, scope, sort]);
+
   const commentsQuery = useQuery({
-    queryKey: ["comments", mangaId, chapterId ?? "none", scope, sort],
+    queryKey: ["comments", mangaId, chapterId ?? "none", scope, sort, page],
     queryFn: () =>
       apiClient.listComments({
         mangaId,
         chapterId: scope === "CHAPTER" ? chapterId : undefined,
         scope,
         sort,
+        page,
       }),
   });
+
+  const visibleComments = useMemo(() => {
+    const items = commentsQuery.data?.data ?? [];
+    const q = keyword.trim().toLowerCase();
+    return items.filter((cm) => {
+      if (spoilerFilter === "NON_SPOILER" && cm.isSpoiler) return false;
+      if (spoilerFilter === "SPOILER_ONLY" && !cm.isSpoiler) return false;
+      if (!q) return true;
+      const rootMatch =
+        cm.content.toLowerCase().includes(q) ||
+        cm.author.displayName.toLowerCase().includes(q) ||
+        cm.author.username.toLowerCase().includes(q);
+      const replyMatch = cm.replies.some(
+        (r) =>
+          r.content.toLowerCase().includes(q) ||
+          r.author.displayName.toLowerCase().includes(q) ||
+          r.author.username.toLowerCase().includes(q),
+      );
+      return rootMatch || replyMatch;
+    });
+  }, [commentsQuery.data, keyword, spoilerFilter]);
 
   function refreshComments() {
     void queryClient.invalidateQueries({ queryKey: ["comments", mangaId] });
@@ -499,7 +535,37 @@ export function CommentsSection({ mangaId, chapterId }: { mangaId: string; chapt
         <h2 className="text-lg font-bold" style={{ color: "var(--mr-text-primary)" }}>
           Comments ({commentsQuery.data?.meta.total ?? 0})
         </h2>
-        <div className="flex flex-wrap gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <input
+            type="search"
+            aria-label="Filter loaded comments"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder="Filter text or user..."
+            className="w-40 rounded border px-2.5 py-1"
+            style={{
+              backgroundColor: "var(--mr-bg-surface)",
+              borderColor: "var(--mr-border-strong)",
+              color: "var(--mr-text-primary)",
+            }}
+          />
+          <select
+            aria-label="Filter spoiler comments"
+            value={spoilerFilter}
+            onChange={(e) =>
+              setSpoilerFilter(e.target.value as "ALL" | "NON_SPOILER" | "SPOILER_ONLY")
+            }
+            className="rounded border px-2.5 py-1"
+            style={{
+              backgroundColor: "var(--mr-bg-surface)",
+              borderColor: "var(--mr-border-strong)",
+              color: "var(--mr-text-primary)",
+            }}
+          >
+            <option value="ALL">All Visibility</option>
+            <option value="NON_SPOILER">Hide Spoilers</option>
+            <option value="SPOILER_ONLY">Spoilers Only</option>
+          </select>
           {!chapterId ? (
             <select
               aria-label="Filter comment scope"
@@ -608,7 +674,7 @@ export function CommentsSection({ mangaId, chapterId }: { mangaId: string; chapt
       )}
 
       {commentsQuery.isLoading ? (
-        <LoadingState label="Loading comments..." />
+        <LoadingState variant="table" count={4} label="Loading comments..." />
       ) : commentsQuery.isError ? (
         <ErrorState onRetry={() => void commentsQuery.refetch()} />
       ) : commentsQuery.data && commentsQuery.data.data.length === 0 ? (
@@ -616,18 +682,35 @@ export function CommentsSection({ mangaId, chapterId }: { mangaId: string; chapt
           title="No comments yet"
           description="Be the first reader to start the discussion."
         />
+      ) : visibleComments.length === 0 ? (
+        <EmptyState
+          title="No comments matched your filter"
+          description="Clear the text or spoiler filter to view comments on this page."
+        />
       ) : (
-        <div className="space-y-3">
-          {commentsQuery.data?.data.map((comment) => (
-            <CommentCard
-              key={comment.commentId}
-              comment={comment}
-              mangaId={mangaId}
-              onMutated={refreshComments}
-              onReport={setReportTarget}
+        <>
+          <div className="space-y-3">
+            {visibleComments.map((comment) => (
+              <CommentCard
+                key={comment.commentId}
+                comment={comment}
+                mangaId={mangaId}
+                onMutated={refreshComments}
+                onReport={setReportTarget}
+              />
+            ))}
+          </div>
+          {commentsQuery.data ? (
+            <CatalogPagination
+              page={page}
+              total={commentsQuery.data.meta.total}
+              pageSize={commentsQuery.data.meta.pageSize || 20}
+              hasNext={commentsQuery.data.meta.hasNext}
+              onPageChange={setPage}
+              label="Comments pagination"
             />
-          ))}
-        </div>
+          ) : null}
+        </>
       )}
 
       {reportTarget ? (

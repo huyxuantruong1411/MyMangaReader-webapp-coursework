@@ -28,6 +28,7 @@ from manga_reader.infrastructure.orm import (
     MangaReportModel,
     MangaSyncSubscriptionModel,
     MediaObjectModel,
+    ReaderProgressModel,
     ReadingListModel,
 )
 
@@ -273,11 +274,6 @@ class MangaLifecycleService:
             )
 
         # 5. Collect candidate media IDs for async GC after chapter/cover rows are removed
-        chapter_ids = (
-            await session.scalars(
-                select(ChapterModel.chapter_id).where(ChapterModel.manga_id == manga.manga_id)
-            )
-        ).all()
         candidate_media_ids: set[int] = set()
         if manga.primary_cover_media_id is not None:
             candidate_media_ids.add(manga.primary_cover_media_id)
@@ -289,19 +285,32 @@ class MangaLifecycleService:
             )
         ).all()
         candidate_media_ids.update(cover_media)
-        if chapter_ids:
-            page_media = (
-                await session.scalars(
-                    select(ChapterPageModel.media_id).where(
-                        ChapterPageModel.chapter_id.in_(chapter_ids)
-                    )
+        chapter_subq = select(ChapterModel.chapter_id).where(
+            ChapterModel.manga_id == manga.manga_id
+        )
+        page_media = (
+            await session.scalars(
+                select(ChapterPageModel.media_id).where(
+                    ChapterPageModel.chapter_id.in_(chapter_subq)
                 )
-            ).all()
-            candidate_media_ids.update(page_media)
+            )
+        ).all()
+        candidate_media_ids.update(page_media)
 
-        # 6. Delete local comments (UC-2.4) & manga (cascades chapters/pages/tags/credits)
+        # 6. Delete reader progress (NO ACTION FK on chapters), comments (replies first), then manga
+        await session.execute(
+            delete(ReaderProgressModel).where(ReaderProgressModel.manga_id == manga.manga_id)
+        )
+        await session.execute(
+            delete(CommentModel).where(
+                CommentModel.manga_id == manga.manga_id,
+                CommentModel.parent_comment_id.is_not(None),
+            )
+        )
         await session.execute(delete(CommentModel).where(CommentModel.manga_id == manga.manga_id))
-        await session.delete(manga)
+        await session.flush()
+        session.expunge(manga)
+        await session.execute(delete(MangaModel).where(MangaModel.manga_id == manga_id))
         await session.flush()
 
         # 7. Flag unreferenced media objects as PENDING_GC (never delete referenced media!)

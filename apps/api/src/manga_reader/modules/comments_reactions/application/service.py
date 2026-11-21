@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import false, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from manga_reader.common.clock import format_rfc3339, utc_now
@@ -15,6 +15,7 @@ from manga_reader.common.errors import (
     ResourceNotFoundError,
     ValidationAppError,
 )
+from manga_reader.common.identities import MediaObjectRef
 from manga_reader.common.security import SecurityPrincipal
 from manga_reader.common.text import sanitize_user_text
 from manga_reader.infrastructure.audit_outbox import append_activity_log
@@ -38,16 +39,29 @@ class CommentService:
     def __init__(self, container: AppContainer) -> None:
         self._container = container
 
+    def _resolve_avatar_url(
+        self,
+        avatar_bucket: str | None,
+        avatar_object_key: str | None,
+        avatar_url: str | None,
+    ) -> str | None:
+        if avatar_bucket and avatar_object_key:
+            ref = MediaObjectRef(bucket=avatar_bucket, object_key=avatar_object_key)
+            return self._container.media_signer.build_signed_proxy_url(ref)
+        return avatar_url
+
     async def _serialize_comment(
         self,
         comment: CommentModel,
         *,
-        author_map: dict[UUID, tuple[str, str]],
+        author_map: dict[UUID, tuple[str, str, str | None]],
         viewer: SecurityPrincipal,
         my_reactions: dict[UUID, str],
         replies: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
-        username, display_name = author_map.get(comment.reader_account_id, ("reader", "Reader"))
+        username, display_name, avatar_url = author_map.get(
+            comment.reader_account_id, ("reader", "Reader", None)
+        )
         is_owner = viewer.account_id == comment.reader_account_id
         return {
             "commentId": str(comment.comment_id),
@@ -60,6 +74,7 @@ class CommentService:
                 "accountId": str(comment.reader_account_id),
                 "username": username,
                 "displayName": display_name,
+                "avatarUrl": avatar_url,
             },
             "content": DELETED_COMMENT_PLACEHOLDER if comment.is_deleted else comment.content,
             "isDeleted": comment.is_deleted,
@@ -105,7 +120,7 @@ class CommentService:
         elif scope.upper() == "MANGA_ONLY":
             root_stmt = root_stmt.where(CommentModel.chapter_id.is_(None))
 
-        if sort.upper() == "TOP":
+        if sort.upper() in ("TOP", "TOP_LIKED"):
             root_stmt = root_stmt.order_by(
                 CommentModel.like_count.desc(), CommentModel.created_at.desc()
             )
@@ -115,23 +130,25 @@ class CommentService:
             root_stmt = root_stmt.order_by(CommentModel.created_at.desc())
 
         all_roots = (await session.scalars(root_stmt)).all()
-        root_ids = [r.comment_id for r in all_roots]
+        root_ids = {r.comment_id for r in all_roots}
 
         replies_by_parent: dict[UUID, list[CommentModel]] = {}
         if root_ids:
+            reply_stmt = select(CommentModel).where(
+                CommentModel.manga_id == manga_id,
+                CommentModel.parent_comment_id.is_not(None),
+                CommentModel.is_deleted == false(),
+            )
+            if chapter_id is not None:
+                reply_stmt = reply_stmt.where(CommentModel.chapter_id == chapter_id)
+            elif scope.upper() == "MANGA_ONLY":
+                reply_stmt = reply_stmt.where(CommentModel.chapter_id.is_(None))
             reply_rows = (
-                await session.scalars(
-                    select(CommentModel)
-                    .where(
-                        CommentModel.parent_comment_id.in_(root_ids),
-                        CommentModel.is_deleted.is_(False),
-                    )
-                    .order_by(CommentModel.created_at.asc())
-                )
+                await session.scalars(reply_stmt.order_by(CommentModel.created_at.asc()))
             ).all()
             for rep in reply_rows:
-                assert rep.parent_comment_id is not None
-                replies_by_parent.setdefault(rep.parent_comment_id, []).append(rep)
+                if rep.parent_comment_id is not None and rep.parent_comment_id in root_ids:
+                    replies_by_parent.setdefault(rep.parent_comment_id, []).append(rep)
 
         # Hide soft-deleted root comments that have NO visible replies; keep placeholder if replies exist
         visible_roots = [
@@ -147,16 +164,30 @@ class CommentService:
             all_comment_objs.extend(replies_by_parent.get(r.comment_id, []))
 
         author_ids = list({c.reader_account_id for c in all_comment_objs})
-        author_map: dict[UUID, tuple[str, str]] = {}
+        author_map: dict[UUID, tuple[str, str, str | None]] = {}
         if author_ids:
             arows = (
                 await session.execute(
-                    select(AccountModel.account_id, AccountModel.username, ReaderModel.display_name)
+                    select(
+                        AccountModel.account_id,
+                        AccountModel.username,
+                        ReaderModel.display_name,
+                        ReaderModel.avatar_bucket,
+                        ReaderModel.avatar_object_key,
+                        ReaderModel.avatar_url,
+                    )
                     .join(ReaderModel, ReaderModel.account_id == AccountModel.account_id)
                     .where(AccountModel.account_id.in_(author_ids))
                 )
             ).all()
-            author_map = {aid: (uname, dname) for aid, uname, dname in arows}
+            author_map = {
+                aid: (
+                    uname,
+                    dname,
+                    self._resolve_avatar_url(abucket, akey, aurl),
+                )
+                for aid, uname, dname, abucket, akey, aurl in arows
+            }
 
         my_reactions: dict[UUID, str] = {}
         if viewer.is_authenticated and viewer.account_id is not None and all_comment_objs:
@@ -272,10 +303,15 @@ class CommentService:
 
         acc = await session.get(AccountModel, principal.account_id)
         reader = await session.get(ReaderModel, principal.account_id)
-        author_map: dict[UUID, tuple[str, str]] = {
+        author_map: dict[UUID, tuple[str, str, str | None]] = {
             principal.account_id: (
                 acc.username if acc else "reader",
                 reader.display_name if reader else "Reader",
+                self._resolve_avatar_url(
+                    reader.avatar_bucket if reader else None,
+                    reader.avatar_object_key if reader else None,
+                    reader.avatar_url if reader else None,
+                ),
             )
         }
         return await self._serialize_comment(
@@ -334,10 +370,15 @@ class CommentService:
 
         acc = await session.get(AccountModel, principal.account_id)
         reader = await session.get(ReaderModel, principal.account_id)
-        author_map: dict[UUID, tuple[str, str]] = {
+        author_map: dict[UUID, tuple[str, str, str | None]] = {
             principal.account_id: (
                 acc.username if acc else "reader",
                 reader.display_name if reader else "Reader",
+                self._resolve_avatar_url(
+                    reader.avatar_bucket if reader else None,
+                    reader.avatar_object_key if reader else None,
+                    reader.avatar_url if reader else None,
+                ),
             )
         }
         return await self._serialize_comment(

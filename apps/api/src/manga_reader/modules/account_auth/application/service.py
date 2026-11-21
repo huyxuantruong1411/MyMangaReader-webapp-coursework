@@ -201,7 +201,11 @@ class AuthService:
             preload_page_count=self._settings.reader_default_preload_pages,
             updated_at=now,
         )
-        session.add_all([account, reader, reader_settings])
+        session.add(account)
+        await session.flush()
+        session.add(reader)
+        await session.flush()
+        session.add(reader_settings)
         append_activity_log(
             session,
             event_type="ACCOUNT_REGISTERED",
@@ -591,6 +595,31 @@ class AuthService:
             data["lockedAt"] = format_rfc3339(account.locked_at) if account.locked_at else None
         return data
 
+    async def _get_or_create_reader(
+        self,
+        session: AsyncSession,
+        principal: SecurityPrincipal,
+    ) -> ReaderModel:
+        assert principal.account_id is not None
+        reader = await session.get(ReaderModel, principal.account_id)
+        if reader is not None:
+            return reader
+        account = await session.get(AccountModel, principal.account_id)
+        if account is None:
+            raise ResourceNotFoundError("Account not found.")
+        admin = await session.get(AdminModel, principal.account_id)
+        default_display = (admin.admin_code if admin and admin.admin_code else account.username)[
+            :100
+        ]
+        reader = ReaderModel(
+            account_id=account.account_id,
+            display_name=sanitize_user_text(default_display, preserve_newlines=False),
+            is_birth_date_public=False,
+        )
+        session.add(reader)
+        await session.flush()
+        return reader
+
     async def update_profile(
         self,
         session: AsyncSession,
@@ -603,9 +632,7 @@ class AuthService:
         ip_address: str | None = None,
     ) -> dict[str, Any]:
         assert principal.account_id is not None
-        reader = await session.get(ReaderModel, principal.account_id)
-        if reader is None:
-            raise ResourceNotFoundError("Reader profile not found.")
+        reader = await self._get_or_create_reader(session, principal)
 
         if display_name is not None:
             clean_name = display_name.strip()
@@ -613,7 +640,7 @@ class AuthService:
                 raise ValidationAppError(
                     "Display name must be 1-100 characters.", details={"field": "displayName"}
                 )
-            if is_reserved_display_name(clean_name):
+            if not principal.is_admin and is_reserved_display_name(clean_name):
                 raise ValidationAppError(
                     "Display name contains reserved administrative keywords.",
                     details={"field": "displayName"},
@@ -696,9 +723,7 @@ class AuthService:
                 status_code=415,
             ) from exc
 
-        reader = await session.get(ReaderModel, principal.account_id)
-        if reader is None:
-            raise ResourceNotFoundError("Reader profile not found.")
+        reader = await self._get_or_create_reader(session, principal)
 
         ref = MediaObjectRef(
             bucket=self._settings.s3_default_bucket,

@@ -76,7 +76,7 @@ async def get_my_rating_history(
     container: AppContainer = Depends(get_container),
 ) -> PaginatedEnvelope[dict[str, Any]]:
     pg = PaginationParams.create(page=page, page_size=page_size)
-    svc = RatingService()
+    svc = RatingService(container)
     async with container.db.session() as db:
         items, total = await svc.list_my_rating_history(
             db, principal=principal, page=pg.page, page_size=pg.page_size

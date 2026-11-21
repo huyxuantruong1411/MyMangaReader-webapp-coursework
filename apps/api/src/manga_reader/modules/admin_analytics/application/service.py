@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import Numeric, cast, false, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from manga_reader.common.clock import format_rfc3339
@@ -106,7 +106,7 @@ class AdminAnalyticsService:
             await session.scalars(
                 select(RatingModel).where(
                     RatingModel.reader_account_id == reader_account_id,
-                    RatingModel.is_removed.is_(False),
+                    RatingModel.is_removed == false(),
                 )
             )
         ).all()
@@ -115,11 +115,12 @@ class AdminAnalyticsService:
         top_tags: list[dict[str, Any]] = []
         top_creators: list[dict[str, Any]] = []
         if unique_mangas:
+            sample_manga_ids = list(unique_mangas)[:1500]
             t_rows = (
                 await session.execute(
                     select(TagModel.slug, TagModel.name, func.count(MangaTagModel.manga_id))
                     .join(MangaTagModel, MangaTagModel.tag_id == TagModel.tag_id)
-                    .where(MangaTagModel.manga_id.in_(list(unique_mangas)))
+                    .where(MangaTagModel.manga_id.in_(sample_manga_ids))
                     .group_by(TagModel.slug, TagModel.name)
                     .order_by(func.count(MangaTagModel.manga_id).desc())
                     .limit(8)
@@ -139,7 +140,7 @@ class AdminAnalyticsService:
                     .join(
                         MangaCreatorModel, MangaCreatorModel.creator_id == CreatorModel.creator_id
                     )
-                    .where(MangaCreatorModel.manga_id.in_(list(unique_mangas)))
+                    .where(MangaCreatorModel.manga_id.in_(sample_manga_ids))
                     .group_by(CreatorModel.creator_id, CreatorModel.name)
                     .order_by(func.count(func.distinct(MangaCreatorModel.manga_id)).desc())
                     .limit(8)
@@ -183,7 +184,40 @@ class AdminAnalyticsService:
             )
             stmt = stmt.where(MangaModel.manga_id.in_(tag_subq))
 
-        mangas = (await session.scalars(stmt.order_by(MangaModel.total_views.desc()))).all()
+        filtered_subq = stmt.with_only_columns(
+            MangaModel.manga_id, MangaModel.total_views
+        ).subquery()
+        agg_row = (
+            await session.execute(
+                select(
+                    func.count(filtered_subq.c.manga_id),
+                    func.coalesce(func.sum(filtered_subq.c.total_views), 0),
+                )
+            )
+        ).one()
+        total_mangas = int(agg_row[0] or 0)
+        total_valid_views = int(agg_row[1] or 0)
+
+        filtered_ids_select = select(filtered_subq.c.manga_id)
+        total_list_adds = int(
+            await session.scalar(
+                select(func.count())
+                .select_from(ListItemModel)
+                .where(ListItemModel.manga_id.in_(filtered_ids_select))
+            )
+            or 0
+        )
+        total_comments = int(
+            await session.scalar(
+                select(func.count())
+                .select_from(CommentModel)
+                .where(
+                    CommentModel.is_deleted == false(),
+                    CommentModel.manga_id.in_(filtered_ids_select),
+                )
+            )
+            or 0
+        )
         pending_reports = int(
             await session.scalar(
                 select(func.count()).select_from(ReportModel).where(ReportModel.status == "PENDING")
@@ -191,52 +225,71 @@ class AdminAnalyticsService:
             or 0
         )
 
-        items: list[dict[str, Any]] = []
-        for m in mangas:
-            list_adds = int(
-                await session.scalar(
-                    select(func.count())
-                    .select_from(ListItemModel)
-                    .where(ListItemModel.manga_id == m.manga_id)
-                )
-                or 0
-            )
-            ratings_cnt = int(
-                await session.scalar(
-                    select(func.count())
-                    .select_from(RatingModel)
-                    .where(RatingModel.manga_id == m.manga_id, RatingModel.is_removed.is_(False))
-                )
-                or 0
-            )
-            comments_cnt = int(
-                await session.scalar(
-                    select(func.count())
-                    .select_from(CommentModel)
-                    .where(CommentModel.manga_id == m.manga_id, CommentModel.is_deleted.is_(False))
-                )
-                or 0
-            )
-            items.append(
-                {
-                    "mangaId": str(m.manga_id),
-                    "slug": m.slug,
-                    "title": m.title,
-                    "visibilityStatus": m.visibility_status,
-                    "validViews": m.total_views,
-                    "listAdditions": list_adds,
-                    "ratingsCount": ratings_cnt,
-                    "averageRating": float(m.average_rating),
-                    "commentsCount": comments_cnt,
-                }
-            )
+        mangas = (
+            await session.scalars(stmt.order_by(MangaModel.total_views.desc()).limit(100))
+        ).all()
+        page_ids = [m.manga_id for m in mangas]
+        list_counts: dict[UUID, int] = {}
+        rating_counts: dict[UUID, int] = {}
+        comment_counts: dict[UUID, int] = {}
+        if page_ids:
+            list_counts = {
+                mid: int(cnt)
+                for mid, cnt in (
+                    await session.execute(
+                        select(ListItemModel.manga_id, func.count())
+                        .where(ListItemModel.manga_id.in_(page_ids))
+                        .group_by(ListItemModel.manga_id)
+                    )
+                ).all()
+            }
+            rating_counts = {
+                mid: int(cnt)
+                for mid, cnt in (
+                    await session.execute(
+                        select(RatingModel.manga_id, func.count())
+                        .where(
+                            RatingModel.manga_id.in_(page_ids), RatingModel.is_removed == false()
+                        )
+                        .group_by(RatingModel.manga_id)
+                    )
+                ).all()
+            }
+            comment_counts = {
+                mid: int(cnt)
+                for mid, cnt in (
+                    await session.execute(
+                        select(CommentModel.manga_id, func.count())
+                        .where(
+                            CommentModel.manga_id.in_(page_ids),
+                            CommentModel.is_deleted == false(),
+                        )
+                        .group_by(CommentModel.manga_id)
+                    )
+                ).all()
+            }
+
+        items: list[dict[str, Any]] = [
+            {
+                "mangaId": str(m.manga_id),
+                "slug": m.slug,
+                "title": m.title,
+                "visibilityStatus": m.visibility_status,
+                "validViews": m.total_views,
+                "listAdditions": list_counts.get(m.manga_id, 0),
+                "ratingsCount": rating_counts.get(m.manga_id, 0),
+                "averageRating": float(m.average_rating),
+                "commentsCount": comment_counts.get(m.manga_id, 0),
+            }
+            for m in mangas
+        ]
 
         return {
             "summary": {
-                "totalMangas": len(items),
-                "totalValidViews": sum(i["validViews"] for i in items),
-                "totalListAdditions": sum(i["listAdditions"] for i in items),
-                "totalComments": sum(i["commentsCount"] for i in items),
+                "totalMangas": total_mangas,
+                "totalValidViews": total_valid_views,
+                "totalListAdditions": total_list_adds,
+                "totalComments": total_comments,
                 "pendingReports": pending_reports,
             },
             "items": items,
@@ -245,56 +298,78 @@ class AdminAnalyticsService:
     async def reconcile_counters(self, session: AsyncSession) -> dict[str, int]:
         """Integrity reconciliation job (`04_DATABASE_SCHEMA_AND_MIGRATIONS.md` §9)."""
         fixed_lists = 0
-        for lst in (await session.scalars(select(ReadingListModel))).all():
-            actual = int(
-                await session.scalar(
-                    select(func.count())
-                    .select_from(ListItemModel)
-                    .where(ListItemModel.list_id == lst.list_id)
+        list_count_map = {
+            lid: int(cnt)
+            for lid, cnt in (
+                await session.execute(
+                    select(ListItemModel.list_id, func.count()).group_by(ListItemModel.list_id)
                 )
-                or 0
-            )
+            ).all()
+        }
+        for lst in (await session.scalars(select(ReadingListModel))).all():
+            actual = list_count_map.get(lst.list_id, 0)
             if lst.item_count != actual:
                 lst.item_count = actual
                 fixed_lists += 1
 
         fixed_comments = 0
-        for cm in (await session.scalars(select(CommentModel))).all():
-            likes = int(
-                await session.scalar(
-                    select(func.count())
-                    .select_from(CommentReactionModel)
-                    .where(
-                        CommentReactionModel.comment_id == cm.comment_id,
-                        CommentReactionModel.reaction_type == "LIKE",
+        reaction_rows = (
+            await session.execute(
+                select(
+                    CommentReactionModel.comment_id,
+                    CommentReactionModel.reaction_type,
+                    func.count(),
+                ).group_by(CommentReactionModel.comment_id, CommentReactionModel.reaction_type)
+            )
+        ).all()
+        like_map: dict[UUID, int] = {}
+        dislike_map: dict[UUID, int] = {}
+        for cid, rtype, cnt in reaction_rows:
+            if rtype == "LIKE":
+                like_map[cid] = int(cnt)
+            elif rtype == "DISLIKE":
+                dislike_map[cid] = int(cnt)
+        comments_to_check = (
+            await session.scalars(
+                select(CommentModel).where(
+                    (CommentModel.like_count > 0)
+                    | (CommentModel.dislike_count > 0)
+                    | CommentModel.comment_id.in_(
+                        select(CommentReactionModel.comment_id).distinct()
                     )
                 )
-                or 0
             )
-            dislikes = int(
-                await session.scalar(
-                    select(func.count())
-                    .select_from(CommentReactionModel)
-                    .where(
-                        CommentReactionModel.comment_id == cm.comment_id,
-                        CommentReactionModel.reaction_type == "DISLIKE",
-                    )
-                )
-                or 0
-            )
+        ).all()
+        for cm in comments_to_check:
+            likes = like_map.get(cm.comment_id, 0)
+            dislikes = dislike_map.get(cm.comment_id, 0)
             if cm.like_count != likes or cm.dislike_count != dislikes:
                 cm.like_count = likes
                 cm.dislike_count = dislikes
                 fixed_comments += 1
 
         fixed_ratings = 0
-        for m in (await session.scalars(select(MangaModel))).all():
-            avg_raw = await session.scalar(
-                select(func.avg(RatingModel.score)).where(
-                    RatingModel.manga_id == m.manga_id,
-                    RatingModel.is_removed.is_(False),
+        rating_avgs: dict[UUID, Any] = dict(
+            (
+                await session.execute(
+                    select(
+                        RatingModel.manga_id,
+                        func.avg(cast(RatingModel.score, Numeric(9, 3))),
+                    )
+                    .where(RatingModel.is_removed == false())
+                    .group_by(RatingModel.manga_id)
+                )
+            ).all()
+        )
+        rated_mangas = (
+            await session.scalars(
+                select(MangaModel).where(
+                    MangaModel.manga_id.in_(select(RatingModel.manga_id).distinct())
                 )
             )
+        ).all()
+        for m in rated_mangas:
+            avg_raw = rating_avgs.get(m.manga_id)
             expected_avg = (
                 Decimal(str(round(float(avg_raw), 3))) if avg_raw is not None else Decimal("0.000")
             )
