@@ -179,7 +179,6 @@ export class ApiClient {
       status: string;
       verificationRequired: boolean;
       otpTtlSeconds: number;
-      devOtpPreview?: string;
     }>("/auth/register", { method: "POST", body: JSON.stringify(body) });
   }
 
@@ -191,13 +190,44 @@ export class ApiClient {
   }
 
   public resendOtp(email: string) {
-    return this.request<{ sent: boolean; otpTtlSeconds: number; devOtpPreview?: string }>(
-      "/auth/resend-otp",
+    return this.request<{ sent: boolean; otpTtlSeconds: number }>("/auth/resend-otp", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  public forgotPassword(identifier: string) {
+    return this.request<{
+      sent: boolean;
+      email: string;
+      username: string;
+      otpTtlSeconds: number;
+    }>("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ identifier }),
+    });
+  }
+
+  public verifyResetOtp(body: { email: string; code: string }) {
+    return this.request<{ valid: boolean; email: string; username: string }>(
+      "/auth/verify-reset-otp",
       {
         method: "POST",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify(body),
       },
     );
+  }
+
+  public resetPassword(body: { email: string; code: string; newPassword: string }) {
+    return this.request<{
+      reset: boolean;
+      email: string;
+      username: string;
+      sessionsRevoked: boolean;
+    }>("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
   }
 
   public login(body: { identifier: string; password: string }) {

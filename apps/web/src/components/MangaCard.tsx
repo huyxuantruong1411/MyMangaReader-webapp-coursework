@@ -122,16 +122,53 @@ export function MangaCard({
             <span>· {manga.totalViews.toLocaleString()} views</span>
           </div>
 
-          {manga.creators && manga.creators.length > 0 ? (
-            <p className="truncate text-xs" style={{ color: "var(--mr-text-muted)" }}>
-              By{" "}
-              {manga.creators
-                .slice(0, 3)
-                .map((c) => c.name)
-                .join(", ")}
-              {manga.creators.length > 3 ? ` +${manga.creators.length - 3}` : ""}
-            </p>
-          ) : null}
+          {manga.creators && manga.creators.length > 0
+            ? (() => {
+                const authors = manga.creators.filter(
+                  (c) => c.roles.some((r) => r.toLowerCase() === "author") || c.roles.length === 0,
+                );
+                const artists = manga.creators.filter((c) =>
+                  c.roles.some((r) => r.toLowerCase() === "artist"),
+                );
+                return (
+                  <div
+                    className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px]"
+                    style={{ color: "var(--mr-text-muted)" }}
+                  >
+                    {authors.length > 0 ? (
+                      <span className="truncate">
+                        <strong
+                          className="font-semibold"
+                          style={{ color: "var(--mr-text-secondary)" }}
+                        >
+                          Author:
+                        </strong>{" "}
+                        {authors
+                          .slice(0, 2)
+                          .map((c) => c.name)
+                          .join(", ")}
+                        {authors.length > 2 ? ` +${authors.length - 2}` : ""}
+                      </span>
+                    ) : null}
+                    {artists.length > 0 ? (
+                      <span className="truncate">
+                        <strong
+                          className="font-semibold"
+                          style={{ color: "var(--mr-text-secondary)" }}
+                        >
+                          Artist:
+                        </strong>{" "}
+                        {artists
+                          .slice(0, 2)
+                          .map((c) => c.name)
+                          .join(", ")}
+                        {artists.length > 2 ? ` +${artists.length - 2}` : ""}
+                      </span>
+                    ) : null}
+                  </div>
+                );
+              })()
+            : null}
 
           {manga.description ? (
             <p className="line-clamp-2 text-xs" style={{ color: "var(--mr-text-secondary)" }}>

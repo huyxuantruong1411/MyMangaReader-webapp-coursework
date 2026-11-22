@@ -10,7 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr, field_validator, model_validator
+from pydantic import AliasChoices, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 AppEnvironment = Literal["development", "test", "staging", "production"]
@@ -96,10 +96,16 @@ class Settings(BaseSettings):
     )
 
     # Email
-    email_backend: EmailBackend = "dev-console"
-    smtp_host: str = "smtp.gmail.com"
+    email_backend: EmailBackend = "smtp"
+    smtp_host: str = Field(
+        default="smtp.gmail.com",
+        validation_alias=AliasChoices("SMTP_HOST", "SMTP_SERVER", "smtp_host"),
+    )
     smtp_port: int = Field(default=587, ge=1, le=65535)
-    smtp_username: str = ""
+    smtp_username: str = Field(
+        default="",
+        validation_alias=AliasChoices("SMTP_USERNAME", "SMTP_ACCOUNT", "smtp_username"),
+    )
     smtp_password: SecretStr = SecretStr("")
     smtp_from_address: str = "noreply@manga-reader.local"
     email_dev_log_otp: bool = False

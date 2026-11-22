@@ -1172,11 +1172,19 @@ class CatalogDiscoveryService:
                 select(CreatorLinkModel).where(CreatorLinkModel.creator_id == creator_id)
             )
         ).all()
+        role_rows = (
+            await session.scalars(
+                select(MangaCreatorModel.role)
+                .where(MangaCreatorModel.creator_id == creator_id)
+                .distinct()
+            )
+        ).all()
         bio_map = {b.language_code: b.biography for b in bios}
         return {
             "creatorId": creator.creator_id,
             "slug": creator.slug,
             "name": creator.name,
+            "roles": sorted({r.lower() for r in role_rows if r}),
             "biography": bio_map.get("en") or creator.biography,
             "localizedBiographies": bio_map,
             "links": {lnk.platform: lnk.url for lnk in links},

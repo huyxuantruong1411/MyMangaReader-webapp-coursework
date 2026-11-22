@@ -10,7 +10,6 @@ from fastapi import APIRouter, Depends, File, Query, Request, Response, UploadFi
 from pydantic import BaseModel, Field
 
 from manga_reader.api.v1.dependencies import (
-    get_active_reader_principal,
     get_admin_principal,
     get_authenticated_principal,
     get_container,
@@ -41,6 +40,21 @@ class VerifyOtpRequest(BaseModel):
 
 class ResendOtpRequest(BaseModel):
     email: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    identifier: str = Field(min_length=1, max_length=254)
+
+
+class VerifyResetOtpRequest(BaseModel):
+    email: str
+    code: str = Field(min_length=4, max_length=10)
+
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    code: str = Field(min_length=4, max_length=10)
+    newPassword: str = Field(min_length=1, max_length=128)
 
 
 class LoginRequest(BaseModel):
@@ -125,6 +139,49 @@ async def resend_otp(
     svc = AuthService(container)
     async with container.db.session() as db:
         result = await svc.resend_otp(db, email=body.email)
+    return SuccessEnvelope(data=result)
+
+
+@router.post("/auth/forgot-password", response_model=SuccessEnvelope[dict[str, Any]])
+async def forgot_password(
+    body: ForgotPasswordRequest,
+    request: Request,
+    container: AppContainer = Depends(get_container),
+) -> SuccessEnvelope[dict[str, Any]]:
+    svc = AuthService(container)
+    async with container.db.session() as db:
+        result = await svc.request_password_reset(
+            db, identifier=body.identifier, ip_address=_client_ip(request)
+        )
+    return SuccessEnvelope(data=result)
+
+
+@router.post("/auth/verify-reset-otp", response_model=SuccessEnvelope[dict[str, Any]])
+async def verify_reset_otp(
+    body: VerifyResetOtpRequest,
+    container: AppContainer = Depends(get_container),
+) -> SuccessEnvelope[dict[str, Any]]:
+    svc = AuthService(container)
+    async with container.db.session() as db:
+        result = await svc.verify_password_reset_otp(db, email=body.email, code=body.code)
+    return SuccessEnvelope(data=result)
+
+
+@router.post("/auth/reset-password", response_model=SuccessEnvelope[dict[str, Any]])
+async def reset_password(
+    body: ResetPasswordRequest,
+    request: Request,
+    container: AppContainer = Depends(get_container),
+) -> SuccessEnvelope[dict[str, Any]]:
+    svc = AuthService(container)
+    async with container.db.session() as db:
+        result = await svc.confirm_password_reset(
+            db,
+            email=body.email,
+            code=body.code,
+            new_password=body.newPassword,
+            ip_address=_client_ip(request),
+        )
     return SuccessEnvelope(data=result)
 
 
@@ -261,7 +318,7 @@ async def upload_my_avatar(
 async def update_my_password(
     body: ChangePasswordRequest,
     request: Request,
-    principal: SecurityPrincipal = Depends(get_active_reader_principal),
+    principal: SecurityPrincipal = Depends(get_authenticated_principal),
     container: AppContainer = Depends(get_container),
 ) -> SuccessEnvelope[dict[str, Any]]:
     svc = AuthService(container)

@@ -31,7 +31,7 @@ Verify these tools are installed:
 2. **Option A — Zero-Dependency Dev Mode (Default in `.env.example`):**
    - Uses local SQLite (`storage/local-dev/dev.sqlite3`), `InMemoryCacheAdapter`, `LocalDevStorageAdapter`, and `DevConsoleEmailAdapter`.
    - Ready immediately for API startup, frontend preview, migrations, and all unit/integration tests.
-3. **Option B — Connect to Existing Local Host Services (SQL Server + Memurai + MinIO):**
+3. **Option B — Connect to Existing Local Host Services (SQL Server + Memurai + MinIO + Gmail SMTP):**
    Update these entries in your local `.env` (never commit `.env`):
    ```ini
    DATABASE_BACKEND=mssql
@@ -46,8 +46,19 @@ Verify these tools are installed:
    S3_ACCESS_KEY="<your-local-minio-access-key>"
    S3_SECRET_KEY="<your-local-minio-secret-key>"
    S3_DEFAULT_BUCKET="manga-reader-media"
+
+   # Real Gmail SMTP OTP & Account Security Notifications (optional)
+   EMAIL_BACKEND="smtp"
+   SMTP_SERVER="smtp.gmail.com"
+   SMTP_PORT="587"
+   SMTP_ACCOUNT="<your-email@gmail.com>"
+   SMTP_PASSWORD="<your-16-char-gmail-app-password>"
+   SMTP_FROM_ADDRESS="<your-email@gmail.com>"
+   EMAIL_DEV_LOG_OTP="false"
    ```
-   > **Isolation Note:** Always use Redis DB `/1` with prefix `mreader:` and dedicated MinIO bucket `manga-reader-media` so existing coursework services (`MangaLibrary` DB and `manga-media` bucket) are never affected.
+   > **Isolation & Security Notes:**
+   > - Always use Redis DB `/1` with prefix `mreader:` and dedicated MinIO bucket `manga-reader-media` (or local shared read-only `manga-media` bucket) so host services stay isolated.
+   > - Leaving `SMTP_ACCOUNT` / `SMTP_PASSWORD` empty automatically falls back to `DevConsoleEmailAdapter`; keep `EMAIL_DEV_LOG_OTP="false"` so OTP codes are never leaked to HTTP clients.
 
 Check local service availability anytime:
 ```powershell
@@ -120,3 +131,12 @@ pnpm test          # Vitest (contracts + web) + Pytest (api + cross-component in
 pnpm build         # TypeScript build (contracts) + Vite production bundle (web)
 pnpm check:all     # Run all five gates sequentially
 ```
+
+---
+
+## 7. System Reference & Codebase Traceability
+
+For detailed architectural, UI, API, and database mapping across the repository:
+- [USECASE_CODE_TRACEABILITY.md](../reference/USECASE_CODE_TRACEABILITY.md) — Use Cases `UC-1`..`UC-8` mapped end-to-end across Frontend, API, Services, ORM, and SQL Server Triggers.
+- [WEB_UI_CODE_DICTIONARY.md](../reference/WEB_UI_CODE_DICTIONARY.md) — Dictionary of all 19 routes, 4 layouts, modals, drawers, SVG charts, and shared components (`UI-00`..`UI-16`).
+- [BACKEND_API_AND_DATABASE_DICTIONARY.md](../reference/BACKEND_API_AND_DATABASE_DICTIONARY.md) — Dictionary of 12 domain modules, HTTP endpoints (`/api/v1/*`), 47 ORM tables + 3 system tables, covering indexes, and 10 T-SQL triggers.

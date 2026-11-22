@@ -3,11 +3,9 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { CatalogPagination } from "../../components/CatalogPagination";
 import {
-  buildListDataStory,
   GenreRadarChart,
   InteractiveDonutChart,
   InteractiveTrendChart,
-  StorytellingNarrativeCard,
 } from "../../components/DataStoryCharts";
 import { MangaCard } from "../../components/MangaCard";
 import { EmptyState, ErrorState, LoadingState, NotFoundState } from "../../components/StateViews";
@@ -419,8 +417,6 @@ export function ReadingListDetailPage() {
         />
       ) : statsQuery.data ? (
         <div className="space-y-6">
-          <StorytellingNarrativeCard {...buildListDataStory(statsQuery.data.data)} />
-
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div
               className="rounded-[var(--mr-radius-md)] border p-4"
@@ -552,30 +548,81 @@ export function ReadingListDetailPage() {
               ))}
             </div>
 
-            <div
-              className="space-y-3 rounded-[var(--mr-radius-md)] border p-4"
-              style={{
-                backgroundColor: "var(--mr-bg-surface)",
-                borderColor: "var(--mr-border-subtle)",
-              }}
-            >
-              <h3 className="text-sm font-semibold">Top Creators in This List</h3>
-              <ul className="space-y-2 text-xs">
-                {statsQuery.data.data.topCreators.map((c) => (
-                  <li key={c.creatorId} className="flex items-center justify-between gap-2">
-                    <span className="truncate font-medium">
-                      {c.name}{" "}
-                      <span style={{ color: "var(--mr-text-muted)" }}>({c.roles.join("/")})</span>
-                    </span>
-                    <span
-                      className="shrink-0 rounded px-2 py-0.5 font-mono"
-                      style={{ backgroundColor: "var(--mr-bg-elevated)" }}
+            <div className="grid gap-4 sm:grid-cols-2">
+              {(() => {
+                const topAuthors = statsQuery.data.data.topCreators.filter(
+                  (c) => c.roles.some((r) => r.toLowerCase() === "author") || c.roles.length === 0,
+                );
+                const topArtists = statsQuery.data.data.topCreators.filter((c) =>
+                  c.roles.some((r) => r.toLowerCase() === "artist"),
+                );
+                return (
+                  <>
+                    <div
+                      className="space-y-3 rounded-[var(--mr-radius-md)] border p-4"
+                      style={{
+                        backgroundColor: "var(--mr-bg-surface)",
+                        borderColor: "var(--mr-border-subtle)",
+                      }}
                     >
-                      {c.workCount} works
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                      <h3 className="text-sm font-semibold">Top Authors in This List</h3>
+                      {topAuthors.length === 0 ? (
+                        <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
+                          No authors recorded.
+                        </p>
+                      ) : (
+                        <ul className="space-y-2 text-xs">
+                          {topAuthors.map((c) => (
+                            <li
+                              key={`la-${c.creatorId}`}
+                              className="flex items-center justify-between gap-2"
+                            >
+                              <span className="truncate font-medium">{c.name}</span>
+                              <span
+                                className="shrink-0 rounded px-2 py-0.5 font-mono"
+                                style={{ backgroundColor: "var(--mr-bg-elevated)" }}
+                              >
+                                {c.workCount} works
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <div
+                      className="space-y-3 rounded-[var(--mr-radius-md)] border p-4"
+                      style={{
+                        backgroundColor: "var(--mr-bg-surface)",
+                        borderColor: "var(--mr-border-subtle)",
+                      }}
+                    >
+                      <h3 className="text-sm font-semibold">Top Artists in This List</h3>
+                      {topArtists.length === 0 ? (
+                        <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
+                          No artists recorded.
+                        </p>
+                      ) : (
+                        <ul className="space-y-2 text-xs">
+                          {topArtists.map((c) => (
+                            <li
+                              key={`lar-${c.creatorId}`}
+                              className="flex items-center justify-between gap-2"
+                            >
+                              <span className="truncate font-medium">{c.name}</span>
+                              <span
+                                className="shrink-0 rounded px-2 py-0.5 font-mono"
+                                style={{ backgroundColor: "var(--mr-bg-elevated)" }}
+                              >
+                                {c.workCount} works
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

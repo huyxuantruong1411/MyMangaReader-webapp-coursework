@@ -243,6 +243,7 @@ export interface CreatorDetail {
   creatorId: string;
   slug: string;
   name: string;
+  roles?: string[];
   biography: string | null;
   localizedBiographies: Record<string, string>;
   links: Record<string, string>;
@@ -351,7 +352,7 @@ export interface ReaderStatsPayload {
   averageRatingGiven: number | null;
   readingStatusBreakdown: Record<string, number>;
   topTags: Array<{ slug: string; name: string; count: number }>;
-  topCreators: Array<{ creatorId: string; name: string; workCount: number }>;
+  topCreators: Array<{ creatorId: string; name: string; workCount: number; roles?: string[] }>;
 }
 
 export interface AdminMangaItem {

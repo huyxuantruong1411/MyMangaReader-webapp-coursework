@@ -661,30 +661,87 @@ export function MangaDetailPage() {
             ) : null}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span style={{ color: "var(--mr-text-muted)" }}>Creators:</span>
-            {manga.creators.length > 0 ? (
-              manga.creators.map((c) => (
-                <Link
-                  key={c.creatorId}
-                  to={`/author/${c.creatorId}/${c.slug}`}
-                  className="rounded border px-2 py-0.5 font-medium hover:underline"
+          {(() => {
+            const authors = manga.creators.filter(
+              (c) => c.roles.some((r) => r.toLowerCase() === "author") || c.roles.length === 0,
+            );
+            const artists = manga.creators.filter((c) =>
+              c.roles.some((r) => r.toLowerCase() === "artist"),
+            );
+            return (
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                <div
+                  className="rounded-[var(--mr-radius-sm)] border p-2.5 text-xs"
                   style={{
                     backgroundColor: "var(--mr-bg-elevated)",
-                    borderColor: "var(--mr-border-strong)",
-                    color: "var(--mr-accent)",
+                    borderColor: "var(--mr-border-subtle)",
                   }}
                 >
-                  {c.name}{" "}
-                  <span className="capitalize" style={{ color: "var(--mr-text-muted)" }}>
-                    ({c.roles.join("/")})
-                  </span>
-                </Link>
-              ))
-            ) : (
-              <span style={{ color: "var(--mr-text-muted)" }}>Credits pending verification</span>
-            )}
-          </div>
+                  <p
+                    className="mb-1.5 text-[10px] font-bold tracking-wider uppercase"
+                    style={{ color: "var(--mr-text-muted)" }}
+                  >
+                    Authors (Story)
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {authors.length > 0 ? (
+                      authors.map((c) => (
+                        <Link
+                          key={`author-${c.creatorId}`}
+                          to={`/author/${c.creatorId}/${c.slug}`}
+                          className="rounded border px-2 py-0.5 font-medium hover:underline"
+                          style={{
+                            backgroundColor: "var(--mr-bg-surface)",
+                            borderColor: "var(--mr-border-strong)",
+                            color: "var(--mr-accent)",
+                          }}
+                        >
+                          {c.name}
+                        </Link>
+                      ))
+                    ) : (
+                      <span style={{ color: "var(--mr-text-muted)" }}>Not specified</span>
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  className="rounded-[var(--mr-radius-sm)] border p-2.5 text-xs"
+                  style={{
+                    backgroundColor: "var(--mr-bg-elevated)",
+                    borderColor: "var(--mr-border-subtle)",
+                  }}
+                >
+                  <p
+                    className="mb-1.5 text-[10px] font-bold tracking-wider uppercase"
+                    style={{ color: "var(--mr-text-muted)" }}
+                  >
+                    Artists (Illustration)
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {artists.length > 0 ? (
+                      artists.map((c) => (
+                        <Link
+                          key={`artist-${c.creatorId}`}
+                          to={`/author/${c.creatorId}/${c.slug}`}
+                          className="rounded border px-2 py-0.5 font-medium hover:underline"
+                          style={{
+                            backgroundColor: "var(--mr-bg-surface)",
+                            borderColor: "var(--mr-border-strong)",
+                            color: "var(--mr-accent)",
+                          }}
+                        >
+                          {c.name}
+                        </Link>
+                      ))
+                    ) : (
+                      <span style={{ color: "var(--mr-text-muted)" }}>Not specified</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="space-y-1.5">
             <FormattedMarkdownText

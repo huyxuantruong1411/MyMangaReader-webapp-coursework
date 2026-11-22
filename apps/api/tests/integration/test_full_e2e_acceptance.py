@@ -744,3 +744,52 @@ async def test_admin_without_reader_row_can_upload_avatar_and_update_profile(
     stats_res = await api_client.get("/api/v1/account/me/reading-statistics", headers=admin_hdr)
     assert stats_res.status_code == 200, stats_res.text
     assert stats_res.json()["data"]["accountId"] == str(aid)
+
+
+async def test_forgot_password_otp_recovery_and_pending_reregister(
+    api_client: AsyncClient, app: FastAPI
+) -> None:
+    """Verify PENDING_VERIFICATION re-register OTP resend and 3-step forgot/reset password flow."""
+    email = "forgot_user@test.local"
+    username = "forgot_user"
+    reg1 = await api_client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "username": username, "password": "OldStrong@123"},
+    )
+    assert reg1.status_code == 201, reg1.text
+    assert reg1.json()["data"]["email"] == email
+    assert "devOtpPreview" not in reg1.json()["data"]
+
+    # Re-registering same unverified email cleanly re-issues OTP
+    reg2 = await api_client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "username": username, "password": "OldStrong@123"},
+    )
+    assert reg2.status_code == 201, reg2.text
+    assert "devOtpPreview" not in reg2.json()["data"]
+
+    # Request password reset OTP by username
+    fg = await api_client.post("/api/v1/auth/forgot-password", json={"identifier": username})
+    assert fg.status_code == 200, fg.text
+    assert fg.json()["data"]["email"] == email
+    assert "devOtpPreview" not in fg.json()["data"]
+
+    reset_otp = _extract_last_otp(app.state.container)
+    chk = await api_client.post(
+        "/api/v1/auth/verify-reset-otp", json={"email": email, "code": reset_otp}
+    )
+    assert chk.status_code == 200, chk.text
+    assert chk.json()["data"]["valid"] is True
+
+    rst = await api_client.post(
+        "/api/v1/auth/reset-password",
+        json={"email": email, "code": reset_otp, "newPassword": "NewStrong@456"},
+    )
+    assert rst.status_code == 200, rst.text
+    assert rst.json()["data"]["reset"] is True
+
+    # New password works and account was activated upon OTP ownership proof
+    login_ok = await api_client.post(
+        "/api/v1/auth/login", json={"identifier": username, "password": "NewStrong@456"}
+    )
+    assert login_ok.status_code == 200, login_ok.text

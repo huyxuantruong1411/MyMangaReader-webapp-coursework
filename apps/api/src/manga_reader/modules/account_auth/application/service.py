@@ -44,7 +44,7 @@ from manga_reader.common.text import (
 )
 from manga_reader.infrastructure.audit_outbox import append_activity_log, enqueue_outbox_event
 from manga_reader.infrastructure.container import AppContainer
-from manga_reader.infrastructure.email import EmailMessage
+from manga_reader.infrastructure.email import EmailMessage, build_otp_email_html
 from manga_reader.infrastructure.orm import (
     AccountModel,
     AccountStatusHistoryModel,
@@ -79,6 +79,12 @@ class AuthService:
 
     def _otp_resend_key(self, normalized_email: str) -> str:
         return f"otp:resend:{normalized_email}"
+
+    def _reset_otp_cache_key(self, normalized_email: str) -> str:
+        return f"otp:reset:{normalized_email}"
+
+    def _reset_otp_cooldown_key(self, normalized_email: str) -> str:
+        return f"otp:reset_cooldown:{normalized_email}"
 
     def _issue_access_jwt(
         self,
@@ -120,6 +126,11 @@ class AuthService:
                 to_email=normalized_email,
                 subject="Verify your Manga Reader account",
                 body_text=f"Your verification code is {raw_code}. It expires in {self._settings.otp_ttl_seconds}s.",
+                body_html=build_otp_email_html(
+                    raw_code,
+                    self._settings.otp_ttl_seconds,
+                    "xac thuc tai khoan (Account Verification)",
+                ),
                 contains_sensitive_secret=True,
             )
         )
@@ -165,6 +176,14 @@ class AuthService:
             select(AccountModel).where(AccountModel.email == norm_email)
         )
         if existing_email is not None:
+            if existing_email.status == AccountStatus.PENDING_VERIFICATION.value:
+                existing_email.password_hash = self._container.password_hasher.hash(password)
+                await session.commit()
+                await self._container.cache.delete(self._otp_cache_key(norm_email))
+                raw_code = await self._create_and_dispatch_otp(
+                    norm_email, existing_email.account_id
+                )
+                return self._build_register_response(existing_email, raw_code)
             raise ConflictError(
                 "An account with this email already exists.",
                 error_code="DUPLICATE_RESOURCE",
@@ -227,17 +246,17 @@ class AuthService:
 
         # OTP strictly stored in cache/Redis with 120s TTL (never SQL per ADR-004)
         raw_code = await self._create_and_dispatch_otp(norm_email, account.account_id)
+        return self._build_register_response(account, raw_code)
 
-        response_data: dict[str, Any] = {
+    def _build_register_response(self, account: AccountModel, _raw_code: str) -> dict[str, Any]:
+        return {
             "accountId": str(account.account_id),
             "username": account.username,
+            "email": account.email,
             "status": account.status,
             "verificationRequired": True,
             "otpTtlSeconds": self._settings.otp_ttl_seconds,
         }
-        if self._settings.app_env == "development" and self._settings.email_dev_log_otp:
-            response_data["devOtpPreview"] = raw_code
-        return response_data
 
     async def verify_otp(
         self,
@@ -331,19 +350,16 @@ class AuthService:
             return {"sent": True, "otpTtlSeconds": self._settings.otp_ttl_seconds}
 
         await self._container.cache.delete(self._otp_cache_key(norm_email))
-        raw_code = await self._create_and_dispatch_otp(norm_email, account.account_id)
+        await self._create_and_dispatch_otp(norm_email, account.account_id)
         await self._container.cache.set(
             cooldown_key,
             "1",
             ttl_seconds=self._settings.otp_resend_cooldown_seconds,
         )
-        response_data: dict[str, Any] = {
+        return {
             "sent": True,
             "otpTtlSeconds": self._settings.otp_ttl_seconds,
         }
-        if self._settings.app_env == "development" and self._settings.email_dev_log_otp:
-            response_data["devOtpPreview"] = raw_code
-        return response_data
 
     async def _resolve_user_summary(
         self, session: AsyncSession, account: AccountModel
@@ -423,9 +439,22 @@ class AuthService:
                 details={"reason": account.lock_reason} if account.lock_reason else {},
             )
         if account.status == AccountStatus.PENDING_VERIFICATION.value:
+            existing_otp = await self._container.cache.get(self._otp_cache_key(account.email))
+            in_cooldown = await self._container.cache.get(self._otp_resend_key(account.email))
+            if existing_otp is None and in_cooldown is None:
+                await self._create_and_dispatch_otp(account.email, account.account_id)
+                await self._container.cache.set(
+                    self._otp_resend_key(account.email),
+                    "1",
+                    ttl_seconds=self._settings.otp_resend_cooldown_seconds,
+                )
             raise EmailNotVerifiedError(
                 "Please verify your email address with OTP before logging in.",
-                details={"verificationRequired": True, "email": account.email},
+                details={
+                    "verificationRequired": True,
+                    "email": account.email,
+                    "username": account.username,
+                },
             )
 
         now = utc_now()
@@ -802,6 +831,218 @@ class AuthService:
         )
         await session.commit()
         return {"changed": True, "otherSessionsRevoked": True}
+
+    async def request_password_reset(
+        self,
+        session: AsyncSession,
+        *,
+        identifier: str,
+        ip_address: str | None = None,
+    ) -> dict[str, Any]:
+        norm_id = normalize_identifier(identifier)
+        if not norm_id:
+            raise ValidationAppError(
+                "Email or username is required.", details={"field": "identifier"}
+            )
+        account = await session.scalar(
+            select(AccountModel).where(
+                or_(AccountModel.email == norm_id, AccountModel.username == norm_id)
+            )
+        )
+        if account is None:
+            raise ResourceNotFoundError(
+                "No account found matching that email or username.",
+                error_code="RESOURCE_NOT_FOUND",
+            )
+        if account.status == AccountStatus.LOCKED.value:
+            raise AccountLockedError(
+                "Your account has been locked by an administrator.",
+                details={"reason": account.lock_reason} if account.lock_reason else {},
+            )
+
+        cooldown_key = self._reset_otp_cooldown_key(account.email)
+        if await self._container.cache.get(cooldown_key) is not None:
+            raise RateLimitedError(
+                "Please wait before requesting another password reset code.",
+                error_code="OTP_RESEND_COOLDOWN",
+            )
+
+        otp_length = self._settings.otp_length
+        raw_code = str(secrets.randbelow(10**otp_length)).zfill(otp_length)
+        payload = json.dumps(
+            {
+                "account_id": str(account.account_id),
+                "otp_hash": hash_secret_token(raw_code, pepper=self._pepper),
+                "attempts": 0,
+            }
+        )
+        await self._container.cache.set(
+            self._reset_otp_cache_key(account.email),
+            payload,
+            ttl_seconds=self._settings.otp_ttl_seconds,
+        )
+        await self._container.cache.set(
+            cooldown_key,
+            "1",
+            ttl_seconds=self._settings.otp_resend_cooldown_seconds,
+        )
+        await self._container.email.send(
+            EmailMessage(
+                to_email=account.email,
+                subject="Reset your Manga Reader password",
+                body_text=(
+                    f"Your password reset code is {raw_code}. "
+                    f"It expires in {self._settings.otp_ttl_seconds}s."
+                ),
+                body_html=build_otp_email_html(
+                    raw_code,
+                    self._settings.otp_ttl_seconds,
+                    "khoi phuc mat khau (Password Reset)",
+                ),
+                contains_sensitive_secret=True,
+            )
+        )
+        append_activity_log(
+            session,
+            event_type="PASSWORD_RESET_REQUESTED",
+            account_id=account.account_id,
+            target_type="ACCOUNT",
+            target_id=str(account.account_id),
+            ip_address=ip_address,
+        )
+        await session.commit()
+
+        return {
+            "sent": True,
+            "email": account.email,
+            "username": account.username,
+            "otpTtlSeconds": self._settings.otp_ttl_seconds,
+        }
+
+    async def _validate_reset_otp(
+        self,
+        *,
+        norm_email: str,
+        clean_code: str,
+        consume: bool,
+    ) -> str:
+        cache_key = self._reset_otp_cache_key(norm_email)
+        raw_challenge = await self._container.cache.get(cache_key)
+        if raw_challenge is None:
+            raise BusinessRuleError(
+                "Password reset code has expired or does not exist. Request a new code.",
+                error_code="OTP_EXPIRED_OR_INVALID",
+            )
+        challenge = json.loads(raw_challenge)
+        attempts = int(challenge.get("attempts", 0))
+        if attempts >= self._settings.otp_max_attempts:
+            await self._container.cache.delete(cache_key)
+            raise RateLimitedError(
+                "Maximum OTP attempts exceeded. Request a new password reset code.",
+                error_code="OTP_TOO_MANY_ATTEMPTS",
+            )
+        expected_hash = str(challenge["otp_hash"])
+        if not verify_secret_hash(clean_code, expected_hash, pepper=self._pepper):
+            challenge["attempts"] = attempts + 1
+            await self._container.cache.set(
+                cache_key,
+                json.dumps(challenge),
+                ttl_seconds=self._settings.otp_ttl_seconds,
+            )
+            raise ValidationAppError(
+                "Invalid password reset code.",
+                error_code="INVALID_OTP",
+            )
+        if consume:
+            consumed = await self._container.cache.pop(cache_key)
+            if consumed is None:
+                raise BusinessRuleError(
+                    "Password reset code was already used.",
+                    error_code="OTP_EXPIRED_OR_INVALID",
+                )
+        return str(challenge["account_id"])
+
+    async def verify_password_reset_otp(
+        self,
+        session: AsyncSession,
+        *,
+        email: str,
+        code: str,
+    ) -> dict[str, Any]:
+        norm_email = normalize_identifier(email)
+        account_id_str = await self._validate_reset_otp(
+            norm_email=norm_email,
+            clean_code=code.strip(),
+            consume=False,
+        )
+        account = await session.scalar(select(AccountModel).where(AccountModel.email == norm_email))
+        if account is None or str(account.account_id) != account_id_str:
+            raise ResourceNotFoundError("Account not found.")
+        return {
+            "valid": True,
+            "email": account.email,
+            "username": account.username,
+        }
+
+    async def confirm_password_reset(
+        self,
+        session: AsyncSession,
+        *,
+        email: str,
+        code: str,
+        new_password: str,
+        ip_address: str | None = None,
+    ) -> dict[str, Any]:
+        if len(new_password) < self._settings.password_min_length:
+            raise ValidationAppError(
+                f"New password must be at least {self._settings.password_min_length} characters.",
+                details={"field": "newPassword"},
+            )
+        norm_email = normalize_identifier(email)
+        account_id_str = await self._validate_reset_otp(
+            norm_email=norm_email,
+            clean_code=code.strip(),
+            consume=True,
+        )
+        account = await session.scalar(select(AccountModel).where(AccountModel.email == norm_email))
+        if account is None or str(account.account_id) != account_id_str:
+            raise ResourceNotFoundError("Account not found.")
+        if account.status == AccountStatus.LOCKED.value:
+            raise AccountLockedError(
+                "Your account has been locked by an administrator.",
+                details={"reason": account.lock_reason} if account.lock_reason else {},
+            )
+
+        now = utc_now()
+        account.password_hash = self._container.password_hasher.hash(new_password)
+        account.failed_login_attempts = 0
+        if account.status == AccountStatus.PENDING_VERIFICATION.value:
+            account.status = AccountStatus.ACTIVE.value
+            account.last_status_change_at = now
+
+        await session.execute(
+            update(UserSessionModel)
+            .where(
+                UserSessionModel.account_id == account.account_id,
+                UserSessionModel.revoked_at.is_(None),
+            )
+            .values(revoked_at=now, revoke_reason="PASSWORD_RESET")
+        )
+        append_activity_log(
+            session,
+            event_type="PASSWORD_RESET_COMPLETED",
+            account_id=account.account_id,
+            target_type="ACCOUNT",
+            target_id=str(account.account_id),
+            ip_address=ip_address,
+        )
+        await session.commit()
+        return {
+            "reset": True,
+            "email": account.email,
+            "username": account.username,
+            "sessionsRevoked": True,
+        }
 
     async def admin_list_accounts(
         self,

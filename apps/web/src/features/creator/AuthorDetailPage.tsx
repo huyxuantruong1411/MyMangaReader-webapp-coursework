@@ -11,6 +11,7 @@ export function AuthorDetailPage() {
   const { creatorId = "" } = useParams();
   const [status, setStatus] = useState("");
   const [sort, setSort] = useState("UPDATED_DESC");
+  const [roleFilter, setRoleFilter] = useState<"all" | "author" | "artist">("all");
   const [titleFilter, setTitleFilter] = useState("");
   const [page, setPage] = useState(1);
   const [viewMode, setViewMode] = useState<"poster" | "compact" | "horizontal">("poster");
@@ -40,13 +41,18 @@ export function AuthorDetailPage() {
   const visibleWorks = useMemo(() => {
     const items = worksQuery.data?.data ?? [];
     const q = titleFilter.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter(
-      (m) =>
+    return items.filter((m) => {
+      if (roleFilter !== "all") {
+        const roles = (m.creatorRoles ?? []).map((r) => r.toLowerCase());
+        if (roles.length > 0 && !roles.includes(roleFilter)) return false;
+      }
+      if (!q) return true;
+      return (
         m.title.toLowerCase().includes(q) ||
-        (m.tags ?? []).some((t) => t.name.toLowerCase().includes(q)),
-    );
-  }, [worksQuery.data, titleFilter]);
+        (m.tags ?? []).some((t) => t.name.toLowerCase().includes(q))
+      );
+    });
+  }, [worksQuery.data, titleFilter, roleFilter]);
 
   if (detailQuery.isLoading)
     return <LoadingState variant="detail" label="Loading creator profile..." />;
@@ -83,6 +89,34 @@ export function AuthorDetailPage() {
             <h1 className="mt-1 text-2xl font-bold" style={{ color: "var(--mr-text-primary)" }}>
               {creator.name}
             </h1>
+            {creator.roles && creator.roles.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+                {creator.roles.includes("author") ? (
+                  <span
+                    className="rounded-full border px-2.5 py-0.5 font-semibold"
+                    style={{
+                      backgroundColor: "var(--mr-bg-elevated)",
+                      borderColor: "var(--mr-accent)",
+                      color: "var(--mr-accent)",
+                    }}
+                  >
+                    Author (Story)
+                  </span>
+                ) : null}
+                {creator.roles.includes("artist") ? (
+                  <span
+                    className="rounded-full border px-2.5 py-0.5 font-semibold"
+                    style={{
+                      backgroundColor: "var(--mr-bg-elevated)",
+                      borderColor: "var(--mr-success)",
+                      color: "var(--mr-success)",
+                    }}
+                  >
+                    Artist (Illustration)
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           {bioLanguages.length > 1 ? (
             <select
@@ -132,6 +166,21 @@ export function AuthorDetailPage() {
             Public Works ({worksQuery.data?.meta.total ?? 0})
           </h2>
           <div className="flex flex-wrap items-center gap-2 text-xs">
+            <select
+              aria-label="Filter works by role"
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value as "all" | "author" | "artist")}
+              className="rounded border px-2.5 py-1"
+              style={{
+                backgroundColor: "var(--mr-bg-surface)",
+                borderColor: "var(--mr-border-strong)",
+                color: "var(--mr-text-primary)",
+              }}
+            >
+              <option value="all">All Roles</option>
+              <option value="author">As Author (Story)</option>
+              <option value="artist">As Artist (Art)</option>
+            </select>
             <input
               type="search"
               aria-label="Filter works on this page"
@@ -218,17 +267,61 @@ export function AuthorDetailPage() {
           />
         ) : (
           <>
-            <div
-              className={
+            {(() => {
+              const gridCls =
                 viewMode === "horizontal"
                   ? "space-y-3"
-                  : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
+                  : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6";
+              const authorWorks = visibleWorks.filter((m) =>
+                (m.creatorRoles ?? []).map((r) => r.toLowerCase()).includes("author"),
+              );
+              const artistWorks = visibleWorks.filter((m) =>
+                (m.creatorRoles ?? []).map((r) => r.toLowerCase()).includes("artist"),
+              );
+              const splitBoth =
+                roleFilter === "all" && authorWorks.length > 0 && artistWorks.length > 0;
+              if (!splitBoth) {
+                return (
+                  <div className={gridCls}>
+                    {visibleWorks.map((manga) => (
+                      <MangaCard key={manga.mangaId} manga={manga} variant={viewMode} />
+                    ))}
+                  </div>
+                );
               }
-            >
-              {visibleWorks.map((manga) => (
-                <MangaCard key={manga.mangaId} manga={manga} variant={viewMode} />
-              ))}
-            </div>
+              return (
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold" style={{ color: "var(--mr-text-primary)" }}>
+                      Works as Author ({authorWorks.length})
+                    </h3>
+                    <div className={gridCls}>
+                      {authorWorks.map((manga) => (
+                        <MangaCard
+                          key={`as-author-${manga.mangaId}`}
+                          manga={manga}
+                          variant={viewMode}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold" style={{ color: "var(--mr-text-primary)" }}>
+                      Works as Artist ({artistWorks.length})
+                    </h3>
+                    <div className={gridCls}>
+                      {artistWorks.map((manga) => (
+                        <MangaCard
+                          key={`as-artist-${manga.mangaId}`}
+                          manga={manga}
+                          variant={viewMode}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
             {worksQuery.data ? (
               <CatalogPagination
                 page={page}

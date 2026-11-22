@@ -12,7 +12,7 @@ from manga_reader.infrastructure.cache import (
     RedisCacheAdapter,
 )
 from manga_reader.infrastructure.database import DatabaseManager
-from manga_reader.infrastructure.email import DevConsoleEmailAdapter, EmailAdapter
+from manga_reader.infrastructure.email import DevConsoleEmailAdapter, EmailAdapter, SmtpEmailAdapter
 from manga_reader.infrastructure.outbox import InMemoryOutboxPublisher, OutboxPublisher
 from manga_reader.infrastructure.storage import (
     LocalDevStorageAdapter,
@@ -38,13 +38,30 @@ class AppContainer:
             allowed_buckets=settings.allowed_buckets_set,
             default_ttl_seconds=settings.media_signed_url_ttl_seconds,
         )
-        self.email: EmailAdapter = DevConsoleEmailAdapter(
-            allow_dev_otp_log=settings.email_dev_log_otp
-        )
+        self.email: EmailAdapter = self._build_email(settings)
         self.audit: AuditLogWriter = InMemoryAuditLogWriter()
         self.outbox: OutboxPublisher = InMemoryOutboxPublisher()
         self.password_hasher: PasswordHasher = Argon2PasswordHasher()
         self.worker = BackgroundWorkerBoundary()
+
+    @staticmethod
+    def _build_email(settings: Settings) -> EmailAdapter:
+        smtp_password = settings.smtp_password.get_secret_value()
+        if (
+            settings.email_backend == "smtp"
+            and settings.smtp_username
+            and smtp_password
+            and settings.app_env != "test"
+        ):
+            return SmtpEmailAdapter(
+                host=settings.smtp_host,
+                port=settings.smtp_port,
+                username=settings.smtp_username,
+                password=smtp_password,
+                from_address=settings.smtp_from_address or settings.smtp_username,
+                allow_dev_otp_log=settings.email_dev_log_otp,
+            )
+        return DevConsoleEmailAdapter(allow_dev_otp_log=settings.email_dev_log_otp)
 
     @staticmethod
     def _build_cache(settings: Settings) -> CacheAdapter:

@@ -65,4 +65,37 @@ Verified live running FastAPI (`http://127.0.0.1:8020`) + Vite dev proxy (`http:
 ## 4. Known Explicit Notes
 
 - **Missing Raw Source File:** `Pasted text(2).txt` was not present in the workspace; `packages/contracts/schemas/manga-reader-package.v2.0.schema.json` faithfully reconstructs the contract from `docs/agent-plan/05_PACKAGE_V2_ETL_CDC.md` and `12_ADR_CONFLICTS_AND_RISKS.md`.
-- **SQL Server vs Local SQLite Default:** `.env.example` defaults to zero-credential SQLite (`storage/local-dev/dev.sqlite3`) so the application boots immediately anywhere. Existing host SQL Server `QL_DocTruyen` (`ODBC Driver 17`, Trusted Connection via Shared Memory/Named Pipes) was verified read-only (`44` tables) and remains completely untouched unless explicitly configured in `.env`.
+- **SQL Server vs Local SQLite Default:** `.env.example` and `apps/api/src/manga_reader/config/settings.py` keep zero-credential SQLite and empty SMTP credentials as source-safe defaults so the application and tests run cleanly out of the box. Live SQL Server 2022 (`QL_DocTruyen`, 50 tables), MinIO (`manga-media`), and Gmail SMTP STARTTLS credentials live solely in the git-ignored local `.env`.
+
+---
+
+## 5. Phase 2 Enhancements: UX Polish, Real SMTP OTP, Interactive Analytics, SQL Server Performance & Traceability
+
+Following the initial Phase 0–11 completion, the system underwent a second refinement cycle verified directly against live SQL Server (`QL_DocTruyen`) and automated test suites:
+
+1. **Authentication Security & Real Gmail SMTP OTP (`account_auth`, `infrastructure/email.py`):**
+   - Added [`SmtpEmailAdapter`](../../apps/api/src/manga_reader/infrastructure/email.py) (`smtp.gmail.com:587` STARTTLS) with responsive HTML OTP templates, `AliasChoices` for `SMTP_HOST`/`SMTP_SERVER` and `SMTP_USERNAME`/`SMTP_ACCOUNT`, and strict non-leakage (`EMAIL_DEV_LOG_OTP=false` suppresses raw OTPs from HTTP payloads and logs).
+   - Added complete 3-Step **Forgot Password** flow (`POST /auth/forgot-password`, `POST /auth/verify-reset-otp`, `POST /auth/reset-password`) wired to [`ForgotPasswordPage`](../../apps/web/src/features/auth/AuthPages.tsx) and [`PasswordStrengthMeter`](../../apps/web/src/components/PasswordStrengthMeter.tsx), plus a upgraded 2-column Security Center in [`AccountSettingsPage`](../../apps/web/src/features/account/SettingsPage.tsx).
+2. **Catalog Discovery, Creator Separation & Manga Detail UX (`catalog_discovery`, `MangaDetailPage`, `AuthorDetailPage`):**
+   - Unified search tabs into `/explore` & `/search/advanced` (with `/search` redirecting cleanly), added debounced live search (`280ms`) & skeleton loading states, and replaced preset avatars with real multipart image upload (`POST /account/avatar`).
+   - Separated **Authors (Story)** and **Artists (Illustration)** across catalog filters, creator pickers, [`MangaDetailPage`](../../apps/web/src/features/manga/MangaDetailPage.tsx), [`AuthorDetailPage`](../../apps/web/src/features/creator/AuthorDetailPage.tsx), and analytics dashboards.
+   - Added localized **Also Known As** badges with language color/flag styling, **Cover Art Gallery** grouped/filtered by locale + Lightbox preview, Markdown rendering (`FormattedMarkdownText`) for creator bios, and **Volume / No Volume (Unassigned)** collapsible chapter groups.
+3. **Interactive SVG Data Visualizations & Moderation Workbench (`DataStoryCharts.tsx`, `AdminPages.tsx`):**
+   - Built pure-SVG interactive analytics components ([`InteractiveDonutChart`](../../apps/web/src/components/DataStoryCharts.tsx), `InteractiveTrendChart`, `GenreRadarChart`, `EngagementFunnelChart`) rendered across `My Reading Stats`, `ReadingListDetailPage`, `AdminDashboardPage`, and `AdminAccountsPage` (alongside human-readable activity logs).
+   - Redesigned [`AdminReportsPage`](../../apps/web/src/features/admin/AdminPages.tsx) as a split-pane triage & moderation workbench with KPI strip, plain-language target context, audit timeline, and atomic resolution enforcement.
+4. **SQL Server 2022 Query Performance & T-SQL Integrity (`QL_DocTruyen`):**
+   - Implemented 2-phase catalog pagination in `CatalogDiscoveryService` paired with **9 covering/lookup index groups** (`IX_mangas_sort_updated`, `IX_mangas_sort_views`, `IX_mangas_sort_rating`, `IX_mangas_sort_created`, `IX_mangas_sort_title`, `IX_mangas_filter`, `IX_manga_stats_languages_lang`, `IX_chapters_manga_volume`, `IX_reports_filter`) and **10 T-SQL business-rule triggers** (`51010..51017`).
+5. **Full Codebase Traceability & Technical Dictionaries (`docs/reference/`):**
+   - Created comprehensive, line-anchored reference dictionaries:
+     - [`USECASE_CODE_TRACEABILITY.md`](../reference/USECASE_CODE_TRACEABILITY.md) (`UC-1`..`UC-8`, 50 sub-use-cases)
+     - [`WEB_UI_CODE_DICTIONARY.md`](../reference/WEB_UI_CODE_DICTIONARY.md) (`UI-00`..`UI-16`, all 19 routes & components)
+     - [`BACKEND_API_AND_DATABASE_DICTIONARY.md`](../reference/BACKEND_API_AND_DATABASE_DICTIONARY.md) (12 modules, 90 `/api/v1` endpoints, 50 SQL tables, 9 index groups, 10 T-SQL triggers)
+
+### 5.1 Updated Automated Test Matrix
+
+| Suite | Runner | Passed Tests |
+|---|---|---|
+| Contract Validation (`packages/contracts`) | Vitest | **7 passed / 7** |
+| Frontend SPA & Workflows (`apps/web`) | Vitest + Testing Library | **26 passed / 26** |
+| Backend Modular Monolith & E2E Acceptance (`apps/api`, `tests/integration`) | Pytest | **28 passed / 28** |
+| **Total Automated Suite** | **`pnpm test`** | **61 passed / 61** |

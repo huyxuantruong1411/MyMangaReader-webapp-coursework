@@ -7,9 +7,8 @@ import {
   GenreRadarChart,
   InteractiveDonutChart,
   InteractiveTrendChart,
-  StorytellingNarrativeCard,
-  buildReaderDataStory,
 } from "../../components/DataStoryCharts";
+import { PasswordStrengthMeter } from "../../components/PasswordStrengthMeter";
 import { EmptyState, LoadingState } from "../../components/StateViews";
 import { UserAvatar } from "../../components/UserAvatar";
 import { useAuth } from "../../hooks/useAuth";
@@ -34,7 +33,7 @@ function formatRatingAction(
 }
 
 export function AccountSettingsPage() {
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, logoutSession } = useAuth();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<SettingsTab>("profile");
   const [message, setMessage] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
@@ -53,6 +52,11 @@ export function AccountSettingsPage() {
   // Password form
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPwd, setShowCurrentPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
+  const [pwdBusy, setPwdBusy] = useState(false);
 
   // Rating History pagination & filter
   const [ratingPage, setRatingPage] = useState(1);
@@ -213,10 +217,19 @@ export function AccountSettingsPage() {
   async function handleChangePassword(e: FormEvent) {
     e.preventDefault();
     setMessage(null);
+    if (newPassword !== confirmPassword) {
+      setMessage({
+        tone: "err",
+        text: "New password and confirm password do not match.",
+      });
+      return;
+    }
+    setPwdBusy(true);
     try {
       await apiClient.changePassword({ currentPassword, newPassword });
       setCurrentPassword("");
       setNewPassword("");
+      setConfirmPassword("");
       setMessage({
         tone: "ok",
         text: "Password updated. All other active sessions have been revoked.",
@@ -226,6 +239,8 @@ export function AccountSettingsPage() {
         tone: "err",
         text: err instanceof ApiClientError ? err.message : "Password change failed.",
       });
+    } finally {
+      setPwdBusy(false);
     }
   }
 
@@ -526,54 +541,257 @@ export function AccountSettingsPage() {
       ) : null}
 
       {tab === "security" ? (
-        <form
-          onSubmit={handleChangePassword}
-          className="max-w-md space-y-4 rounded-[var(--mr-radius-lg)] border p-5"
-          style={{
-            backgroundColor: "var(--mr-bg-surface)",
-            borderColor: "var(--mr-border-subtle)",
-          }}
-        >
-          <h2 className="text-base font-semibold">Change Password</h2>
-          <div>
-            <label className="mb-1 block text-xs font-medium">Current Password</label>
-            <input
-              type="password"
-              required
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full rounded border px-3 py-2 text-sm"
-              style={{
-                backgroundColor: "var(--mr-bg-elevated)",
-                borderColor: "var(--mr-border-subtle)",
-                color: "var(--mr-text-primary)",
-              }}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium">New Strong Password</label>
-            <input
-              type="password"
-              required
-              minLength={8}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full rounded border px-3 py-2 text-sm"
-              style={{
-                backgroundColor: "var(--mr-bg-elevated)",
-                borderColor: "var(--mr-border-subtle)",
-                color: "var(--mr-text-primary)",
-              }}
-            />
-          </div>
-          <button
-            type="submit"
-            className="cursor-pointer rounded-[var(--mr-radius-sm)] px-4 py-2 text-sm font-semibold text-white"
-            style={{ backgroundColor: "var(--mr-accent)" }}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+          <form
+            onSubmit={handleChangePassword}
+            className="space-y-4 rounded-[var(--mr-radius-lg)] border p-6"
+            style={{
+              backgroundColor: "var(--mr-bg-surface)",
+              borderColor: "var(--mr-border-subtle)",
+            }}
           >
-            Update Password
-          </button>
-        </form>
+            <div className="space-y-1">
+              <span
+                className="inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase"
+                style={{
+                  backgroundColor: "var(--mr-bg-elevated)",
+                  color: "var(--mr-accent)",
+                }}
+              >
+                Password Management
+              </span>
+              <h2 className="text-base font-bold">Change Password</h2>
+              <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
+                Updating your password immediately revokes refresh tokens across all other devices.
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="sec-current-password" className="mb-1 block text-xs font-medium">
+                Current Password
+              </label>
+              <div className="relative">
+                <input
+                  id="sec-current-password"
+                  type={showCurrentPwd ? "text" : "password"}
+                  required
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full rounded-[var(--mr-radius-sm)] border py-2 pr-14 pl-3 text-sm"
+                  style={{
+                    backgroundColor: "var(--mr-bg-elevated)",
+                    borderColor: "var(--mr-border-subtle)",
+                    color: "var(--mr-text-primary)",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPwd((prev) => !prev)}
+                  className="absolute top-1/2 right-2.5 -translate-y-1/2 cursor-pointer text-[11px] font-medium"
+                  style={{ color: "var(--mr-text-muted)" }}
+                >
+                  {showCurrentPwd ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="sec-new-password" className="mb-1 block text-xs font-medium">
+                New Strong Password
+              </label>
+              <div className="relative">
+                <input
+                  id="sec-new-password"
+                  type={showNewPwd ? "text" : "password"}
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full rounded-[var(--mr-radius-sm)] border py-2 pr-14 pl-3 text-sm"
+                  style={{
+                    backgroundColor: "var(--mr-bg-elevated)",
+                    borderColor: "var(--mr-border-subtle)",
+                    color: "var(--mr-text-primary)",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPwd((prev) => !prev)}
+                  className="absolute top-1/2 right-2.5 -translate-y-1/2 cursor-pointer text-[11px] font-medium"
+                  style={{ color: "var(--mr-text-muted)" }}
+                >
+                  {showNewPwd ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="sec-confirm-password" className="mb-1 block text-xs font-medium">
+                Confirm New Password
+              </label>
+              <div className="relative">
+                <input
+                  id="sec-confirm-password"
+                  type={showConfirmPwd ? "text" : "password"}
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-[var(--mr-radius-sm)] border py-2 pr-14 pl-3 text-sm"
+                  style={{
+                    backgroundColor: "var(--mr-bg-elevated)",
+                    borderColor:
+                      confirmPassword && confirmPassword !== newPassword
+                        ? "var(--mr-danger)"
+                        : "var(--mr-border-subtle)",
+                    color: "var(--mr-text-primary)",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPwd((prev) => !prev)}
+                  className="absolute top-1/2 right-2.5 -translate-y-1/2 cursor-pointer text-[11px] font-medium"
+                  style={{ color: "var(--mr-text-muted)" }}
+                >
+                  {showConfirmPwd ? "Hide" : "Show"}
+                </button>
+              </div>
+              {confirmPassword && confirmPassword !== newPassword ? (
+                <p className="mt-1 text-[11px] font-medium" style={{ color: "var(--mr-danger)" }}>
+                  Confirmation does not match the new password.
+                </p>
+              ) : null}
+            </div>
+
+            <PasswordStrengthMeter
+              password={newPassword}
+              confirmPassword={confirmPassword}
+              currentPassword={currentPassword}
+            />
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+              <button
+                type="submit"
+                disabled={pwdBusy || (Boolean(confirmPassword) && confirmPassword !== newPassword)}
+                className="cursor-pointer rounded-[var(--mr-radius-sm)] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                style={{ backgroundColor: "var(--mr-accent)" }}
+              >
+                {pwdBusy ? "Updating..." : "Update Password"}
+              </button>
+              <Link
+                to="/forgot-password"
+                className="text-xs font-medium underline"
+                style={{ color: "var(--mr-accent)" }}
+              >
+                Forgot current password? Reset via Email OTP →
+              </Link>
+            </div>
+          </form>
+
+          <aside className="space-y-4">
+            <div
+              className="space-y-3 rounded-[var(--mr-radius-lg)] border p-5 text-xs"
+              style={{
+                backgroundColor: "var(--mr-bg-surface)",
+                borderColor: "var(--mr-border-subtle)",
+              }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-bold">Account Security &amp; Verification</h3>
+                <span
+                  className="rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
+                  style={{
+                    backgroundColor: "var(--mr-bg-elevated)",
+                    borderColor:
+                      user?.status === "ACTIVE" ? "var(--mr-success)" : "var(--mr-warning)",
+                    color: user?.status === "ACTIVE" ? "var(--mr-success)" : "var(--mr-warning)",
+                  }}
+                >
+                  {user?.status ?? "ACTIVE"}
+                </span>
+              </div>
+
+              <dl
+                className="space-y-2 rounded-[var(--mr-radius-sm)] border p-3"
+                style={{
+                  backgroundColor: "var(--mr-bg-canvas)",
+                  borderColor: "var(--mr-border-subtle)",
+                }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <dt style={{ color: "var(--mr-text-muted)" }}>Username</dt>
+                  <dd className="font-mono font-semibold">@{user?.username ?? "—"}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <dt style={{ color: "var(--mr-text-muted)" }}>Verified Email</dt>
+                  <dd className="truncate font-mono">{user?.email ?? "—"}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <dt style={{ color: "var(--mr-text-muted)" }}>Account Role</dt>
+                  <dd className="font-semibold">{user?.role ?? "READER"}</dd>
+                </div>
+              </dl>
+
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  to="/forgot-password"
+                  className="rounded border px-3 py-1.5 font-semibold"
+                  style={{
+                    backgroundColor: "var(--mr-bg-elevated)",
+                    borderColor: "var(--mr-border-strong)",
+                    color: "var(--mr-accent)",
+                  }}
+                >
+                  Reset Password via OTP
+                </Link>
+                <Link
+                  to={
+                    user?.email
+                      ? `/verify-email?email=${encodeURIComponent(user.email)}`
+                      : "/verify-email"
+                  }
+                  className="rounded border px-3 py-1.5 font-semibold"
+                  style={{
+                    backgroundColor: "var(--mr-bg-elevated)",
+                    borderColor: "var(--mr-border-strong)",
+                    color: "var(--mr-text-primary)",
+                  }}
+                >
+                  Verify Email OTP
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => void logoutSession()}
+                  className="cursor-pointer rounded border px-3 py-1.5 font-semibold"
+                  style={{
+                    borderColor: "var(--mr-danger)",
+                    color: "var(--mr-danger)",
+                  }}
+                >
+                  Sign Out Session
+                </button>
+              </div>
+            </div>
+
+            <div
+              className="space-y-2 rounded-[var(--mr-radius-lg)] border p-5 text-xs"
+              style={{
+                backgroundColor: "var(--mr-bg-surface)",
+                borderColor: "var(--mr-border-subtle)",
+              }}
+            >
+              <h3 className="text-sm font-bold">Protection Controls</h3>
+              <ul className="space-y-2" style={{ color: "var(--mr-text-secondary)" }}>
+                <li>• Passwords hashed with Argon2id before database storage.</li>
+                <li>• Changing or resetting password revokes active refresh sessions.</li>
+                <li>• Email OTP challenges expire after 120 seconds and allow single-use only.</li>
+              </ul>
+            </div>
+          </aside>
+        </div>
       ) : null}
 
       {tab === "reader" ? (
@@ -1299,19 +1517,15 @@ export function AccountSettingsPage() {
 
       {tab === "stats" ? (
         statsQuery.isLoading ? (
-          <LoadingState
-            variant="dashboard"
-            label="Analyzing reading history & building visual story..."
-          />
+          <LoadingState variant="dashboard" label="Loading personal reading statistics..." />
         ) : !statsQuery.data?.data.hasData ? (
           <EmptyState
             title="Not enough reading data yet"
-            description="Open a few chapters, bookmark titles in your library, or rate completed manga to unlock your interactive Data Storytelling dashboard."
+            description="Open chapters, bookmark titles in your library, or rate completed manga to view your reading statistics and charts."
           />
         ) : (
           (() => {
             const st = statsQuery.data.data;
-            const story = buildReaderDataStory(st, ratingsQuery.data?.data);
             const validRate =
               st.chapterOpens > 0 ? Math.round((st.validViews / st.chapterOpens) * 100) : 0;
             const chaptersPerSeries =
@@ -1329,27 +1543,27 @@ export function AccountSettingsPage() {
               READING: {
                 label: "Currently Reading",
                 color: "#38bdf8",
-                hint: "Active ongoing titles in rotation",
+                hint: "Ongoing series in library",
               },
               COMPLETED: {
                 label: "Completed",
                 color: "#34d399",
-                hint: "Series finished end-to-end",
+                hint: "Finished titles",
               },
               PLAN_TO_READ: {
                 label: "Plan to Read",
                 color: "#a78bfa",
-                hint: "Saved backlog queue",
+                hint: "Queued to read later",
               },
               ON_HOLD: {
                 label: "On Hold",
                 color: "#fbbf24",
-                hint: "Paused mid-series",
+                hint: "Temporarily paused",
               },
               DROPPED: {
                 label: "Dropped",
                 color: "#f87171",
-                hint: "Discontinued early",
+                hint: "Discontinued titles",
               },
             };
 
@@ -1370,40 +1584,46 @@ export function AccountSettingsPage() {
                 };
               });
 
-            const maxCreatorWork = Math.max(1, ...st.topCreators.map((c) => c.workCount));
+            const topAuthors = st.topCreators.filter(
+              (c) =>
+                (c.roles ?? []).some((r) => r.toLowerCase() === "author") ||
+                !(c.roles && c.roles.length > 0),
+            );
+            const topArtists = st.topCreators.filter((c) =>
+              (c.roles ?? []).some((r) => r.toLowerCase() === "artist"),
+            );
+            const maxAuthorWork = Math.max(1, ...topAuthors.map((c) => c.workCount));
+            const maxArtistWork = Math.max(1, ...topArtists.map((c) => c.workCount));
 
             return (
               <div className="space-y-5">
-                {/* 1. Data Storytelling Persona & Actionable Insights */}
-                <StorytellingNarrativeCard {...story} />
-
-                {/* 2. Executive Metrics Strip */}
+                {/* 1. Metrics Strip */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                   {[
                     {
                       label: "Chapter Opens",
                       val: st.chapterOpens.toLocaleString(),
-                      sub: "Total sessions started",
+                      sub: "Total sessions",
                     },
                     {
-                      label: "Valid Deep Reads",
+                      label: "Valid Views",
                       val: st.validViews.toLocaleString(),
-                      sub: `${validRate}% dwell completion`,
+                      sub: `${validRate}% dwell rate`,
                     },
                     {
                       label: "Unique Chapters",
                       val: st.uniqueChaptersRead.toLocaleString(),
-                      sub: "Distinct episodes read",
+                      sub: "Distinct chapters",
                     },
                     {
-                      label: "Series Explored",
+                      label: "Series Interacted",
                       val: st.uniqueMangasInteracted.toLocaleString(),
                       sub: `${chaptersPerSeries} ch/title avg`,
                     },
                     {
                       label: "Ratings Submitted",
                       val: st.ratingsCount.toLocaleString(),
-                      sub: `${rateCoveragePct}% of explored titles`,
+                      sub: `${rateCoveragePct}% of titles`,
                     },
                     {
                       label: "Mean Score Given",
@@ -1412,13 +1632,9 @@ export function AccountSettingsPage() {
                           ? `${st.averageRatingGiven.toFixed(2)}/10`
                           : "—",
                       sub:
-                        st.averageRatingGiven === null
-                          ? "Rate a manga to calibrate"
-                          : st.averageRatingGiven >= 8
-                            ? "Generous curator (>8.0)"
-                            : st.averageRatingGiven >= 6.5
-                              ? "Balanced evaluator"
-                              : "Discerning critic (<6.5)",
+                        st.averageRatingGiven !== null
+                          ? `Based on ${st.ratingsCount} ratings`
+                          : "No ratings yet",
                     },
                   ].map((kpi) => (
                     <div
@@ -1448,11 +1664,11 @@ export function AccountSettingsPage() {
                   ))}
                 </div>
 
-                {/* 3. Reading Retention Funnel + Library Pipeline Donut */}
+                {/* 2. Reading Funnel + Library Pipeline Donut */}
                 <div className="grid gap-4 lg:grid-cols-2">
                   <EngagementFunnelChart
                     title="Reading Commitment Funnel"
-                    subtitle="How opening a chapter converts into deep reading, library curation, and community rating"
+                    subtitle="Chapter opens, qualified views, library tracking, and ratings"
                     stages={[
                       {
                         key: "opens",
@@ -1466,11 +1682,8 @@ export function AccountSettingsPage() {
                         key: "valid",
                         label: "Valid Qualified Views",
                         value: st.validViews,
-                        conversionLabel: `${validRate}% Deep-Read`,
-                        hint:
-                          validRate >= 65
-                            ? "High immersion: most opened chapters keep your attention."
-                            : "Many short previews — bookmark promising hits before losing track.",
+                        conversionLabel: `${validRate}% Qualified`,
+                        hint: "Reads meeting the minimum dwell threshold.",
                         color: "#34d399",
                       },
                       {
@@ -1478,15 +1691,15 @@ export function AccountSettingsPage() {
                         label: "Tracked Series in Library",
                         value: totalTracked,
                         conversionLabel: `${st.uniqueMangasInteracted} Interacted`,
-                        hint: "Titles organized across Reading, Completed, and Plan-to-Read.",
+                        hint: "Titles saved across Reading, Completed, and Plan-to-Read.",
                         color: "#a78bfa",
                       },
                       {
                         key: "rated",
                         label: "Rated Titles",
                         value: st.ratingsCount,
-                        conversionLabel: `${rateCoveragePct}% Coverage`,
-                        hint: "Scored series that sharpen Home personalized recommendations.",
+                        conversionLabel: `${rateCoveragePct}% Rated`,
+                        hint: "Series you have assigned a 1–10 score.",
                         color: "#fbbf24",
                       },
                     ]}
@@ -1494,7 +1707,7 @@ export function AccountSettingsPage() {
 
                   <InteractiveDonutChart
                     title="Library Lifecycle Distribution"
-                    subtitle="Click any segment to inspect backlog vs. completion momentum"
+                    subtitle="Click any status segment to inspect count and share"
                     centerLabel="Tracked Titles"
                     centerValue={totalTracked.toLocaleString()}
                     items={
@@ -1506,19 +1719,19 @@ export function AccountSettingsPage() {
                               label: "No Bookmarked Series Yet",
                               value: Math.max(1, st.uniqueMangasInteracted),
                               color: "#64748b",
-                              hint: "Add titles to Library to organize Reading & Plan-to-Read.",
+                              hint: "Add titles to Library to track status.",
                             },
                           ]
                     }
                   />
                 </div>
 
-                {/* 4. Genre DNA Radar + Interactive Top Genres Bar/Area Chart */}
+                {/* 3. Genre Radar + Interactive Top Genres Bar/Area Chart */}
                 <div className="grid gap-4 lg:grid-cols-2">
                   {st.topTags.length >= 3 ? (
                     <GenreRadarChart
-                      title="Personal Genre DNA Footprint"
-                      subtitle="Hover vertices to examine how concentrated or diverse your taste signature is"
+                      title="Top Genres Radar"
+                      subtitle="Distribution across your most frequently read tags"
                       axes={st.topTags.slice(0, 7).map((t) => ({
                         label: t.name,
                         value: t.count,
@@ -1533,123 +1746,192 @@ export function AccountSettingsPage() {
                         borderColor: "var(--mr-border-subtle)",
                       }}
                     >
-                      <h3 className="text-sm font-bold">Personal Genre DNA Footprint</h3>
+                      <h3 className="text-sm font-bold">Top Genres Radar</h3>
                       <p
                         className="mt-2 text-xs leading-relaxed"
                         style={{ color: "var(--mr-text-muted)" }}
                       >
-                        Read across at least 3 distinct genres/tags to unlock the multi-axis Taste
-                        Radar visualization.
+                        Read across at least 3 distinct genres/tags to render the multi-axis radar
+                        chart.
                       </p>
-                      <Link
-                        to="/search/advanced"
-                        className="mt-3 inline-block text-xs font-semibold hover:underline"
-                        style={{ color: "var(--mr-accent)" }}
-                      >
-                        Discover new tags in Advanced Search →
-                      </Link>
                     </div>
                   )}
 
                   <InteractiveTrendChart
-                    title="Top Genres & Thematic Engagement"
-                    subtitle="Switch Bar/Area views or click a genre bar to explore matching titles"
+                    title="Top Genres & Tags"
+                    subtitle="Switch Bars / Trend Line or click a tag to filter catalog"
                     accentColor="#38bdf8"
                     averageLabel="Tag Avg"
-                    valueFormatter={(v) => `${v} ch/interactions`}
+                    valueFormatter={(v) => `${v} hits`}
                     data={st.topTags.map((t) => ({
                       key: t.slug,
                       label: t.name,
                       value: t.count,
                       sublabel: `#${t.slug}`,
-                      href: `/search/advanced?tag=${encodeURIComponent(t.slug)}`,
+                      href: `/search/advanced?includeTags=${encodeURIComponent(t.slug)}`,
                     }))}
                   />
                 </div>
 
-                {/* 5. Top Creators Affinity Panel */}
-                <div
-                  className="rounded-[var(--mr-radius-lg)] border p-5"
-                  style={{
-                    backgroundColor: "var(--mr-bg-surface)",
-                    borderColor: "var(--mr-border-subtle)",
-                  }}
-                >
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <h3 className="text-sm font-bold">Top Creators Affinity</h3>
-                      <p className="text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
-                        Authors & artists whose catalogs drive your highest engagement — click any
-                        creator to browse their bibliography
-                      </p>
+                {/* 4. Separate Top Authors & Top Artists Panels */}
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div
+                    className="rounded-[var(--mr-radius-lg)] border p-5"
+                    style={{
+                      backgroundColor: "var(--mr-bg-surface)",
+                      borderColor: "var(--mr-border-subtle)",
+                    }}
+                  >
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h3 className="text-sm font-bold">Top Authors (Story)</h3>
+                        <p className="text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
+                          Most-read story writers from your reading history
+                        </p>
+                      </div>
+                      <Link
+                        to="/search/advanced?tab=creators"
+                        className="text-xs font-semibold hover:underline"
+                        style={{ color: "var(--mr-accent)" }}
+                      >
+                        Directory →
+                      </Link>
                     </div>
-                    <Link
-                      to="/search/advanced?tab=creators"
-                      className="text-xs font-semibold hover:underline"
-                      style={{ color: "var(--mr-accent)" }}
-                    >
-                      Browse Creator Directory →
-                    </Link>
+                    {topAuthors.length === 0 ? (
+                      <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
+                        No author credits recorded yet.
+                      </p>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {topAuthors.map((c, idx) => {
+                          const widthPct = Math.max(
+                            10,
+                            Math.round((c.workCount / maxAuthorWork) * 100),
+                          );
+                          return (
+                            <Link
+                              key={`auth-${c.creatorId}`}
+                              to={`/author/${encodeURIComponent(c.creatorId)}/${encodeURIComponent(c.creatorId)}`}
+                              className="block rounded-[var(--mr-radius-md)] border p-3 transition hover:border-sky-400"
+                              style={{
+                                backgroundColor: "var(--mr-bg-canvas)",
+                                borderColor: "var(--mr-border-subtle)",
+                              }}
+                            >
+                              <div className="flex items-center justify-between gap-2 text-xs">
+                                <span
+                                  className="truncate font-semibold"
+                                  style={{ color: "var(--mr-text-primary)" }}
+                                >
+                                  <span
+                                    className="mr-1.5 font-mono text-[11px]"
+                                    style={{ color: "var(--mr-accent)" }}
+                                  >
+                                    #{idx + 1}
+                                  </span>
+                                  {c.name}
+                                </span>
+                                <span
+                                  className="shrink-0 font-mono text-[11px]"
+                                  style={{ color: "var(--mr-text-secondary)" }}
+                                >
+                                  {c.workCount} works
+                                </span>
+                              </div>
+                              <div
+                                className="mt-2 h-1.5 overflow-hidden rounded-full"
+                                style={{ backgroundColor: "var(--mr-bg-elevated)" }}
+                              >
+                                <div
+                                  className="h-full rounded-full"
+                                  style={{ width: `${widthPct}%`, backgroundColor: "#38bdf8" }}
+                                />
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
-                  {st.topCreators.length === 0 ? (
-                    <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
-                      No creator attribution recorded yet in your reading history.
-                    </p>
-                  ) : (
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {st.topCreators.map((c, idx) => {
-                        const widthPct = Math.max(
-                          10,
-                          Math.round((c.workCount / maxCreatorWork) * 100),
-                        );
-                        return (
-                          <Link
-                            key={c.creatorId}
-                            to={`/author/${encodeURIComponent(c.creatorId)}/${encodeURIComponent(c.creatorId)}`}
-                            className="block rounded-[var(--mr-radius-md)] border p-3 transition hover:border-sky-400"
-                            style={{
-                              backgroundColor: "var(--mr-bg-canvas)",
-                              borderColor: "var(--mr-border-subtle)",
-                            }}
-                          >
-                            <div className="flex items-center justify-between gap-2 text-xs">
-                              <span
-                                className="truncate font-semibold"
-                                style={{ color: "var(--mr-text-primary)" }}
-                              >
-                                <span
-                                  className="mr-1.5 font-mono text-[11px]"
-                                  style={{ color: "var(--mr-accent)" }}
-                                >
-                                  #{idx + 1}
-                                </span>
-                                {c.name}
-                              </span>
-                              <span
-                                className="shrink-0 font-mono text-[11px]"
-                                style={{ color: "var(--mr-text-secondary)" }}
-                              >
-                                {c.workCount} works read
-                              </span>
-                            </div>
-                            <div
-                              className="mt-2 h-1.5 overflow-hidden rounded-full"
-                              style={{ backgroundColor: "var(--mr-bg-elevated)" }}
-                            >
-                              <div
-                                className="h-full rounded-full"
-                                style={{
-                                  width: `${widthPct}%`,
-                                  backgroundColor: idx === 0 ? "#38bdf8" : "#34d399",
-                                }}
-                              />
-                            </div>
-                          </Link>
-                        );
-                      })}
+                  <div
+                    className="rounded-[var(--mr-radius-lg)] border p-5"
+                    style={{
+                      backgroundColor: "var(--mr-bg-surface)",
+                      borderColor: "var(--mr-border-subtle)",
+                    }}
+                  >
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h3 className="text-sm font-bold">Top Artists (Illustration)</h3>
+                        <p className="text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
+                          Most-read illustrators from your reading history
+                        </p>
+                      </div>
+                      <Link
+                        to="/search/advanced?tab=creators"
+                        className="text-xs font-semibold hover:underline"
+                        style={{ color: "var(--mr-accent)" }}
+                      >
+                        Directory →
+                      </Link>
                     </div>
-                  )}
+                    {topArtists.length === 0 ? (
+                      <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
+                        No artist credits recorded yet.
+                      </p>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {topArtists.map((c, idx) => {
+                          const widthPct = Math.max(
+                            10,
+                            Math.round((c.workCount / maxArtistWork) * 100),
+                          );
+                          return (
+                            <Link
+                              key={`art-${c.creatorId}`}
+                              to={`/author/${encodeURIComponent(c.creatorId)}/${encodeURIComponent(c.creatorId)}`}
+                              className="block rounded-[var(--mr-radius-md)] border p-3 transition hover:border-emerald-400"
+                              style={{
+                                backgroundColor: "var(--mr-bg-canvas)",
+                                borderColor: "var(--mr-border-subtle)",
+                              }}
+                            >
+                              <div className="flex items-center justify-between gap-2 text-xs">
+                                <span
+                                  className="truncate font-semibold"
+                                  style={{ color: "var(--mr-text-primary)" }}
+                                >
+                                  <span
+                                    className="mr-1.5 font-mono text-[11px]"
+                                    style={{ color: "var(--mr-success)" }}
+                                  >
+                                    #{idx + 1}
+                                  </span>
+                                  {c.name}
+                                </span>
+                                <span
+                                  className="shrink-0 font-mono text-[11px]"
+                                  style={{ color: "var(--mr-text-secondary)" }}
+                                >
+                                  {c.workCount} works
+                                </span>
+                              </div>
+                              <div
+                                className="mt-2 h-1.5 overflow-hidden rounded-full"
+                                style={{ backgroundColor: "var(--mr-bg-elevated)" }}
+                              >
+                                <div
+                                  className="h-full rounded-full"
+                                  style={{ width: `${widthPct}%`, backgroundColor: "#34d399" }}
+                                />
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );

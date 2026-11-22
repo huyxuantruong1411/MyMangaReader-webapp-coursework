@@ -135,20 +135,35 @@ class AdminAnalyticsService:
                     select(
                         CreatorModel.creator_id,
                         CreatorModel.name,
-                        func.count(func.distinct(MangaCreatorModel.manga_id)),
+                        MangaCreatorModel.role,
+                        MangaCreatorModel.manga_id,
                     )
                     .join(
                         MangaCreatorModel, MangaCreatorModel.creator_id == CreatorModel.creator_id
                     )
                     .where(MangaCreatorModel.manga_id.in_(sample_manga_ids))
-                    .group_by(CreatorModel.creator_id, CreatorModel.name)
-                    .order_by(func.count(func.distinct(MangaCreatorModel.manga_id)).desc())
-                    .limit(8)
                 )
             ).all()
+            creator_works: dict[str, set[UUID]] = {}
+            creator_names: dict[str, str] = {}
+            creator_roles: dict[str, set[str]] = {}
+            for cid, cname, crole, mid in c_rows:
+                creator_names[cid] = cname
+                creator_works.setdefault(cid, set()).add(mid)
+                if crole:
+                    creator_roles.setdefault(cid, set()).add(crole.lower())
+            ranked_creators = sorted(
+                creator_works.items(),
+                key=lambda item: (-len(item[1]), creator_names[item[0]]),
+            )[:12]
             top_creators = [
-                {"creatorId": cid, "name": cname, "workCount": int(cnt)}
-                for cid, cname, cnt in c_rows
+                {
+                    "creatorId": cid,
+                    "name": creator_names[cid],
+                    "workCount": len(mids),
+                    "roles": sorted(creator_roles.get(cid, set())),
+                }
+                for cid, mids in ranked_creators
             ]
 
         return {

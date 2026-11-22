@@ -3,11 +3,9 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { CatalogPagination } from "../../components/CatalogPagination";
 import {
-  buildAdminDataStory,
   EngagementFunnelChart,
   InteractiveDonutChart,
   InteractiveTrendChart,
-  StorytellingNarrativeCard,
 } from "../../components/DataStoryCharts";
 import { EmptyState, ErrorState, LoadingState } from "../../components/StateViews";
 import { UserAvatar } from "../../components/UserAvatar";
@@ -502,10 +500,6 @@ export function AdminDashboardPage() {
         <ErrorState onRetry={() => void statsQuery.refetch()} />
       ) : statsQuery.data ? (
         <>
-          <StorytellingNarrativeCard
-            {...buildAdminDataStory(statsQuery.data.data.summary, statsQuery.data.data.items)}
-          />
-
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
             {[
               { label: "Total Mangas", val: statsQuery.data.data.summary.totalMangas },
@@ -1334,25 +1328,80 @@ export function AdminAccountsPage() {
                             </ul>
                           </div>
                         ) : null}
-                        {readerStats.topCreators.length > 0 ? (
-                          <div
-                            className="rounded border p-3"
-                            style={{
-                              backgroundColor: "var(--mr-bg-elevated)",
-                              borderColor: "var(--mr-border-subtle)",
-                            }}
-                          >
-                            <p className="mb-1.5 font-semibold">Top Creators Read</p>
-                            <ul className="space-y-1">
-                              {readerStats.topCreators.map((c) => (
-                                <li key={c.creatorId} className="flex justify-between">
-                                  <span>{c.name}</span>
-                                  <span className="font-mono">{c.workCount} titles</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
+                        {readerStats.topCreators.length > 0
+                          ? (() => {
+                              const topAuthors = readerStats.topCreators.filter(
+                                (c) =>
+                                  (c.roles ?? []).some((r) => r.toLowerCase() === "author") ||
+                                  !(c.roles && c.roles.length > 0),
+                              );
+                              const topArtists = readerStats.topCreators.filter((c) =>
+                                (c.roles ?? []).some((r) => r.toLowerCase() === "artist"),
+                              );
+                              return (
+                                <div className="space-y-2">
+                                  <div
+                                    className="rounded border p-3"
+                                    style={{
+                                      backgroundColor: "var(--mr-bg-elevated)",
+                                      borderColor: "var(--mr-border-subtle)",
+                                    }}
+                                  >
+                                    <p className="mb-1.5 font-semibold">Top Authors Read</p>
+                                    {topAuthors.length === 0 ? (
+                                      <p
+                                        className="text-[11px]"
+                                        style={{ color: "var(--mr-text-muted)" }}
+                                      >
+                                        None recorded
+                                      </p>
+                                    ) : (
+                                      <ul className="space-y-1">
+                                        {topAuthors.map((c) => (
+                                          <li
+                                            key={`ma-${c.creatorId}`}
+                                            className="flex justify-between"
+                                          >
+                                            <span>{c.name}</span>
+                                            <span className="font-mono">{c.workCount} titles</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                  </div>
+                                  <div
+                                    className="rounded border p-3"
+                                    style={{
+                                      backgroundColor: "var(--mr-bg-elevated)",
+                                      borderColor: "var(--mr-border-subtle)",
+                                    }}
+                                  >
+                                    <p className="mb-1.5 font-semibold">Top Artists Read</p>
+                                    {topArtists.length === 0 ? (
+                                      <p
+                                        className="text-[11px]"
+                                        style={{ color: "var(--mr-text-muted)" }}
+                                      >
+                                        None recorded
+                                      </p>
+                                    ) : (
+                                      <ul className="space-y-1">
+                                        {topArtists.map((c) => (
+                                          <li
+                                            key={`mar-${c.creatorId}`}
+                                            className="flex justify-between"
+                                          >
+                                            <span>{c.name}</span>
+                                            <span className="font-mono">{c.workCount} titles</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()
+                          : null}
                       </div>
                     ) : null}
                   </div>

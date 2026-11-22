@@ -11,7 +11,12 @@ import {
   AdminMangaPage,
   AdminReportsPage,
 } from "../features/admin/AdminPages";
-import { LoginPage, RegisterPage } from "../features/auth/AuthPages";
+import {
+  ForgotPasswordPage,
+  LoginPage,
+  RegisterPage,
+  VerifyEmailPage,
+} from "../features/auth/AuthPages";
 import { AuthorDetailPage } from "../features/creator/AuthorDetailPage";
 import { ExplorePage } from "../features/discovery/ExplorePage";
 import { HomePage } from "../features/discovery/HomePage";
@@ -33,6 +38,8 @@ export function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/explore" element={<ExplorePage />} />
         <Route path="/search/advanced" element={<ExplorePage />} />
         <Route path="/search" element={<SearchPage />} />

@@ -829,8 +829,10 @@ describe("Manga Reader Frontend Application", () => {
 
     renderRoute("/manga/azure-blade", ACTIVE_READER);
     await waitFor(() => {
-      expect(screen.getByRole("link", { name: /Asano Inio/i })).toBeInTheDocument();
+      expect(screen.getAllByRole("link", { name: /Asano Inio/i }).length).toBeGreaterThanOrEqual(2);
     });
+    expect(screen.getByText(/Authors \(Story\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Artists \(Illustration\)/i)).toBeInTheDocument();
     expect(screen.getAllByText(/おやすみプンプン/).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: /Cover Art Gallery/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /All Locales/i })).toBeInTheDocument();
@@ -908,7 +910,14 @@ describe("Manga Reader Frontend Application", () => {
               { slug: "psychological", name: "Psychological", count: 12 },
               { slug: "action", name: "Action", count: 9 },
             ],
-            topCreators: [{ creatorId: "cr-asano", name: "Asano Inio", workCount: 3 }],
+            topCreators: [
+              {
+                creatorId: "cr-asano",
+                name: "Asano Inio",
+                workCount: 3,
+                roles: ["author", "artist"],
+              },
+            ],
           },
           meta: { requestId: "req-test" },
         });
@@ -917,6 +926,13 @@ describe("Manga Reader Frontend Application", () => {
     });
 
     renderRoute("/settings", ACTIVE_ADMIN);
+    await user.click(screen.getByRole("button", { name: /Password & Security/i }));
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Confirm New Password/i)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Password Strength/i)).toBeInTheDocument();
+    expect(screen.getByText(/Reset Password via OTP/i)).toBeInTheDocument();
+
     await user.click(screen.getByRole("button", { name: /Reader Preferences/i }));
     await waitFor(() => {
       expect(screen.getByText(/Live Reader Simulator/i)).toBeInTheDocument();
@@ -926,8 +942,11 @@ describe("Manga Reader Frontend Application", () => {
     await waitFor(() => {
       expect(screen.getByText(/Reading Commitment Funnel/i)).toBeInTheDocument();
     });
+    expect(screen.queryByText(/Personal Reading Intelligence/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Library Lifecycle Distribution/i)).toBeInTheDocument();
-    expect(screen.getByText(/Personal Genre DNA Footprint/i)).toBeInTheDocument();
+    expect(screen.getByText(/Top Genres Radar/i)).toBeInTheDocument();
+    expect(screen.getByText(/Top Authors \(Story\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Top Artists \(Illustration\)/i)).toBeInTheDocument();
   });
 
   it("renders AdminReportsPage triage KPI workbench and auto-selects pending report", async () => {
@@ -975,5 +994,68 @@ describe("Manga Reader Frontend Application", () => {
       expect(screen.getByText(/Case Inspector · COMMENT/i)).toBeInTheDocument();
     });
     expect(screen.getByText(/Moderation Decision/i)).toBeInTheDocument();
+  });
+
+  it("completes 3-step Forgot Password Email OTP recovery flow", async () => {
+    const user = userEvent.setup();
+    const prevFetch = globalThis.fetch;
+
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.endsWith("/auth/forgot-password")) {
+        return makeJsonResponse({
+          data: {
+            sent: true,
+            email: "reader01@example.com",
+            username: "reader01",
+            otpTtlSeconds: 120,
+          },
+          meta: { requestId: "req-test" },
+        });
+      }
+      if (url.endsWith("/auth/verify-reset-otp")) {
+        return makeJsonResponse({
+          data: {
+            valid: true,
+            email: "reader01@example.com",
+            username: "reader01",
+          },
+          meta: { requestId: "req-test" },
+        });
+      }
+      if (url.endsWith("/auth/reset-password")) {
+        return makeJsonResponse({
+          data: {
+            reset: true,
+            email: "reader01@example.com",
+            username: "reader01",
+            sessionsRevoked: true,
+          },
+          meta: { requestId: "req-test" },
+        });
+      }
+      return prevFetch(input, init);
+    });
+
+    renderRoute("/forgot-password", null);
+    await user.type(screen.getByLabelText(/Email Address or Username/i), "reader01");
+    await user.click(screen.getByRole("button", { name: /Send Reset OTP to Email/i }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/6-digit Reset OTP/i)).toBeInTheDocument();
+    });
+    await user.type(screen.getByLabelText(/6-digit Reset OTP/i), "654321");
+    await user.click(screen.getByRole("button", { name: /Verify OTP Code/i }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/New Strong Password/i)).toBeInTheDocument();
+    });
+    await user.type(screen.getByLabelText(/New Strong Password/i), "StrongPass@99");
+    await user.type(screen.getByLabelText(/Confirm New Password/i), "StrongPass@99");
+    await user.click(screen.getByRole("button", { name: /Reset Password & Sign In/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Password updated successfully for @reader01/i)).toBeInTheDocument();
+    });
   });
 });
