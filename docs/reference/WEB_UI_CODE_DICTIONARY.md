@@ -1,8 +1,8 @@
 # Từ điển Giao diện Web → Code thực tế (`QL-DocTruyen`)
 
 > **Dự án:** Hệ thống Đọc truyện Manga & Webtoon — Manga Reader (`QL-DocTruyen`)  
-> **Khảo sát source:** ngày 22/11/2026 tại commit `d1ff289` (`2026-11-21 16:26:14 +0700`)  
-> **Phạm vi:** 42 file React 19 / TypeScript trong `apps/web/src/`, 4 Layout Boundaries, 19 Routes, kết nối tới 12 Domain Modules FastAPI trong `apps/api/src/manga_reader/`.  
+> **Khảo sát source:** ngày 22/11/2026 tại commit `3a52a2a` (`2026-11-22`)  
+> **Phạm vi:** 45 file React 19 / TypeScript & CSS trong `apps/web/src/`, 4 Layout Boundaries, 19 Routes, kết nối tới 12 Domain Modules FastAPI trong `apps/api/src/manga_reader/`.  
 > **Mục đích:** tra ngược từ mọi tên màn hình, tab, nút bấm, nhãn lọc, modal, drawer hoặc biểu đồ người dùng nhìn thấy trên trình duyệt (`Ctrl+F`) sang đúng file `.tsx`, hook, hàm xử lý sự kiện, phương thức `apiClient.ts`, endpoint API và service Backend xử lý tương ứng.
 
 ---
@@ -99,9 +99,9 @@ AppProviders (QueryClientProvider + AuthProvider)
 
 **Luồng code:**
 1. `AuthProvider` ([authContext.tsx#L29-L123](../../apps/web/src/services/authContext.tsx#L29-L123)) lưu token và hồ sơ rút gọn trong `window.sessionStorage` (`mr_access_token`, `mr_session_user`) và gắn hàm `getAccessToken` + `refreshSession` vào `apiClient.configureAuth()`.
-2. `ApiClient.requestRaw()` ([apiClient.ts#L95-L154](../../apps/web/src/services/apiClient.ts#L95-L154)) tự gắn header `X-Request-ID`, `Authorization: Bearer <token>` và `credentials: "include"`. Nếu API trả `401` (không phải đường dẫn `/auth/*`), client khóa hàng đợi qua `this.inflightRefresh` (single-flight lock), gọi `POST /api/v1/auth/refresh` một lần duy nhất rồi lặp lại request gốc; nếu refresh thất bại thì gọi `clearSession()`.
+2. `ApiClient.requestRaw()` ([apiClient.ts#L141-L205](../../apps/web/src/services/apiClient.ts#L141-L205)) gọi qua `fetchWithLocalFallback()` ([apiClient.ts#L89-L121](../../apps/web/src/services/apiClient.ts#L89-L121)) — nếu proxy bị lỗi mạng cục bộ khi đang chạy localhost (và không phải `AbortError`), tự fallback sang `:8020` hoặc trả mã lỗi có cấu trúc `NETWORK_UNREACHABLE`; đồng thời [vite.config.ts#L5-L24](../../apps/web/vite.config.ts#L5-L24) cấu hình proxy `/api` cho cả `server` (`:5173`) lẫn `preview` (`:4173`). Request tự gắn header `X-Request-ID`, `Authorization: Bearer <token>` và `credentials: "include"`. Nếu API trả `401` (không phải đường dẫn `/auth/*`), client khóa hàng đợi qua `this.inflightRefresh` (single-flight lock), gọi `POST /api/v1/auth/refresh` một lần duy nhất rồi lặp lại request gốc; nếu refresh thất bại thì gọi `clearSession()`.
 
-**File/hàm:** [App.tsx#L12-L43](../../apps/web/src/app/App.tsx#L12-L43), [router.tsx#L33-L81](../../apps/web/src/app/router.tsx#L33-L81), [authContext.tsx#L29-L123](../../apps/web/src/services/authContext.tsx#L29-L123), [apiClient.ts#L77-L162](../../apps/web/src/services/apiClient.ts#L77-L162), [AuthenticatedLayout.tsx#L9-L66](../../apps/web/src/layouts/AuthenticatedLayout.tsx#L9-L66), [AdminLayout.tsx#L22-L75](../../apps/web/src/layouts/AdminLayout.tsx#L22-L75).
+**File/hàm:** [App.tsx#L12-L43](../../apps/web/src/app/App.tsx#L12-L43), [router.tsx#L33-L81](../../apps/web/src/app/router.tsx#L33-L81), [authContext.tsx#L29-L123](../../apps/web/src/services/authContext.tsx#L29-L123), [apiClient.ts#L89-L213](../../apps/web/src/services/apiClient.ts#L89-L213), [vite.config.ts#L5-L24](../../apps/web/vite.config.ts#L5-L24), [AuthenticatedLayout.tsx#L9-L66](../../apps/web/src/layouts/AuthenticatedLayout.tsx#L9-L66), [AdminLayout.tsx#L22-L75](../../apps/web/src/layouts/AdminLayout.tsx#L22-L75).
 
 ### UI-00.2 — AppHeader, Live Autocomplete Search (`Ctrl+K`) & Dark/Light Theme
 
@@ -166,7 +166,7 @@ AppProviders (QueryClientProvider + AuthProvider)
    - Khi `isAuthenticated` đúng: `myRecsQuery` (`GET /api/v1/recommendations/me`) và `historyQuery` (`GET /api/v1/reader/history?page=1`) được kích hoạt để dựng dải `"Continue Reading"` (khử trùng lặp theo `mangaId` giữ bản ghi mới nhất) và dải `"Recommended For You"`.
 2. Khi đang tải, từng section hiển thị khung xương `LoadingState` đúng variant (`cards`, `strip`) để chống giật layout.
 
-**File/hàm:** [HomePage.tsx#L12-L369](../../apps/web/src/features/discovery/HomePage.tsx#L12-L369), [MangaCard.tsx#L17-L369](../../apps/web/src/components/MangaCard.tsx#L17-L369), [CatalogPagination.tsx#L22-L143](../../apps/web/src/components/CatalogPagination.tsx#L22-L143).
+**File/hàm:** [HomePage.tsx#L12-L369](../../apps/web/src/features/discovery/HomePage.tsx#L12-L369), [MangaCard.tsx#L17-L372](../../apps/web/src/components/MangaCard.tsx#L17-L372), [CatalogPagination.tsx#L22-L143](../../apps/web/src/components/CatalogPagination.tsx#L22-L143).
 
 ---
 
@@ -207,28 +207,28 @@ AppProviders (QueryClientProvider + AuthProvider)
 **Từ khóa:** `Also Known As`, `Authors (Story)`, `Artists (Illustration)`, `Continue Reading`, `Read from Beginning`, `Start Reading`, `Metadata-only entry (0 exported chapters)`, `Reading status`, `+ Reading Lists`, `Report Issue`, `Your Rating (1–10)`.
 
 **Luồng code:**
-1. `MangaDetailPage` ([MangaDetailPage.tsx#L39-L985](../../apps/web/src/features/manga/MangaDetailPage.tsx#L39-L985)) tải `getMangaDetail(slug)`.
+1. `MangaDetailPage` ([MangaDetailPage.tsx#L39-L990](../../apps/web/src/features/manga/MangaDetailPage.tsx#L39-L990)) tải `getMangaDetail(slug)`.
 2. Cột trái hiển thị bìa chính (bấm mở Lightbox) + badge đếm tổng số bìa + thẻ thống kê điểm TB & `valid views` + khung **`Also Known As`** hiển thị tên thay thế kèm huy hiệu màu và quốc kỳ ngôn ngữ từ `resolveLocaleBadge()` ([localization.ts#L291-L320](../../apps/web/src/utils/localization.ts#L291-L320)); nếu >5 tên có nút `"View all"` và ô lọc tìm kiếm tên thay thế (`L507-L595`).
-3. Cột phải tách riêng 2 hộp: **`Authors (Story)`** (`role === "author"`) và **`Artists (Illustration)`** (`role === "artist"`) (`L664-L744`) với link sang `/author/:creatorId/:slug`. Phần mô tả dài >320 ký tự được render qua `<FormattedMarkdownText>` kèm nút `"Show full synopsis"` / `"Show less"`.
-4. Thanh chấm điểm `1–10` (`L404-L436`, `L851-L895`) vô hiệu hóa nút điểm nếu `!viewerState.canRate` (chưa mở chương nào), gọi `PUT/DELETE /api/v1/manga/{mangaId}/rating` và vô hiệu hóa lại query detail & rating history.
+3. Cột phải tách riêng 2 hộp: **`Authors (Story)`** (`role === "author"`) và **`Artists (Illustration)`** (`role === "artist"`) (`L669-L749`) với link sang `/author/:creatorId/:slug`. Phần mô tả dài >320 ký tự được render qua `<FormattedMarkdownText>` (kèm `break-words [overflow-wrap:anywhere]`) và nút `"Show full synopsis"` / `"Show less"`.
+4. Thanh chấm điểm `1–10` (`L404-L436`, `L856-L900`) vô hiệu hóa nút điểm nếu `!viewerState.canRate` (chưa mở chương nào), gọi `PUT/DELETE /api/v1/manga/{mangaId}/rating` và vô hiệu hóa lại query detail & rating history.
 
 ### UI-04.2 — Cover Art Gallery theo Locale & Lightbox
 
 **Từ khóa:** `Cover Art Gallery`, `Volume Asc ↑ / Volume Desc ↓`, `All Locales`, `Cover artwork lightbox`.
 
-**Luồng code:** ([MangaDetailPage.tsx#L137-L238](../../apps/web/src/features/manga/MangaDetailPage.tsx#L137-L238), `L987-L1093`, `L1600-L1685`): lọc danh sách `manga.coverArts` theo `locale` (sắp xếp tab ưu tiên ngôn ngữ gốc trước nhờ `getLocalePriority()`), chống trùng lặp bìa theo tập ưu tiên locale đang chọn, click mở Lightbox toàn màn hình.
+**Luồng code:** ([MangaDetailPage.tsx#L137-L238](../../apps/web/src/features/manga/MangaDetailPage.tsx#L137-L238), `L992-L1098`, `L1608-L1694`): lọc danh sách `manga.coverArts` theo `locale` (sắp xếp tab ưu tiên ngôn ngữ gốc trước nhờ `getLocalePriority()`), chống trùng lặp bìa theo tập ưu tiên locale đang chọn, click mở Lightbox toàn màn hình.
 
 ### UI-04.3 — Danh sách Chương nhóm theo Volume / No Volume & Dải Gợi ý
 
 **Từ khóa:** `Group by Volume`, `Flat List`, `No Volume (Unassigned)`, `Expand All Volumes`, `Collapse All`, `Search ch., vol., or group...`, `Jump to Ch. #`, `Filter chapter volume`, `Filter chapter language`, `Chapter ranges`, `Similar Manga`, `Content Matches`.
 
-**Luồng code:** ([MangaDetailPage.tsx#L253-L355](../../apps/web/src/features/manga/MangaDetailPage.tsx#L253-L355), `L1095-L1587`):
+**Luồng code:** ([MangaDetailPage.tsx#L253-L355](../../apps/web/src/features/manga/MangaDetailPage.tsx#L253-L355), `L1100-L1593`):
 - Mặc định chế độ `VOLUME_GROUPS`: phân bucket theo `volume`, tách riêng nhóm `"No Volume (Unassigned)"` (`__NONE__`), sắp xếp thông minh qua `compareVolumeKeys()`, bấm từng tiêu đề tập để đóng/mở (`collapsedVolumes`).
 - Chế độ `FLAT`: chia cụm 50 chương (`CHAPTER_GROUP_SIZE = 50`) + `CatalogPagination` (25/50/100 chương/trang).
 - Ô `"Jump to Ch. #"` tìm khớp `chapterNumber` để nhảy thẳng vào chương cần đọc.
 - Cuối trang hiển thị 2 dải gợi ý: `Similar Manga` (`ITEM_BASED`) và `Content Matches` (`CONTENT_BASED`).
 
-**File/hàm:** [MangaDetailPage.tsx#L15-L1690](../../apps/web/src/features/manga/MangaDetailPage.tsx#L15-L1690), [localization.ts#L10-L372](../../apps/web/src/utils/localization.ts#L10-L372), [AddToListsModal.tsx](../../apps/web/src/components/AddToListsModal.tsx), [ReportModal.tsx](../../apps/web/src/components/ReportModal.tsx).
+**File/hàm:** [MangaDetailPage.tsx#L15-L1697](../../apps/web/src/features/manga/MangaDetailPage.tsx#L15-L1697), [localization.ts#L10-L372](../../apps/web/src/utils/localization.ts#L10-L372), [AddToListsModal.tsx](../../apps/web/src/components/AddToListsModal.tsx), [ReportModal.tsx](../../apps/web/src/components/ReportModal.tsx).
 
 ---
 
@@ -240,14 +240,14 @@ AppProviders (QueryClientProvider + AuthProvider)
 **Cha → con:** Được nhúng tại cuối `MangaDetailPage` (mặc định `scope=ALL`) và trong `Chapter comments drawer` của `ChapterReaderPage` (mặc định `scope=CHAPTER` cho `chapterId` đang đọc).
 
 **Luồng code:**
-1. `CommentsSection` ([CommentsSection.tsx#L454-L721](../../apps/web/src/features/manga/CommentsSection.tsx#L454-L721)) gọi `GET /api/v1/comments` với `mangaId`, `chapterId`, `scope`, `sort` (`NEWEST`, `OLDEST`, `MOST_LIKED`), `page`. Bộ lọc text và spoiler lọc tức thì trên tập đã tải.
-2. `CommentCard` ([CommentsSection.tsx#L18-L453](../../apps/web/src/features/manga/CommentsSection.tsx#L18-L453)):
+1. `CommentsSection` ([CommentsSection.tsx#L462-L729](../../apps/web/src/features/manga/CommentsSection.tsx#L462-L729)) gọi `GET /api/v1/comments` với `mangaId`, `chapterId`, `scope`, `sort` (`NEWEST`, `OLDEST`, `MOST_LIKED`), `page`. Bộ lọc text và spoiler lọc tức thì trên tập đã tải.
+2. `CommentCard` ([CommentsSection.tsx#L18-L461](../../apps/web/src/features/manga/CommentsSection.tsx#L18-L461)):
    - Tự ẩn nội dung nếu `comment.isSpoiler && !spoilerRevealed && !comment.isDeleted`; hiện huy hiệu `"Spoiler"` hoặc `"Locked by Admin"` nếu `isSpoilerLockedByAdmin`. Khi chủ comment bấm `"Edit"` trên comment bị Admin khóa spoiler, checkbox `"Contains spoiler"` bị vô hiệu hóa (`disabled`).
    - Đệ quy hiển thị cây trả lời 1 cấp (`replies`); nút `"Reply"` chỉ xuất hiện ở comment gốc chưa bị xóa.
    - Bấm `"Edited history"` gọi `GET /api/v1/comments/{commentId}/history` mở danh sách phiên bản cũ ngay dưới card.
    - Bấm `Like` / `Dislike` gọi `PUT /api/v1/comments/{id}/reaction` với desired-state (`null` nếu bấm lại nút đang chọn).
 
-**File/hàm:** [CommentsSection.tsx#L16-L721](../../apps/web/src/features/manga/CommentsSection.tsx#L16-L721), [comments_reactions/router.py#L43-L158](../../apps/api/src/manga_reader/modules/comments_reactions/presentation/router.py#L43-L158), [comments_reactions/service.py#L94-L547](../../apps/api/src/manga_reader/modules/comments_reactions/application/service.py#L94-L547).
+**File/hàm:** [CommentsSection.tsx#L16-L729](../../apps/web/src/features/manga/CommentsSection.tsx#L16-L729), [comments_reactions/router.py#L43-L158](../../apps/api/src/manga_reader/modules/comments_reactions/presentation/router.py#L43-L158), [comments_reactions/service.py#L94-L547](../../apps/api/src/manga_reader/modules/comments_reactions/application/service.py#L94-L547).
 
 ---
 
@@ -257,11 +257,11 @@ AppProviders (QueryClientProvider + AuthProvider)
 **Từ khóa:** `Author / Artist Profile`, `Biography language`, `Filter works by role`, `All Roles`, `Author (Story)`, `Artist (Illustration)`, `Works as Author (Story)`, `Works as Artist (Illustration)`.
 
 **Luồng code:**
-1. `AuthorDetailPage` ([AuthorDetailPage.tsx#L10-L340](../../apps/web/src/features/creator/AuthorDetailPage.tsx#L10-L340)) gọi `GET /api/v1/creators/{id}` và `GET /api/v1/creators/{id}/manga`.
+1. `AuthorDetailPage` ([AuthorDetailPage.tsx#L10-L343](../../apps/web/src/features/creator/AuthorDetailPage.tsx#L10-L343)) gọi `GET /api/v1/creators/{id}` và `GET /api/v1/creators/{id}/manga`.
 2. Phần tiểu sử dùng `<FormattedMarkdownText content={displayedBio} />` (định dạng sạch tiêu đề, `**Native Name:**`, danh sách bullet và tự động nhận diện link URL) kèm selector chọn ngôn ngữ tiểu sử (`localizedBiographies`) và danh sách link mạng xã hội (`creator.links`).
 3. Phần tác phẩm lọc qua AJAX không reload (`role`, `tag`, `status`, `sort`, `titleFilter`, `CatalogPagination`) và **tách làm 2 grid riêng** `Works as Author (Story)` vs `Works as Artist (Illustration)` (`L275-L325`).
 
-**File/hàm:** [AuthorDetailPage.tsx#L10-L340](../../apps/web/src/features/creator/AuthorDetailPage.tsx#L10-L340), [FormattedMarkdownText.tsx#L96-L238](../../apps/web/src/components/FormattedMarkdownText.tsx#L96-L238).
+**File/hàm:** [AuthorDetailPage.tsx#L10-L343](../../apps/web/src/features/creator/AuthorDetailPage.tsx#L10-L343), [FormattedMarkdownText.tsx#L96-L238](../../apps/web/src/components/FormattedMarkdownText.tsx#L96-L238).
 
 ---
 
@@ -325,15 +325,15 @@ AppProviders (QueryClientProvider + AuthProvider)
 
 **Từ khóa:** `My Reading Lists`, `Search your lists by name...`, `Sort reading lists`, `Create New Private List`, `List name (unique per account)`, `Clone or Merge Existing Lists (UC-8.2)`, `Confirm creating empty merged list`.
 
-**Luồng code:** `ReadingListsPage` ([ReadingListsPage.tsx#L11-L430](../../apps/web/src/features/lists/ReadingListsPage.tsx#L11-L430)) dùng `useDebouncedValue(search, 250)` gọi `GET /api/v1/lists/my`, hiển thị thẻ danh sách kèm `<ReadingListCover variant="card" />` (collage 1–4 ảnh bìa từ `previewCovers` hoặc SVG mặc định `"Empty List"` khi trống). Form tạo gọi `POST /api/v1/lists`; form Clone/Merge (`submitMerge`, `L61-L91`) gọi `POST /api/v1/lists/merge-create`. Nếu các list nguồn đều rỗng, server trả `409 EMPTY_SOURCE_LISTS_CONFIRMATION_REQUIRED` và UI mở checkbox xác nhận `confirmEmpty`.
+**Luồng code:** `ReadingListsPage` ([ReadingListsPage.tsx#L12-L434](../../apps/web/src/features/lists/ReadingListsPage.tsx#L12-L434)) dùng `useDebouncedValue(search, 250)` gọi `GET /api/v1/lists/my`, hiển thị thẻ danh sách kèm `<ReadingListCover variant="card" />` (collage 1–4 ảnh bìa từ `previewCovers` hoặc SVG mặc định `"Empty List"` khi trống). Form tạo gọi `POST /api/v1/lists`; form Clone/Merge (`submitMerge`, `L62-L99`) gọi `POST /api/v1/lists/merge-create`. Nếu các list nguồn đều rỗng, server trả `409 EMPTY_SOURCE_LISTS_CONFIRMATION_REQUIRED` và UI mở checkbox xác nhận `confirmEmpty`.
 
 ### UI-10.2 — Chi tiết, Lọc nội bộ & Thống kê List (`ReadingListDetailPage`)
 
-**Từ khóa:** `Edit Details`, `Delete List`, `List Items`, `Metadata & Stats`, `Filter items in list...`, `Filter by publication status`, `Filter by my reading status`, `Tag Distribution Breakdown`, `Top Authors in This List`, `Top Artists in This List`, `Danh sách chưa có truyện nào để thống kê`.
+**Từ khóa:** `Edit Details`, `Delete List`, `Manga Titles`, `Dynamic Metadata Statistics`, `Filter items in list...`, `Filter by publication status`, `Filter by my reading status`, `Tag Distribution Breakdown`, `Top Authors in This List`, `Top Artists in This List`, `Danh sách chưa có truyện nào để thống kê`.
 
-**Luồng code:** `ReadingListDetailPage` ([ReadingListDetailPage.tsx#L15-L645](../../apps/web/src/features/lists/ReadingListDetailPage.tsx#L15-L645)) hiển thị `<ReadingListCover variant="detail" />` ở header danh sách, đồng thời tải song song chi tiết, items (qua debounced query + bộ lọc Tag/Publication Status/Reading Status/Sort) và metadata stats. Tại tab `"Metadata & Stats"`, nếu danh sách rỗng hiển thị thông điệp chuẩn; nếu có dữ liệu hiển thị KPI, `InteractiveDonutChart`, `GenreRadarChart` và 2 bảng xếp hạng tách biệt **`Top Authors in This List`** vs **`Top Artists in This List`**.
+**Luồng code:** `ReadingListDetailPage` ([ReadingListDetailPage.tsx#L16-L648](../../apps/web/src/features/lists/ReadingListDetailPage.tsx#L16-L648)) hiển thị `<ReadingListCover variant="detail" />` ở header danh sách, đồng thời tải song song chi tiết, items (qua debounced query + bộ lọc Tag/Publication Status/Reading Status/Sort) và metadata stats. Tại tab `"Dynamic Metadata Statistics"` (`L427-L645`), nếu danh sách rỗng hiển thị thông điệp chuẩn; nếu có dữ liệu hiển thị KPI, `InteractiveDonutChart`, `GenreRadarChart` và 2 bảng xếp hạng tách biệt **`Top Authors in This List`** vs **`Top Artists in This List`**.
 
-**File/hàm:** [ReadingListsPage.tsx#L9-L430](../../apps/web/src/features/lists/ReadingListsPage.tsx#L9-L430), [ReadingListDetailPage.tsx#L15-L645](../../apps/web/src/features/lists/ReadingListDetailPage.tsx#L15-L645), [ReadingListCover.tsx](../../apps/web/src/components/ReadingListCover.tsx), [AddToListsModal.tsx#L11-L266](../../apps/web/src/components/AddToListsModal.tsx#L11-L266), [reading_lists/router.py#L42-L250](../../apps/api/src/manga_reader/modules/reading_lists/presentation/router.py#L42-L250).
+**File/hàm:** [ReadingListsPage.tsx#L10-L434](../../apps/web/src/features/lists/ReadingListsPage.tsx#L10-L434), [ReadingListDetailPage.tsx#L16-L648](../../apps/web/src/features/lists/ReadingListDetailPage.tsx#L16-L648), [ReadingListCover.tsx#L11-L187](../../apps/web/src/components/ReadingListCover.tsx#L11-L187), [AddToListsModal.tsx#L13-L268](../../apps/web/src/components/AddToListsModal.tsx#L13-L268), [reading_lists/router.py#L42-L250](../../apps/api/src/manga_reader/modules/reading_lists/presentation/router.py#L42-L250).
 
 ---
 
@@ -342,9 +342,9 @@ AppProviders (QueryClientProvider + AuthProvider)
 
 **Từ khóa:** `Change avatar image`, `Upload new avatar image`, `Birth Date`, `Email`, `Edit Settings`, `Report User`.
 
-**Luồng code:** `ProfilePage` (`/profile/:username`, [ProfilePage.tsx#L10-L197](../../apps/web/src/features/account/ProfilePage.tsx#L10-L197)) gọi `GET /api/v1/profiles/{username}`. Nếu `user.accountId === profile.accountId` (`isOwnProfile`): cho phép chọn ảnh avatar tải thẳng lên `POST /api/v1/account/avatar` và có nút link tới `/settings`; nếu xem hồ sơ người khác và đã đăng nhập: hiện nút `"Report User"` mở `ReportModal` (`kind="ACCOUNT"`). Email chỉ xuất hiện khi server trả về (chính chủ hoặc Admin).
+**Luồng code:** `ProfilePage` (`/profile/:username`, [ProfilePage.tsx#L10-L203](../../apps/web/src/features/account/ProfilePage.tsx#L10-L203)) gọi `GET /api/v1/profiles/{username}`. Nếu `user.accountId === profile.accountId` (`isOwnProfile`): cho phép chọn ảnh avatar tải thẳng lên `POST /api/v1/account/avatar` và có nút link tới `/settings`; nếu xem hồ sơ người khác và đã đăng nhập: hiện nút `"Report User"` mở `ReportModal` (`kind="ACCOUNT"`). Email chỉ xuất hiện khi server trả về (chính chủ hoặc Admin).
 
-**File/hàm:** [ProfilePage.tsx#L10-L197](../../apps/web/src/features/account/ProfilePage.tsx#L10-L197).
+**File/hàm:** [ProfilePage.tsx#L10-L203](../../apps/web/src/features/account/ProfilePage.tsx#L10-L203).
 
 ---
 
@@ -357,7 +357,7 @@ AppProviders (QueryClientProvider + AuthProvider)
 
 **Từ khóa:** `Profile Details`, `Display Name`, `Bio`, `Birth Date`, `Show birth date on public profile`, `Save Profile`, `Avatar Image`, `Choose avatar image file`, `Upload New Avatar`.
 
-**Luồng code:** ([SettingsPage.tsx#L161-L216](../../apps/web/src/features/account/SettingsPage.tsx#L161-L216), `L330-L541`): lưu thông tin qua `PATCH /api/v1/account/profile`; chọn tệp ảnh xem trước bằng `URL.createObjectURL(avatarFile)` và upload multipart qua `POST /api/v1/account/avatar`.
+**Luồng code:** ([SettingsPage.tsx#L161-L216](../../apps/web/src/features/account/SettingsPage.tsx#L161-L216), `L328-L541`): lưu thông tin qua `PATCH /api/v1/account/profile`; chọn tệp ảnh xem trước bằng `URL.createObjectURL(avatarFile)` và upload multipart qua `POST /api/v1/account/avatar`.
 
 ### UI-12.2 — Tab `"Password & Security"`
 
@@ -369,21 +369,21 @@ AppProviders (QueryClientProvider + AuthProvider)
 
 **Từ khóa:** `Default Reader Settings`, `Display Mode`, `Reading Direction`, `Fit Mode`, `Preload Page Count`, `Save Preferences`, `Live Reader Simulator`, `Chapter Reader Keyboard Shortcuts`.
 
-**Luồng code:** ([SettingsPage.tsx#L247-L270](../../apps/web/src/features/account/SettingsPage.tsx#L247-L270), `L797-L1385`): khởi tạo an toàn tránh undefined khi test mock rỗng, sync với `GET/PUT /api/v1/reader/settings` và `localStorage`, đồng thời vẽ mô hình trực quan `"Live Reader Simulator"` thay đổi hình dáng khung trang theo đúng chế độ Webtoon / Single / Double & LTR / RTL theo thời gian thực.
+**Luồng code:** ([SettingsPage.tsx#L247-L270](../../apps/web/src/features/account/SettingsPage.tsx#L247-L270), `L797-L1400`): khởi tạo an toàn tránh undefined khi test mock rỗng, sync với `GET/PUT /api/v1/reader/settings` và `localStorage`, đồng thời vẽ mô hình trực quan `"Live Reader Simulator"` thay đổi hình dáng khung trang theo đúng chế độ Webtoon / Single / Double & LTR / RTL theo thời gian thực.
 
 ### UI-12.4 — Tab `"Rating History"`
 
 **Từ khóa:** `Filter rated manga titles...`, `Filter rating action type`, `Created`, `Updated`, `Removed`.
 
-**Luồng code:** ([SettingsPage.tsx#L139-L154](../../apps/web/src/features/account/SettingsPage.tsx#L139-L154), `L1386-L1524`): gọi `GET /api/v1/account/me/rating-history`, lọc Client theo tên truyện / loại thao tác và phân trang.
+**Luồng code:** ([SettingsPage.tsx#L139-L154](../../apps/web/src/features/account/SettingsPage.tsx#L139-L154), `L1402-L1516`): gọi `GET /api/v1/account/me/rating-history`, lọc Client (chuẩn hóa `NFC`) theo tên truyện / loại thao tác và phân trang.
 
 ### UI-12.5 — Tab `"My Reading Stats"`
 
 **Từ khóa:** `Valid Reads`, `Chapter Opens`, `Top Genres Radar`, `Top Authors (Story)`, `Top Artists (Illustration)`.
 
-**Luồng code:** ([SettingsPage.tsx#L155-L159](../../apps/web/src/features/account/SettingsPage.tsx#L155-L159), `L1525-L1930`): gọi `GET /api/v1/account/me/reading-statistics`, kết xuất KPI cards, `EngagementFunnelChart`, `InteractiveDonutChart`, `GenreRadarChart` và 2 bảng tách riêng `Top Authors (Story)` vs `Top Artists (Illustration)` — đã gỡ bỏ hoàn toàn phần text narrative theo yêu cầu gọn gàng trực quan.
+**Luồng code:** ([SettingsPage.tsx#L155-L159](../../apps/web/src/features/account/SettingsPage.tsx#L155-L159), `L1518-L1940`): gọi `GET /api/v1/account/me/reading-statistics`, kết xuất KPI cards, `EngagementFunnelChart`, `InteractiveDonutChart`, `GenreRadarChart` và 2 bảng tách riêng `Top Authors (Story)` vs `Top Artists (Illustration)` — đã gỡ bỏ hoàn toàn phần text narrative theo yêu cầu gọn gàng trực quan.
 
-**File/hàm:** [SettingsPage.tsx#L35-L1943](../../apps/web/src/features/account/SettingsPage.tsx#L35-L1943), [PasswordStrengthMeter.tsx#L8-L123](../../apps/web/src/components/PasswordStrengthMeter.tsx#L8-L123), [DataStoryCharts.tsx#L23-L773](../../apps/web/src/components/DataStoryCharts.tsx#L23-L773).
+**File/hàm:** [SettingsPage.tsx#L35-L1943](../../apps/web/src/features/account/SettingsPage.tsx#L35-L1943), [PasswordStrengthMeter.tsx#L8-L123](../../apps/web/src/components/PasswordStrengthMeter.tsx#L8-L123), [DataStoryCharts.tsx#L23-L781](../../apps/web/src/components/DataStoryCharts.tsx#L23-L781).
 
 ---
 
@@ -402,19 +402,19 @@ AppProviders (QueryClientProvider + AuthProvider)
 
 **Từ khóa:** `Admin — Accounts & Activity Logs`, `Search username, email, display name...`, `Filter account status`, `Lock/Unlock audit reason...`, `Lock Account`, `Unlock Account`, `Logs & Stats`, `System Activity Logs`, `Account Inspection & Logs`, `Reader Behavior Statistics`.
 
-**Luồng code:** ([AdminPages.tsx#L751-L1479](../../apps/web/src/features/admin/AdminPages.tsx#L751-L1479)): tải `adminListAccounts` (debounce 280ms) + `adminListActivityLogs`, gắn handler `handleLockToggle()` (`L797-L812`) và `inspectReaderStats()` (`L814-L833`). Nút `"Logs & Stats"` mở Modal Inspection gồm 3 khối: lọc log của tài khoản, thống kê hành vi Reader kèm biểu đồ Donut/Radar và 2 bảng tách riêng Authors vs Artists. Toàn bộ dòng nhật ký được dịch sang tiếng người dễ hiểu qua `formatActivityLogSummary()` (`L103-L162`).
+**Luồng code:** ([AdminPages.tsx#L751-L1492](../../apps/web/src/features/admin/AdminPages.tsx#L751-L1492)): tải `adminListAccounts` (debounce 280ms) + `adminListActivityLogs`, gắn handler `handleLockToggle()` (`L797-L812`) và `inspectReaderStats()` (`L814-L833`). Nút `"Logs & Stats"` mở Modal Inspection gồm 3 khối: lọc log của tài khoản, thống kê hành vi Reader kèm biểu đồ Donut/Radar và 2 bảng tách riêng Authors vs Artists. Toàn bộ dòng nhật ký được dịch sang tiếng người dễ hiểu qua `formatActivityLogSummary()` (`L103-L162`).
 
 ### UI-13.3 — `AdminMangaPage` (`/admin/manga`)
 
 **Từ khóa:** `Admin — Manga Catalog Management`, `Search manga title or slug...`, `Moderation reason...`, `Hide`, `Show`, `Enable CDC / Disable CDC`, `Delete Permanently`.
 
-**Luồng code:** ([AdminPages.tsx#L1480-L1727](../../apps/web/src/features/admin/AdminPages.tsx#L1480-L1727)): gọi `GET /api/v1/admin/manga`, gán action qua `runAction()` (`L1503-L1515`), khóa nút `"Delete Permanently"` nếu `m.isSyncing` đúng, yêu cầu lý do khi ẩn/xóa.
+**Luồng code:** ([AdminPages.tsx#L1493-L1740](../../apps/web/src/features/admin/AdminPages.tsx#L1493-L1740)): gọi `GET /api/v1/admin/manga`, gán action qua `runAction()` (`L1516-L1528`), khóa nút `"Delete Permanently"` nếu `m.isSyncing` đúng, yêu cầu lý do khi ẩn/xóa.
 
 ### UI-13.4 — `AdminReportsPage` (`/admin/reports`)
 
 **Từ khóa:** `Admin — Moderation Reports Queue`, `Pending Review`, `Resolved`, `Dismissed`, `Auto-Closed`, `Inspect`, `Case Inspector`, `Target State`, `Moderation Decision`, `Resolution Note (required)`, `Ignore all future reports on this manga`, `Apply Resolution`, `Moderation Audit Timeline`.
 
-**Luồng code:** ([AdminPages.tsx#L1728-L2404](../../apps/web/src/features/admin/AdminPages.tsx#L1728-L2404)): thiết kế dạng **Moderation Workbench 2 cột**:
+**Luồng code:** ([AdminPages.tsx#L1741-L2424](../../apps/web/src/features/admin/AdminPages.tsx#L1741-L2424)): thiết kế dạng **Moderation Workbench 2 cột**:
 - Cột trái: KPI triage strip + thanh lọc 3 loại (`COMMENT`/`MANGA`/`ACCOUNT`), pill chuyển trạng thái nhanh, tìm kiếm và danh sách phân trang.
 - Cột phải dính (`sticky`): `<ReportTargetCard />` ([AdminPages.tsx#L164-L386](../../apps/web/src/features/admin/AdminPages.tsx#L164-L386)) giải nghĩa dữ liệu snapshot + trạng thái sống của mục tiêu bằng ngôn ngữ bình thường (tác giả comment, tên truyện, link mở trực tiếp, cảnh báo spoiler/bị xóa), khung `Moderation Decision` chỉ liệt kê `allowedActions` hợp lệ, gợi ý ghi chú nhanh `QUICK_NOTES`, nút `"Apply Resolution"` và timeline lịch sử xử lý (`ADMIN` / `SYSTEM`).
 
@@ -422,9 +422,9 @@ AppProviders (QueryClientProvider + AuthProvider)
 
 **Từ khóa:** `External ETL & CDC Integration Paused`, `Admin — Source ETL & CDC Console`, `Upstream Package v2.0 Catalog`, `Direct Package v2.0 JSON Ingestion`, `Recent ETL Jobs`, `Retry Failed Item`.
 
-**Luồng code:** ([AdminPages.tsx#L2405-L2710](../../apps/web/src/features/admin/AdminPages.tsx#L2405-L2710)): kiểm `frontendConfig.externalEtlEnabled`; khi `false` trả panel trạng thái tạm ngưng kèm ghi chú chế độ đọc kho local; khi `true` mở form chọn từng manga + checkbox CDC, ô dán Package v2.0 JSON (`adminStartEtlSync`) và chi tiết job/retry.
+**Luồng code:** ([AdminPages.tsx#L2425-L2730](../../apps/web/src/features/admin/AdminPages.tsx#L2425-L2730)): kiểm `frontendConfig.externalEtlEnabled`; khi `false` trả panel trạng thái tạm ngưng kèm ghi chú chế độ đọc kho local; khi `true` mở form chọn từng manga + checkbox CDC, ô dán Package v2.0 JSON (`adminStartEtlSync`) và chi tiết job/retry.
 
-**File/hàm:** [AdminPages.tsx#L24-L2710](../../apps/web/src/features/admin/AdminPages.tsx#L24-L2710), [DataStoryCharts.tsx#L23-L773](../../apps/web/src/components/DataStoryCharts.tsx#L23-L773).
+**File/hàm:** [AdminPages.tsx#L24-L2730](../../apps/web/src/features/admin/AdminPages.tsx#L24-L2730), [DataStoryCharts.tsx#L23-L781](../../apps/web/src/components/DataStoryCharts.tsx#L23-L781).
 
 ---
 
@@ -433,13 +433,13 @@ AppProviders (QueryClientProvider + AuthProvider)
 
 | Component | Đường dẫn & Dòng | Trách nhiệm & Điểm cần nhớ |
 |---|---|---|
-| `MangaCard` | [MangaCard.tsx#L17-L369](../../apps/web/src/components/MangaCard.tsx#L17-L369) | 3 layout (`comfortable`, `compact`, `list`), badge rating theo màu an toàn, tách dòng hiển thị **Author:** và **Artist:** rõ ràng, hiển thị `No Cover` an toàn khi ảnh lỗi. |
+| `MangaCard` | [MangaCard.tsx#L17-L372](../../apps/web/src/components/MangaCard.tsx#L17-L372) | 3 layout (`comfortable`, `compact`, `list`), badge rating theo màu an toàn, tách dòng hiển thị **Author:** và **Artist:** rõ ràng, hiển thị `No Cover` an toàn khi ảnh lỗi. |
 | `CatalogPagination` | [CatalogPagination.tsx#L22-L143](../../apps/web/src/components/CatalogPagination.tsx#L22-L143) | Phân trang rút gọn thông minh (`1 ... n-2..n+2 ... total`), nút `First / Prev / Next / Last` + ô `"Go to page"` nhập số trang nhảy thẳng. |
-| `DataStoryCharts` | [DataStoryCharts.tsx#L23-L780](../../apps/web/src/components/DataStoryCharts.tsx#L23-L780) | 4 biểu đồ SVG thuần không phụ thuộc thư viện nặng: `InteractiveDonutChart` (giới hạn tâm chống tràn chữ & tự xuống dòng chú thích), `InteractiveTrendChart` (Bar/Line + đường TB), `GenreRadarChart` (`viewBox` mở rộng chống cắt nhãn), `EngagementFunnelChart`. |
-| `ReadingListCover` | [ReadingListCover.tsx](../../apps/web/src/components/ReadingListCover.tsx) | Hiển thị ảnh bìa collage 1–4 ảnh từ truyện trong Reading List (`card` / `detail` / `thumb`) kèm ảnh bìa mặc định SVG `"Empty List"` khi danh sách trống. |
+| `DataStoryCharts` | [DataStoryCharts.tsx#L23-L781](../../apps/web/src/components/DataStoryCharts.tsx#L23-L781) | 4 biểu đồ SVG thuần không phụ thuộc thư viện nặng: `InteractiveDonutChart` (giới hạn tâm chống tràn chữ & tự xuống dòng chú thích), `InteractiveTrendChart` (Bar/Line + đường TB), `GenreRadarChart` (`viewBox` mở rộng chống cắt nhãn), `EngagementFunnelChart`. |
+| `ReadingListCover` | [ReadingListCover.tsx#L11-L187](../../apps/web/src/components/ReadingListCover.tsx#L11-L187) | Hiển thị ảnh bìa collage 1–4 ảnh từ truyện trong Reading List (`card` / `detail` / `thumb`) kèm ảnh bìa mặc định SVG `"Empty List"` khi danh sách trống. |
 | `FormattedMarkdownText` | [FormattedMarkdownText.tsx#L96-L238](../../apps/web/src/components/FormattedMarkdownText.tsx#L96-L238) | Chuyển Markdown tiểu sử/mô tả (`#`, `**bold**`, `*italic*`, `` `[link](url)` ``, `Key: Value`, bullet list) thành JSX an toàn chống XSS kèm ngắt dòng chống tràn khung. |
 | `PasswordStrengthMeter` | [PasswordStrengthMeter.tsx#L8-L123](../../apps/web/src/components/PasswordStrengthMeter.tsx#L8-L123) | Thanh đo 4 cấp (`Weak`, `Fair`, `Good`, `Strong`) + checklist 6 tiêu chí live (độ dài >=8, chữ hoa, chữ thường, số, ký tự đặc biệt, khác mật khẩu cũ). |
-| `AddToListsModal` | [AddToListsModal.tsx#L11-L266](../../apps/web/src/components/AddToListsModal.tsx#L11-L266) | Quản lý checklist đồng bộ `PUT /manga/{id}/my-list-memberships`, kèm ảnh bìa mini `ReadingListCover`, quick-create list và cảnh báo khi bỏ chọn list cũ. |
+| `AddToListsModal` | [AddToListsModal.tsx#L13-L268](../../apps/web/src/components/AddToListsModal.tsx#L13-L268) | Quản lý checklist đồng bộ `PUT /manga/{id}/my-list-memberships`, kèm ảnh bìa mini `ReadingListCover`, quick-create list và cảnh báo khi bỏ chọn list cũ. |
 | `ReportModal` | [ReportModal.tsx#L31-L207](../../apps/web/src/components/ReportModal.tsx#L31-L207) | Modal dùng chung cho cả 3 loại `ACCOUNT`, `MANGA` (+ `chapterId`), `COMMENT` với danh mục lý do chuẩn `REASON_OPTIONS`. |
 | `StateViews` | [StateViews.tsx#L10-L393](../../apps/web/src/components/StateViews.tsx#L10-L393) | Chuẩn hóa 5 trạng thái bắt buộc cho mọi trang: `LoadingState` (skeleton `cards`/`list`/`table`/`detail`/`dashboard`/`strip` + hiệu ứng shimmer), `EmptyState`, `ErrorState` (có `onRetry`), `ForbiddenState`, `NotFoundState`. |
 | `UserAvatar` | [UserAvatar.tsx#L10-L46](../../apps/web/src/components/UserAvatar.tsx#L10-L46) | Hiển thị ảnh avatar `xs`/`sm`/`md`/`lg`, tự rơi về chữ cái đầu tên người dùng nếu `src` trống hoặc tải ảnh lỗi. |
@@ -457,6 +457,8 @@ AppProviders (QueryClientProvider + AuthProvider)
 | "Sao Forgot Password không hiện OTP để test?" | [UI-01.3](#ui-01) | Hệ thống đã xóa bỏ hoàn toàn `devOtpPreview`; OTP 120s chỉ lưu dạng hash trong Cache và gửi qua Gmail SMTP thực (`SmtpEmailAdapter`). |
 | "Author với Artist tách nhau ở những màn nào?" | [UI-04.1](#ui-04), [UI-06](#ui-06), [UI-10.2](#ui-10), [UI-12.5](#ui-12), [UI-13.2](#ui-13) | Mọi màn hình (`MangaCard`, `MangaDetailPage`, `AuthorDetailPage`, `ReadingListDetailPage`, `SettingsPage`, `AdminAccountsPage`) đều tách 2 khu vực `Authors (Story)` và `Artists (Illustration)`. |
 | "Nhóm Chapter có Volume và No Volume hoạt động ra sao?" | [UI-04.3](#ui-04) | `MangaDetailPage` gom nhóm `volumeGroups`, dùng `compareVolumeKeys` xếp số tập tăng/giảm và tách riêng chương không có tập vào `"No Volume (Unassigned)"`. |
+| "Tiếng Việt có dấu trong comment / list có bị lỗi `?` hay `&amp;` không?" | [UI-05](#ui-05), [UI-12.1](#ui-12) | Backend cấu hình `use_setinputsizes=False` cho `mssql+aioodbc`, dùng cột `Unicode`/`UnicodeText`, và `sanitize_user_text()` chuẩn hóa `NFC` không dùng `html.escape()` gây mã hóa kép `&amp;`. |
+| "Reading List lấy ảnh bìa từ đâu và list trống hiện gì?" | [UI-10](#ui-10), [UI-14](#ui-14) | `ReadingListService._fetch_list_cover_map()` trả tối đa 4 URL bìa ký HMAC (`previewCovers`/`coverUrl`) và `<ReadingListCover />` vẽ collage 1–4 ảnh hoặc SVG `"Empty List"` mặc định. |
 
 ---
 

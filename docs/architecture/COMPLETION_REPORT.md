@@ -1,14 +1,14 @@
 # Manga Reader Web Application — Full-Stack Completion Report (Phases 0–11)
 
-- **Date:** 2026-11-20
+- **Date:** 2026-11-20 (Updated: 2026-11-22)
 - **Workspace:** `d:\work\TH-PTTK\QL-DocTruyen`
-- **Specification Baseline:** `docs/agent-plan/00_README_AGENT_ENTRYPOINT.md` → `14_HANDOFF_MANIFEST.md` (`Lab8.docx`, `Lab9.docx`, `Lab10.docx`, `manga-reader-package:2.0`)
+- **Specification Baseline:** `docs/agent-plan/Setup/00_README_AGENT_ENTRYPOINT.md` → `14_HANDOFF_MANIFEST.md` (`Lab8.docx`, `Lab9.docx`, `Lab10.docx`, `manga-reader-package:2.0`)
 
 ---
 
 ## 1. Executive Summary
 
-All 11 roadmap phases defined in `docs/agent-plan/13_IMPLEMENTATION_ROADMAP.md` have been autonomously implemented, integrated, and verified end-to-end:
+All 11 roadmap phases defined in `docs/agent-plan/Setup/13_IMPLEMENTATION_ROADMAP.md` have been autonomously implemented, integrated, and verified end-to-end:
 
 - **Shared Package v2.0 Contract (`packages/contracts/`):** Pinned JSON Schema Draft 2020-12 (`manga-reader-package:2.0`), TypeScript types, Ajv2020 validator, 5 valid/invalid contract fixtures, and 7 passing Vitest contract tests.
 - **Database Schema & Migrations (`database/`, `apps/api/src/manga_reader/infrastructure/orm/`):** Canonical 47-table SQLAlchemy 2.x ORM model suite combining all 39 Lab10 tables with ADR reconciliations `M-001`..`M-011`, Alembic revisions `0001` & `0002` (verified online upgrade/downgrade and offline `--sql`), and idempotent dev seeder (`database/seeds/seed_dev.py`) ingesting 5 rich Package v2.0 titles with Pillow-generated WebP covers/pages and 3 demo accounts.
@@ -64,7 +64,7 @@ Verified live running FastAPI (`http://127.0.0.1:8020`) + Vite dev proxy (`http:
 
 ## 4. Known Explicit Notes
 
-- **Missing Raw Source File:** `Pasted text(2).txt` was not present in the workspace; `packages/contracts/schemas/manga-reader-package.v2.0.schema.json` faithfully reconstructs the contract from `docs/agent-plan/05_PACKAGE_V2_ETL_CDC.md` and `12_ADR_CONFLICTS_AND_RISKS.md`.
+- **Missing Raw Source File:** `Pasted text(2).txt` was not present in the workspace; `packages/contracts/schemas/manga-reader-package.v2.0.schema.json` faithfully reconstructs the contract from `docs/agent-plan/Setup/05_PACKAGE_V2_ETL_CDC.md` and `12_ADR_CONFLICTS_AND_RISKS.md`.
 - **SQL Server vs Local SQLite Default:** `.env.example` and `apps/api/src/manga_reader/config/settings.py` keep zero-credential SQLite and empty SMTP credentials as source-safe defaults so the application and tests run cleanly out of the box. Live SQL Server 2022 (`QL_DocTruyen`, 50 tables), MinIO (`manga-media`), and Gmail SMTP STARTTLS credentials live solely in the git-ignored local `.env`.
 
 ---
@@ -105,3 +105,4 @@ Following the initial Phase 0–11 completion, the system underwent a second ref
 - **Full Vietnamese NFC Unicode Persistence:** Set `use_setinputsizes=False` on `mssql+aioodbc` engines (`database.py`), migrated ORM human-text columns to `Unicode` / `UnicodeText`, and updated `sanitize_user_text()` (`common/text.py`) to preserve NFC diacritics & `&` while stripping `<script>`/`<iframe>` tags cleanly (fixing `Hello các con gi?i` and `&amp;` double-encoding).
 - **Reading List Cover Art:** Added batched `_fetch_list_cover_map()` in `ReadingListService` (`coverUrl`, `previewCovers`) and shared [`ReadingListCover`](../../apps/web/src/components/ReadingListCover.tsx) rendering 1–4 manga cover collages or a built-in `"Empty List"` SVG fallback across `ReadingListsPage`, `ReadingListDetailPage`, and `AddToListsModal`.
 - **Overflow-Safe Charts & Modals:** Constrained donut inner hole text (`max-w-[80px]` + 2-line wrap), widened legend wrapping, expanded `GenreRadarChart` `viewBox` (`0 0 360 264`), widened account inspection modal (`max-w-4xl`), and added `break-words [overflow-wrap:anywhere]` across comments, reports, profiles, lists, and analytics cards.
+- **Local Connectivity Resilience:** Added `fetchWithLocalFallback()` & `NETWORK_UNREACHABLE` structured error handling in [`apiClient.ts`](../../apps/web/src/services/apiClient.ts) alongside matching `server.proxy` & `preview.proxy` rules in [`vite.config.ts`](../../apps/web/vite.config.ts) so dev (`:5173`) and preview (`:4173`) both reach FastAPI cleanly.

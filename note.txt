@@ -25,7 +25,7 @@ Trạng thái hiện tại (SẴN SÀNG CHẠY & TEST NGAY):
 - ReDoc (API Docs):              http://127.0.0.1:8020/redoc
 - Health Check (qua Vite proxy): http://127.0.0.1:5173/api/v1/health
 
-Lưu ý: Vite tự động proxy mọi request `/api/*` sang `http://127.0.0.1:8020`.
+Lưu ý: Vite tự động proxy mọi request `/api/*` sang `http://127.0.0.1:8020` ở cả chế độ dev (`:5173`) lẫn preview (`:4173`), đồng thời `ApiClient` có cơ chế tự fallback về `:8020` khi chạy localhost.
 
 --------------------------------------------------------------------------------
 2. CÁCH CHẠY WEB-APP NGAY BÂY GIỜ (MỞ 2 TERMINAL TẠI THƯ MỤC GỐC)
@@ -52,9 +52,9 @@ Reader 2       | reader2  | reader2@manga-reader.local | Reader@123456
 
 Mẹo nhanh:
 - Tại trang /login có nút autofill 1-click cho 3 tài khoản trên.
-- Tại trang /register (tạo tài khoản mới thật): file `.env` đã bật sẵn
-  `EMAIL_DEV_LOG_OTP="true"`, nên mã OTP 6 số vừa in ra Terminal Backend vừa
-  hiển thị khung "Local Dev OTP Preview" và tự điền sẵn để test kích hoạt ngay!
+- Tại trang /register hoặc /forgot-password (3 bước khôi phục mật khẩu):
+  * Khi `.env` cấu hình Gmail SMTP (`EMAIL_BACKEND="smtp"` + `SMTP_ACCOUNT`/`SMTP_PASSWORD` + `EMAIL_DEV_LOG_OTP="false"`), hệ thống gửi mã OTP 6 số (TTL 120s) thẳng về email thật và tuyệt đối không trả OTP về JSON client.
+  * Nếu để trống thông tin SMTP trong `.env`, hệ thống tự động dùng `DevConsoleEmailAdapter` và in email OTP ra Terminal Backend (dev console).
 
 --------------------------------------------------------------------------------
 4. CÁC CHỨC NĂNG ĐỌC TRUYỆN SẴN SÀNG TEST
@@ -67,13 +67,13 @@ Mẹo nhanh:
 - /manga/:slug/chapter/:chapterId  : Trình đọc đa chế độ (Webtoon dọc / 1 trang / 2 trang LTR-RTL / Solo Cover / Focus `F` / nền đọc độc lập), giữ đúng trang khi đổi mode
 - /author/:creatorId/:slug         : Trang tác giả / họa sĩ
 - /profile/:username               : Hồ sơ công khai người đọc
-- /login  &  /register             : Đăng nhập, Đăng ký & Xác thực OTP
+- /login , /register , /verify-email , /forgot-password : Đăng nhập, Đăng ký, Xác thực OTP Gmail SMTP & Khôi phục mật khẩu 3 bước
 
 [Yêu cầu đăng nhập Reader]
 - /library                         : Thư viện cá nhân 5 trạng thái (`READING`, `PLAN_TO_READ`, `COMPLETED`, `ON_HOLD`, `DROPPED`) tách biệt khỏi Reading Lists
 - /history                         : Lịch sử đọc phân nhóm theo ngày + nút đọc tiếp đúng số trang đã dừng
-- /reading-lists  &  /lists        : Danh sách đọc riêng tư + Clone/Merge danh sách
-- /reading-lists/:listId           : Chi tiết danh sách + Thống kê metadata động + Xác nhận xóa 2 bước
+- /reading-lists  &  /lists        : Danh sách đọc riêng tư + Cover Art Collage (1–4 bìa hoặc ảnh SVG "Empty List") + Clone/Merge danh sách
+- /reading-lists/:listId           : Chi tiết danh sách + Biểu đồ & Thống kê metadata động + Xác nhận xóa 2 bước
 - /settings                        : Sửa hồ sơ, Upload Avatar, Đổi mật khẩu, Cài đặt trình đọc, Lịch sử đánh giá, Thống kê cá nhân
 
 [Yêu cầu quyền Administrator]
@@ -115,10 +115,10 @@ pnpm check:all
 pnpm format:write
 
 # Chạy lẻ từng bộ test
-pnpm test              # Toàn bộ (Contracts + Web + API/E2E)
+pnpm test              # Toàn bộ (Contracts + Web + API/E2E — 63 tests)
 pnpm test:contracts    # Vitest cho JSON Schema Package v2.0 (7 tests)
-pnpm test:web          # Vitest + Testing Library cho Frontend React (14 tests)
-pnpm test:api          # Pytest cho Backend & E2E Acceptance Suite (25 tests)
+pnpm test:web          # Vitest + Testing Library cho Frontend React (27 tests)
+pnpm test:api          # Pytest cho Backend & E2E Acceptance Suite (29 tests)
 
 # Build bản Production
 pnpm build             # Build contracts + web (tạo bundle trong apps/web/dist/)
