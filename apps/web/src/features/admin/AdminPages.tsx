@@ -219,7 +219,7 @@ function ReportTargetCard({ report }: { report: AdminReportItem }) {
         </div>
 
         <blockquote
-          className="rounded border-l-4 px-3 py-2 text-sm italic"
+          className="break-words [overflow-wrap:anywhere] rounded border-l-4 px-3 py-2 text-sm italic"
           style={{
             backgroundColor: "var(--mr-bg-surface)",
             borderColor: "var(--mr-accent)",
@@ -244,12 +244,12 @@ function ReportTargetCard({ report }: { report: AdminReportItem }) {
               <span>Unavailable</span>
             )}
           </div>
-          <div>
+          <div className="min-w-0">
             <span style={{ color: "var(--mr-text-muted)" }}>Posted On: </span>
             {mangaSlug ? (
               <Link
                 to={`/manga/${mangaSlug}`}
-                className="font-medium hover:underline"
+                className="break-words font-medium hover:underline"
                 style={{ color: "var(--mr-accent)" }}
               >
                 {mangaTitle || mangaSlug}
@@ -411,12 +411,12 @@ export function AdminDashboardPage() {
 
   const filteredItems = useMemo(() => {
     const raw = statsQuery.data?.data.items ?? [];
-    const norm = q.trim().toLowerCase();
+    const norm = q.trim().normalize("NFC").toLowerCase();
     const list = raw.filter((row) => {
       if (visibilityFilter && row.visibilityStatus !== visibilityFilter) return false;
       if (
         norm &&
-        !row.title.toLowerCase().includes(norm) &&
+        !row.title.normalize("NFC").toLowerCase().includes(norm) &&
         !row.slug.toLowerCase().includes(norm)
       ) {
         return false;
@@ -693,10 +693,10 @@ export function AdminDashboardPage() {
               <tbody className="divide-y" style={{ borderColor: "var(--mr-border-subtle)" }}>
                 {pagedItems.map((row) => (
                   <tr key={row.mangaId}>
-                    <td className="px-3 py-2 font-medium">
+                    <td className="max-w-xs break-words px-3 py-2 font-medium">
                       <Link
                         to={`/manga/${row.slug}`}
-                        className="hover:underline"
+                        className="break-words hover:underline"
                         style={{ color: "var(--mr-text-primary)" }}
                       >
                         {row.title}
@@ -1147,7 +1147,7 @@ export function AdminAccountsPage() {
           }}
         >
           <div
-            className="flex max-h-[88vh] w-full max-w-3xl flex-col rounded-[var(--mr-radius-lg)] border shadow-2xl"
+            className="flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-[var(--mr-radius-lg)] border shadow-2xl"
             style={{
               backgroundColor: "var(--mr-bg-surface)",
               borderColor: "var(--mr-border-strong)",
@@ -1158,17 +1158,17 @@ export function AdminAccountsPage() {
               className="flex items-center justify-between gap-3 border-b px-5 py-4"
               style={{ borderColor: "var(--mr-border-subtle)" }}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
                 <UserAvatar
                   src={selectedAccount.avatarUrl}
                   name={selectedAccount.displayName}
                   size="md"
                 />
-                <div>
-                  <h2 className="text-base font-bold">
+                <div className="min-w-0 flex-1">
+                  <h2 className="break-words [overflow-wrap:anywhere] text-base font-bold">
                     {selectedAccount.displayName} (@{selectedAccount.username})
                   </h2>
-                  <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
+                  <p className="break-words text-xs" style={{ color: "var(--mr-text-muted)" }}>
                     {selectedAccount.email} · {selectedAccount.role} · {selectedAccount.status}
                   </p>
                 </div>
@@ -1311,7 +1311,7 @@ export function AdminAccountsPage() {
                       <div className="grid gap-3 sm:grid-cols-2">
                         {readerStats.topTags.length > 0 ? (
                           <div
-                            className="rounded border p-3"
+                            className="min-w-0 rounded border p-3"
                             style={{
                               backgroundColor: "var(--mr-bg-elevated)",
                               borderColor: "var(--mr-border-subtle)",
@@ -1320,9 +1320,12 @@ export function AdminAccountsPage() {
                             <p className="mb-1.5 font-semibold">Favorite Genres &amp; Tags</p>
                             <ul className="space-y-1">
                               {readerStats.topTags.map((t) => (
-                                <li key={t.slug} className="flex justify-between">
-                                  <span>{t.name}</span>
-                                  <span className="font-mono">{t.count}</span>
+                                <li
+                                  key={t.slug}
+                                  className="flex items-center justify-between gap-2"
+                                >
+                                  <span className="min-w-0 break-words">{t.name}</span>
+                                  <span className="shrink-0 font-mono">{t.count}</span>
                                 </li>
                               ))}
                             </ul>
@@ -1339,9 +1342,9 @@ export function AdminAccountsPage() {
                                 (c.roles ?? []).some((r) => r.toLowerCase() === "artist"),
                               );
                               return (
-                                <div className="space-y-2">
+                                <div className="min-w-0 space-y-2">
                                   <div
-                                    className="rounded border p-3"
+                                    className="min-w-0 rounded border p-3"
                                     style={{
                                       backgroundColor: "var(--mr-bg-elevated)",
                                       borderColor: "var(--mr-border-subtle)",
@@ -1360,17 +1363,19 @@ export function AdminAccountsPage() {
                                         {topAuthors.map((c) => (
                                           <li
                                             key={`ma-${c.creatorId}`}
-                                            className="flex justify-between"
+                                            className="flex items-center justify-between gap-2"
                                           >
-                                            <span>{c.name}</span>
-                                            <span className="font-mono">{c.workCount} titles</span>
+                                            <span className="min-w-0 break-words">{c.name}</span>
+                                            <span className="shrink-0 font-mono">
+                                              {c.workCount} titles
+                                            </span>
                                           </li>
                                         ))}
                                       </ul>
                                     )}
                                   </div>
                                   <div
-                                    className="rounded border p-3"
+                                    className="min-w-0 rounded border p-3"
                                     style={{
                                       backgroundColor: "var(--mr-bg-elevated)",
                                       borderColor: "var(--mr-border-subtle)",
@@ -1389,10 +1394,12 @@ export function AdminAccountsPage() {
                                         {topArtists.map((c) => (
                                           <li
                                             key={`mar-${c.creatorId}`}
-                                            className="flex justify-between"
+                                            className="flex items-center justify-between gap-2"
                                           >
-                                            <span>{c.name}</span>
-                                            <span className="font-mono">{c.workCount} titles</span>
+                                            <span className="min-w-0 break-words">{c.name}</span>
+                                            <span className="shrink-0 font-mono">
+                                              {c.workCount} titles
+                                            </span>
                                           </li>
                                         ))}
                                       </ul>
@@ -1438,15 +1445,21 @@ export function AdminAccountsPage() {
                             key={`modal-${log.logId}`}
                             className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
                           >
-                            <div>
-                              <p className="font-semibold" style={{ color: "var(--mr-accent)" }}>
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className="break-words font-semibold"
+                                style={{ color: "var(--mr-accent)" }}
+                              >
                                 {formatted.title}
                               </p>
-                              <p style={{ color: "var(--mr-text-secondary)" }}>
+                              <p
+                                className="break-words [overflow-wrap:anywhere]"
+                                style={{ color: "var(--mr-text-secondary)" }}
+                              >
                                 {formatted.summary}
                               </p>
                             </div>
-                            <span style={{ color: "var(--mr-text-muted)" }}>
+                            <span className="shrink-0" style={{ color: "var(--mr-text-muted)" }}>
                               {new Date(log.createdAt).toLocaleString()}
                             </span>
                           </li>
@@ -1753,15 +1766,16 @@ export function AdminReportsPage() {
 
   const visibleReports = useMemo(() => {
     const items = reportsQuery.data?.data ?? [];
-    const norm = searchText.trim().toLowerCase();
+    const norm = searchText.trim().normalize("NFC").toLowerCase();
     if (!norm) return items;
     return items.filter(
       (rep) =>
         rep.reasonCategory.toLowerCase().includes(norm) ||
         getReasonMeta(rep.reasonCategory).title.toLowerCase().includes(norm) ||
-        (rep.description ?? "").toLowerCase().includes(norm) ||
+        (rep.description ?? "").normalize("NFC").toLowerCase().includes(norm) ||
         rep.reporter.username.toLowerCase().includes(norm) ||
         String(rep.target?.snapshot ?? "")
+          .normalize("NFC")
           .toLowerCase()
           .includes(norm),
     );
@@ -2074,7 +2088,7 @@ export function AdminReportsPage() {
                           </div>
                           {preview ? (
                             <p
-                              className="line-clamp-2 text-[11px] leading-snug"
+                              className="line-clamp-2 break-words [overflow-wrap:anywhere] text-[11px] leading-snug"
                               style={{ color: "var(--mr-text-secondary)" }}
                             >
                               &ldquo;{preview}&rdquo;
@@ -2227,7 +2241,10 @@ export function AdminReportsPage() {
                 >
                   Reporter Explanation
                 </p>
-                <p className="mt-1 text-xs" style={{ color: "var(--mr-text-primary)" }}>
+                <p
+                  className="mt-1 break-words [overflow-wrap:anywhere] text-xs"
+                  style={{ color: "var(--mr-text-primary)" }}
+                >
                   {selected.description}
                 </p>
               </div>
@@ -2368,7 +2385,10 @@ export function AdminReportsPage() {
                         {h.actorType === "SYSTEM" ? "Automated System" : "Moderator"} ·{" "}
                         {humanizeActionCode(h.actionType)}
                       </p>
-                      <p style={{ color: "var(--mr-text-secondary)" }}>
+                      <p
+                        className="break-words [overflow-wrap:anywhere]"
+                        style={{ color: "var(--mr-text-secondary)" }}
+                      >
                         {h.previousStatus} → {h.newStatus}
                         {h.actionNote ? ` · Note: ${h.actionNote}` : ""}
                       </p>

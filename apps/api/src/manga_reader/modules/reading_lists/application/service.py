@@ -14,6 +14,7 @@ from manga_reader.common.errors import (
     ResourceNotFoundError,
     ValidationAppError,
 )
+from manga_reader.common.identities import MediaObjectRef
 from manga_reader.common.security import SecurityPrincipal
 from manga_reader.common.text import normalize_list_name, normalize_search_text, sanitize_user_text
 from manga_reader.infrastructure.audit_outbox import append_activity_log
@@ -25,6 +26,7 @@ from manga_reader.infrastructure.orm import (
     MangaModel,
     MangaStatsModel,
     MangaTagModel,
+    MediaObjectModel,
     RatingModel,
     ReadingListModel,
     ReadingStatusRecordModel,
@@ -75,15 +77,63 @@ class ReadingListService:
             clean_desc = sanitize_user_text(description, preserve_newlines=True) or None
         return sanitize_user_text(clean_name, preserve_newlines=False), norm, clean_desc
 
+    async def _fetch_list_cover_map(
+        self,
+        session: AsyncSession,
+        list_ids: list[UUID],
+        *,
+        per_list_limit: int = 4,
+    ) -> dict[UUID, list[str]]:
+        if not list_ids:
+            return {}
+        rows = (
+            await session.execute(
+                select(
+                    ListItemModel.list_id,
+                    MediaObjectModel.bucket,
+                    MediaObjectModel.object_key,
+                )
+                .join(MangaModel, MangaModel.manga_id == ListItemModel.manga_id)
+                .join(
+                    MediaObjectModel,
+                    MediaObjectModel.media_id == MangaModel.primary_cover_media_id,
+                )
+                .where(
+                    ListItemModel.list_id.in_(list_ids),
+                    MangaModel.visibility_status == "PUBLIC",
+                    MangaModel.deletion_status == "ACTIVE",
+                )
+                .order_by(ListItemModel.added_at.desc(), ListItemModel.list_item_id.desc())
+            )
+        ).all()
+        covers_by_list: dict[UUID, list[str]] = {}
+        for lid, bucket, obj_key in rows:
+            urls = covers_by_list.setdefault(lid, [])
+            if len(urls) >= per_list_limit:
+                continue
+            url = self._container.media_signer.build_signed_proxy_url(
+                MediaObjectRef(bucket=bucket, object_key=obj_key)
+            )
+            if url not in urls:
+                urls.append(url)
+        return covers_by_list
+
     def _serialize_list(
-        self, lst: ReadingListModel, *, visible_count: int | None = None
+        self,
+        lst: ReadingListModel,
+        *,
+        visible_count: int | None = None,
+        preview_covers: list[str] | None = None,
     ) -> dict[str, Any]:
+        covers = list(preview_covers or [])
         data: dict[str, Any] = {
             "listId": str(lst.list_id),
             "name": lst.name,
             "description": lst.description,
             "itemCount": lst.item_count,
             "visibility": "PRIVATE",
+            "coverUrl": covers[0] if covers else None,
+            "previewCovers": covers,
             "createdAt": format_rfc3339(lst.created_at),
             "updatedAt": format_rfc3339(lst.updated_at),
         }
@@ -110,7 +160,11 @@ class ReadingListService:
                 if norm_q in normalize_search_text(lst.name)
                 or (lst.description and norm_q in normalize_search_text(lst.description))
             ]
-        return [self._serialize_list(lst) for lst in lists]
+        covers_map = await self._fetch_list_cover_map(session, [lst.list_id for lst in lists])
+        return [
+            self._serialize_list(lst, preview_covers=covers_map.get(lst.list_id, []))
+            for lst in lists
+        ]
 
     async def create_list(
         self,
@@ -180,7 +234,10 @@ class ReadingListService:
             )
             or 0
         )
-        return self._serialize_list(lst, visible_count=visible_count)
+        covers_map = await self._fetch_list_cover_map(session, [list_id])
+        return self._serialize_list(
+            lst, visible_count=visible_count, preview_covers=covers_map.get(list_id, [])
+        )
 
     async def update_list(
         self,
@@ -321,7 +378,12 @@ class ReadingListService:
             details={"source_count": len(unique_sources), "item_count": len(eligible_manga_ids)},
         )
         await session.commit()
-        return self._serialize_list(new_list, visible_count=len(eligible_manga_ids))
+        covers_map = await self._fetch_list_cover_map(session, [new_list.list_id])
+        return self._serialize_list(
+            new_list,
+            visible_count=len(eligible_manga_ids),
+            preview_covers=covers_map.get(new_list.list_id, []),
+        )
 
     async def get_manga_memberships(
         self, session: AsyncSession, *, principal: SecurityPrincipal, manga_id: UUID
@@ -347,6 +409,7 @@ class ReadingListService:
                     )
                 ).all()
             )
+        covers_map = await self._fetch_list_cover_map(session, list_ids, per_list_limit=1)
         return {
             "mangaId": str(manga_id),
             "lists": [
@@ -355,6 +418,9 @@ class ReadingListService:
                     "name": lst.name,
                     "itemCount": lst.item_count,
                     "selected": lst.list_id in member_of,
+                    "coverUrl": (
+                        covers_map[lst.list_id][0] if covers_map.get(lst.list_id) else None
+                    ),
                 }
                 for lst in my_lists
             ],

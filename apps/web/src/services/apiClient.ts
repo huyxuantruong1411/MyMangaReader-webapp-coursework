@@ -619,14 +619,26 @@ export class ApiClient {
   public getMangaListMemberships(mangaId: string) {
     return this.request<{
       mangaId: string;
-      lists: Array<{ listId: string; name: string; itemCount: number; selected: boolean }>;
+      lists: Array<{
+        listId: string;
+        name: string;
+        itemCount: number;
+        selected: boolean;
+        coverUrl?: string | null;
+      }>;
     }>(`/manga/${encodeURIComponent(mangaId)}/my-list-memberships`);
   }
 
   public syncMangaListMemberships(mangaId: string, selectedListIds: string[]) {
     return this.request<{
       mangaId: string;
-      lists: Array<{ listId: string; name: string; itemCount: number; selected: boolean }>;
+      lists: Array<{
+        listId: string;
+        name: string;
+        itemCount: number;
+        selected: boolean;
+        coverUrl?: string | null;
+      }>;
     }>(`/manga/${encodeURIComponent(mangaId)}/my-list-memberships`, {
       method: "PUT",
       body: JSON.stringify({ selectedListIds }),

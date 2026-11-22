@@ -1,11 +1,13 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { ApiClientError, apiClient } from "../services/apiClient";
+import { ReadingListCover } from "./ReadingListCover";
 
 interface MembershipRow {
   listId: string;
   name: string;
   itemCount: number;
   selected: boolean;
+  coverUrl?: string | null;
 }
 
 export function AddToListsModal({
@@ -190,15 +192,23 @@ export function AddToListsModal({
                       : "var(--mr-border-subtle)",
                   }}
                 >
-                  <span className="flex items-center gap-2">
+                  <span className="flex min-w-0 flex-1 items-center gap-2.5">
                     <input
                       type="checkbox"
                       checked={selectedIds.has(row.listId)}
                       onChange={() => toggleList(row.listId)}
                     />
-                    <span className="font-medium">{row.name}</span>
+                    <ReadingListCover
+                      name={row.name}
+                      coverUrl={row.coverUrl}
+                      itemCount={row.itemCount}
+                      variant="thumb"
+                    />
+                    <span className="min-w-0 break-words [overflow-wrap:anywhere] font-medium">
+                      {row.name}
+                    </span>
                   </span>
-                  <span className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
+                  <span className="shrink-0 pl-2 text-xs" style={{ color: "var(--mr-text-muted)" }}>
                     {row.itemCount} items
                   </span>
                 </label>

@@ -144,10 +144,10 @@ export function AccountSettingsPage() {
 
   const filteredRatings = useMemo(() => {
     const rows = ratingsQuery.data?.data ?? [];
-    const q = ratingSearch.trim().toLowerCase();
+    const q = ratingSearch.trim().normalize("NFC").toLowerCase();
     return rows.filter((row) => {
       if (ratingActionFilter && row.actionType !== ratingActionFilter) return false;
-      if (q && !row.mangaTitle.toLowerCase().includes(q)) return false;
+      if (q && !row.mangaTitle.normalize("NFC").toLowerCase().includes(q)) return false;
       return true;
     });
   }, [ratingsQuery.data, ratingSearch, ratingActionFilter]);
@@ -1481,10 +1481,10 @@ export function AccountSettingsPage() {
                           </span>
                         )}
                       </Link>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <Link
                           to={`/manga/${row.mangaSlug}`}
-                          className="block truncate font-semibold hover:underline"
+                          className="block truncate break-words font-semibold hover:underline"
                           style={{ color: "var(--mr-text-primary)" }}
                         >
                           {row.mangaTitle}

@@ -150,7 +150,7 @@ function CommentCard({
               name={comment.author.displayName}
               size="sm"
             />
-            <span>{comment.author.displayName}</span>
+            <span className="min-w-0 break-words">{comment.author.displayName}</span>
           </Link>
           <span style={{ color: "var(--mr-text-muted)" }}>
             @{comment.author.username} · {new Date(comment.createdAt).toLocaleString()}
@@ -230,12 +230,15 @@ function CommentCard({
           </div>
         </form>
       ) : comment.isDeleted ? (
-        <p className="mt-2 text-sm italic" style={{ color: "var(--mr-text-muted)" }}>
+        <p
+          className="mt-2 break-words [overflow-wrap:anywhere] text-sm italic"
+          style={{ color: "var(--mr-text-muted)" }}
+        >
           {comment.content}
         </p>
       ) : masked ? (
         <div
-          className="mt-2 flex items-center justify-between rounded border px-3 py-2 text-xs"
+          className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded border px-3 py-2 text-xs"
           style={{
             backgroundColor: "var(--mr-bg-elevated)",
             borderColor: "var(--mr-warning)",
@@ -252,7 +255,10 @@ function CommentCard({
           </button>
         </div>
       ) : (
-        <p className="mt-2 whitespace-pre-wrap text-sm" style={{ color: "var(--mr-text-primary)" }}>
+        <p
+          className="mt-2 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm"
+          style={{ color: "var(--mr-text-primary)" }}
+        >
           {comment.content}
         </p>
       )}
@@ -379,7 +385,9 @@ function CommentCard({
                     {new Date(h.editedAt).toLocaleString()} · Spoiler:{" "}
                     {h.previousIsSpoiler ? "Yes" : "No"}
                   </p>
-                  <p className="mt-0.5 whitespace-pre-wrap">{h.previousContent}</p>
+                  <p className="mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                    {h.previousContent}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -484,19 +492,19 @@ export function CommentsSection({ mangaId, chapterId }: { mangaId: string; chapt
 
   const visibleComments = useMemo(() => {
     const items = commentsQuery.data?.data ?? [];
-    const q = keyword.trim().toLowerCase();
+    const q = keyword.trim().normalize("NFC").toLowerCase();
     return items.filter((cm) => {
       if (spoilerFilter === "NON_SPOILER" && cm.isSpoiler) return false;
       if (spoilerFilter === "SPOILER_ONLY" && !cm.isSpoiler) return false;
       if (!q) return true;
       const rootMatch =
-        cm.content.toLowerCase().includes(q) ||
-        cm.author.displayName.toLowerCase().includes(q) ||
+        cm.content.normalize("NFC").toLowerCase().includes(q) ||
+        cm.author.displayName.normalize("NFC").toLowerCase().includes(q) ||
         cm.author.username.toLowerCase().includes(q);
       const replyMatch = cm.replies.some(
         (r) =>
-          r.content.toLowerCase().includes(q) ||
-          r.author.displayName.toLowerCase().includes(q) ||
+          r.content.normalize("NFC").toLowerCase().includes(q) ||
+          r.author.displayName.normalize("NFC").toLowerCase().includes(q) ||
           r.author.username.toLowerCase().includes(q),
       );
       return rootMatch || replyMatch;

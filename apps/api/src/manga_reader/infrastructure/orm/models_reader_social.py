@@ -12,7 +12,8 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
-    Text,
+    Unicode,
+    UnicodeText,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -182,7 +183,7 @@ class CommentModel(Base):
     parent_comment_id: Mapped[UUID | None] = mapped_column(
         GUID(), ForeignKey("comments.comment_id", ondelete="NO ACTION"), nullable=True
     )
-    content: Mapped[str] = mapped_column(Text, nullable=False)
+    content: Mapped[str] = mapped_column(UnicodeText, nullable=False)
     is_spoiler: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_spoiler_locked_by_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_edited: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -204,7 +205,7 @@ class CommentEditHistoryModel(Base):
     editor_reader_account_id: Mapped[UUID] = mapped_column(
         GUID(), ForeignKey("readers.account_id", ondelete="NO ACTION"), nullable=False
     )
-    previous_content: Mapped[str] = mapped_column(Text, nullable=False)
+    previous_content: Mapped[str] = mapped_column(UnicodeText, nullable=False)
     previous_is_spoiler: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     edited_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utc_now)
 
@@ -243,10 +244,10 @@ class ReportModel(Base):
         GUID(), ForeignKey("readers.account_id", ondelete="NO ACTION"), nullable=False
     )
     report_type: Mapped[str] = mapped_column(String(10), nullable=False)
-    reason_category: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reason_category: Mapped[str] = mapped_column(Unicode(100), nullable=False)
+    description: Mapped[str | None] = mapped_column(UnicodeText, nullable=True)
     status: Mapped[str] = mapped_column(String(10), nullable=False, default="PENDING")
-    resolution_note: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    resolution_note: Mapped[str | None] = mapped_column(Unicode(1000), nullable=True)
     action_taken: Mapped[str | None] = mapped_column(String(50), nullable=True)
     resolved_by_admin_account_id: Mapped[UUID | None] = mapped_column(
         GUID(), ForeignKey("admins.account_id", ondelete="NO ACTION"), nullable=True
@@ -264,7 +265,7 @@ class AccountReportModel(Base):
     target_account_id: Mapped[UUID | None] = mapped_column(
         GUID(), ForeignKey("accounts.account_id", ondelete="SET NULL"), nullable=True
     )
-    target_account_snapshot: Mapped[str] = mapped_column(String(200), nullable=False)
+    target_account_snapshot: Mapped[str] = mapped_column(Unicode(200), nullable=False)
 
 
 class MangaReportModel(Base):
@@ -279,8 +280,8 @@ class MangaReportModel(Base):
     target_chapter_id: Mapped[UUID | None] = mapped_column(
         GUID(), ForeignKey("chapters.chapter_id", ondelete="SET NULL"), nullable=True
     )
-    target_manga_snapshot: Mapped[str] = mapped_column(String(500), nullable=False)
-    target_chapter_snapshot: Mapped[str | None] = mapped_column(String(250), nullable=True)
+    target_manga_snapshot: Mapped[str] = mapped_column(Unicode(500), nullable=False)
+    target_chapter_snapshot: Mapped[str | None] = mapped_column(Unicode(250), nullable=True)
     # Immutable snapshot of Admin's choice at resolution; mangas.ignore_all_reports is authoritative
     ignore_future_reports: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
@@ -294,7 +295,7 @@ class CommentReportModel(Base):
     target_comment_id: Mapped[UUID | None] = mapped_column(
         GUID(), ForeignKey("comments.comment_id", ondelete="SET NULL"), nullable=True
     )
-    target_comment_snapshot: Mapped[str] = mapped_column(String(500), nullable=False)
+    target_comment_snapshot: Mapped[str] = mapped_column(Unicode(500), nullable=False)
 
 
 class ReportActionHistoryModel(Base):
@@ -317,7 +318,7 @@ class ReportActionHistoryModel(Base):
     action_type: Mapped[str] = mapped_column(String(50), nullable=False)
     previous_status: Mapped[str] = mapped_column(String(10), nullable=False)
     new_status: Mapped[str] = mapped_column(String(10), nullable=False)
-    action_note: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    action_note: Mapped[str | None] = mapped_column(Unicode(1000), nullable=True)
     performed_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utc_now)
 
 
@@ -335,9 +336,9 @@ class ReadingListModel(Base):
     owner_reader_account_id: Mapped[UUID] = mapped_column(
         GUID(), ForeignKey("readers.account_id", ondelete="CASCADE"), nullable=False
     )
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    normalized_name: Mapped[str] = mapped_column(String(150), nullable=False)
-    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    name: Mapped[str] = mapped_column(Unicode(100), nullable=False)
+    normalized_name: Mapped[str] = mapped_column(Unicode(150), nullable=False)
+    description: Mapped[str | None] = mapped_column(Unicode(500), nullable=True)
     item_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utc_now)

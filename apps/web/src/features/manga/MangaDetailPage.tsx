@@ -124,11 +124,11 @@ export function MangaDetailPage() {
   }, [manga?.altTitleEntries, manga?.altTitles]);
 
   const filteredAltTitles = useMemo(() => {
-    const norm = altTitleSearch.trim().toLowerCase();
+    const norm = altTitleSearch.trim().normalize("NFC").toLowerCase();
     if (!norm) return localizedAltTitles;
     return localizedAltTitles.filter(
       (item) =>
-        item.title.toLowerCase().includes(norm) ||
+        item.title.normalize("NFC").toLowerCase().includes(norm) ||
         item.badge.code.toLowerCase().includes(norm) ||
         item.badge.label.toLowerCase().includes(norm),
     );
@@ -252,14 +252,14 @@ export function MangaDetailPage() {
 
   const filteredChapters = useMemo(() => {
     const list = chaptersQuery.data?.data ?? [];
-    const q = chapterSearch.trim().toLowerCase();
+    const q = chapterSearch.trim().normalize("NFC").toLowerCase();
     return list.filter((ch) => {
       if (chapterVolume === "__NONE__" && (ch.volume || "").trim() !== "") return false;
       if (
         q &&
         !ch.chapterNumber.toLowerCase().includes(q) &&
-        !ch.title.toLowerCase().includes(q) &&
-        !(ch.scanlationGroup ?? "").toLowerCase().includes(q) &&
+        !ch.title.normalize("NFC").toLowerCase().includes(q) &&
+        !(ch.scanlationGroup ?? "").normalize("NFC").toLowerCase().includes(q) &&
         !(ch.volume ?? "").toLowerCase().includes(q)
       ) {
         return false;
@@ -594,8 +594,8 @@ export function MangaDetailPage() {
           ) : null}
         </div>
 
-        <div className="space-y-4">
-          <div>
+        <div className="min-w-0 space-y-4">
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase">
               <span
                 className="rounded px-2 py-0.5"
@@ -637,7 +637,10 @@ export function MangaDetailPage() {
               ) : null}
             </div>
 
-            <h1 className="mt-2 text-2xl font-bold" style={{ color: "var(--mr-text-primary)" }}>
+            <h1
+              className="mt-2 break-words [overflow-wrap:anywhere] text-2xl font-bold"
+              style={{ color: "var(--mr-text-primary)" }}
+            >
               {manga.title}
             </h1>
             {localizedAltTitles.length > 0 ? (
@@ -645,16 +648,18 @@ export function MangaDetailPage() {
                 {localizedAltTitles.slice(0, 3).map((entry) => (
                   <span
                     key={`top-${entry.id}`}
-                    className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]"
+                    className="inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]"
                     style={{
                       backgroundColor: entry.badge.bg,
                       borderColor: entry.badge.border,
                       color: entry.badge.color,
                     }}
                   >
-                    <span>{entry.badge.flag}</span>
-                    <span className="font-semibold">{entry.badge.code}</span>
-                    <span style={{ color: "var(--mr-text-primary)" }}>{entry.title}</span>
+                    <span className="shrink-0">{entry.badge.flag}</span>
+                    <span className="shrink-0 font-semibold">{entry.badge.code}</span>
+                    <span className="min-w-0 truncate" style={{ color: "var(--mr-text-primary)" }}>
+                      {entry.title}
+                    </span>
                   </span>
                 ))}
               </div>
@@ -689,7 +694,7 @@ export function MangaDetailPage() {
                         <Link
                           key={`author-${c.creatorId}`}
                           to={`/author/${c.creatorId}/${c.slug}`}
-                          className="rounded border px-2 py-0.5 font-medium hover:underline"
+                          className="max-w-full break-words rounded border px-2 py-0.5 font-medium hover:underline"
                           style={{
                             backgroundColor: "var(--mr-bg-surface)",
                             borderColor: "var(--mr-border-strong)",
@@ -724,7 +729,7 @@ export function MangaDetailPage() {
                         <Link
                           key={`artist-${c.creatorId}`}
                           to={`/author/${c.creatorId}/${c.slug}`}
-                          className="rounded border px-2 py-0.5 font-medium hover:underline"
+                          className="max-w-full break-words rounded border px-2 py-0.5 font-medium hover:underline"
                           style={{
                             backgroundColor: "var(--mr-bg-surface)",
                             borderColor: "var(--mr-border-strong)",
@@ -1406,11 +1411,11 @@ export function MangaDetailPage() {
                           >
                             <Link
                               to={`/manga/${manga.slug}/chapter/${ch.chapterId}`}
-                              className="flex flex-wrap items-center gap-2 font-medium hover:underline"
+                              className="flex min-w-0 flex-1 flex-wrap items-center gap-2 break-words font-medium hover:underline"
                               style={{ color: "var(--mr-text-primary)" }}
                             >
                               <span
-                                className="rounded px-1.5 py-0.5 font-mono text-xs"
+                                className="shrink-0 rounded px-1.5 py-0.5 font-mono text-xs"
                                 style={{
                                   backgroundColor: "var(--mr-bg-elevated)",
                                   color: "var(--mr-accent)",
@@ -1418,7 +1423,9 @@ export function MangaDetailPage() {
                               >
                                 Ch. {ch.chapterNumber}
                               </span>
-                              <span>{ch.title || `Chapter ${ch.chapterNumber}`}</span>
+                              <span className="min-w-0 break-words">
+                                {ch.title || `Chapter ${ch.chapterNumber}`}
+                              </span>
                               {isCurrentProgress ? (
                                 <span
                                   className="rounded px-1.5 py-0.5 text-[10px] font-semibold"

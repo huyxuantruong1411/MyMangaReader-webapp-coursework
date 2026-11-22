@@ -317,6 +317,8 @@ export interface ReadingListItem {
   itemCount: number;
   visibleItemCount?: number;
   visibility: "PRIVATE";
+  coverUrl?: string | null;
+  previewCovers?: string[];
   createdAt: string;
   updatedAt: string;
 }

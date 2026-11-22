@@ -74,6 +74,9 @@ class DatabaseManager:
             kwargs["pool_size"] = self._settings.database_pool_size
             kwargs["max_overflow"] = self._settings.database_max_overflow
             kwargs["pool_recycle"] = 1800
+        if self._url.startswith("mssql"):
+            # Prevent pyodbc setinputsizes from coercing Unicode str parameters to single-byte SQL_VARCHAR (`?`)
+            kwargs["use_setinputsizes"] = False
         return create_async_engine(self._url, **kwargs)
 
     @property

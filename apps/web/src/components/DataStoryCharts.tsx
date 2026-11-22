@@ -83,7 +83,7 @@ export function InteractiveDonutChart({
           Chưa có phân bổ dữ liệu.
         </p>
       ) : (
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
+        <div className="flex flex-wrap items-center justify-center gap-4">
           <div className="relative flex h-40 w-40 shrink-0 items-center justify-center">
             <svg viewBox="0 0 150 150" className="h-full w-full -rotate-90">
               <circle
@@ -115,20 +115,25 @@ export function InteractiveDonutChart({
                 );
               })}
             </svg>
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
-              <span
-                className="max-w-full truncate text-[10px] font-semibold uppercase"
-                style={{ color: "var(--mr-text-muted)" }}
-              >
-                {active ? active.label : centerLabel}
-              </span>
-              <span className="text-lg font-bold" style={{ color: "var(--mr-text-primary)" }}>
-                {active ? `${(active.pct * 100).toFixed(1)}%` : centerValue}
-              </span>
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="flex max-w-[80px] flex-col items-center justify-center overflow-hidden text-center leading-tight">
+                <span
+                  className="line-clamp-2 w-full break-words text-[9px] font-semibold uppercase"
+                  style={{ color: "var(--mr-text-muted)" }}
+                >
+                  {active ? active.label : centerLabel}
+                </span>
+                <span
+                  className="mt-0.5 text-sm font-bold"
+                  style={{ color: "var(--mr-text-primary)" }}
+                >
+                  {active ? `${(active.pct * 100).toFixed(1)}%` : centerValue}
+                </span>
+              </div>
             </div>
           </div>
 
-          <ul className="w-full flex-1 space-y-1.5 text-xs">
+          <ul className="w-full min-w-[200px] flex-1 space-y-1.5 text-xs">
             {segments.map((seg) => {
               const isSelected = active?.key === seg.key;
               return (
@@ -142,20 +147,20 @@ export function InteractiveDonutChart({
                       backgroundColor: isSelected ? "var(--mr-bg-elevated)" : "transparent",
                     }}
                   >
-                    <span className="flex min-w-0 items-center gap-2">
+                    <span className="flex min-w-0 flex-1 items-center gap-2">
                       <span
                         className="h-2.5 w-2.5 shrink-0 rounded-full"
                         style={{ backgroundColor: seg.color }}
                       />
                       <span
-                        className="truncate font-medium"
+                        className="break-words leading-snug font-medium"
                         style={{ color: "var(--mr-text-primary)" }}
                       >
                         {seg.label}
                       </span>
                     </span>
                     <span
-                      className="shrink-0 font-mono"
+                      className="shrink-0 font-mono text-[11px]"
                       style={{ color: "var(--mr-text-secondary)" }}
                     >
                       {seg.value.toLocaleString()} ({(seg.pct * 100).toFixed(1)}%)
@@ -478,7 +483,7 @@ export function InteractiveTrendChart({
                 borderColor: "var(--mr-border-subtle)",
               }}
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1 break-words [overflow-wrap:anywhere]">
                 <span className="font-semibold" style={{ color: "var(--mr-text-primary)" }}>
                   #{activeIndex + 1} {activeItem.label}
                 </span>
@@ -532,9 +537,9 @@ export function GenreRadarChart({
   const items = useMemo(() => axes.slice(0, 7), [axes]);
   const maxVal = useMemo(() => Math.max(1, ...items.map((a) => a.value)), [items]);
 
-  const cx = 160;
-  const cy = 128;
-  const r = 82;
+  const cx = 180;
+  const cy = 132;
+  const r = 74;
 
   const coords = useMemo(() => {
     const n = items.length;
@@ -548,7 +553,7 @@ export function GenreRadarChart({
         norm,
         x: cx + Math.cos(angle) * r * norm,
         y: cy + Math.sin(angle) * r * norm,
-        lx: cx + Math.cos(angle) * (r + 20),
+        lx: cx + Math.cos(angle) * (r + 22),
         ly: cy + Math.sin(angle) * (r + 18),
         outerX: cx + Math.cos(angle) * r,
         outerY: cy + Math.sin(angle) * r,
@@ -602,7 +607,7 @@ export function GenreRadarChart({
         </div>
       ) : (
         <div className="flex flex-col items-center gap-3">
-          <svg viewBox="0 0 320 256" className="h-auto w-full max-w-[320px]">
+          <svg viewBox="0 0 360 264" className="h-auto w-full max-w-[360px]">
             {[0.25, 0.5, 0.75, 1].map((ring) => {
               const ringPts = coords
                 .map((_, idx) => {
@@ -644,7 +649,7 @@ export function GenreRadarChart({
 
             {coords.map((c) => {
               const isHov = hoveredIdx === c.idx;
-              const short = c.label.length > 12 ? `${c.label.slice(0, 11)}…` : c.label;
+              const short = c.label.length > 14 ? `${c.label.slice(0, 13)}…` : c.label;
               return (
                 <g
                   key={`pt-${c.label}`}
@@ -734,10 +739,13 @@ export function EngagementFunnelChart({
           return (
             <div key={st.key} className="space-y-1">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                <span className="font-semibold" style={{ color: "var(--mr-text-primary)" }}>
+                <span
+                  className="min-w-0 break-words font-semibold"
+                  style={{ color: "var(--mr-text-primary)" }}
+                >
                   {st.label}
                 </span>
-                <div className="flex items-center gap-2 font-mono">
+                <div className="flex shrink-0 items-center gap-2 font-mono">
                   <strong style={{ color: st.color }}>{st.value.toLocaleString()}</strong>
                   {st.conversionLabel ? (
                     <span
@@ -761,7 +769,7 @@ export function EngagementFunnelChart({
                   style={{ width: `${widthPct}%`, backgroundColor: st.color }}
                 />
               </div>
-              <p className="text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
+              <p className="break-words text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
                 {st.hint}
               </p>
             </div>

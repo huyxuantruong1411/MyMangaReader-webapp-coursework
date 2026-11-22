@@ -71,7 +71,7 @@ export function MangaCard({
           <div className="flex flex-wrap items-start justify-between gap-2">
             <Link
               to={`/manga/${manga.slug}`}
-              className="line-clamp-2 text-base font-semibold hover:underline"
+              className="line-clamp-2 min-w-0 flex-1 break-words [overflow-wrap:anywhere] text-base font-semibold hover:underline"
               style={{ color: "var(--mr-text-primary)" }}
             >
               {manga.title}
@@ -171,7 +171,10 @@ export function MangaCard({
             : null}
 
           {manga.description ? (
-            <p className="line-clamp-2 text-xs" style={{ color: "var(--mr-text-secondary)" }}>
+            <p
+              className="line-clamp-2 break-words [overflow-wrap:anywhere] text-xs"
+              style={{ color: "var(--mr-text-secondary)" }}
+            >
               {manga.description}
             </p>
           ) : null}
@@ -296,7 +299,7 @@ export function MangaCard({
       <div className={`flex flex-1 flex-col gap-1.5 ${isCompact ? "p-2" : "p-3"}`}>
         <Link
           to={`/manga/${manga.slug}`}
-          className={`line-clamp-2 font-semibold hover:underline ${isCompact ? "text-xs" : "text-sm"}`}
+          className={`line-clamp-2 break-words [overflow-wrap:anywhere] font-semibold hover:underline ${isCompact ? "text-xs" : "text-sm"}`}
           style={{ color: "var(--mr-text-primary)" }}
         >
           {manga.title}

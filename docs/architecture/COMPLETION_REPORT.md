@@ -96,6 +96,12 @@ Following the initial Phase 0–11 completion, the system underwent a second ref
 | Suite | Runner | Passed Tests |
 |---|---|---|
 | Contract Validation (`packages/contracts`) | Vitest | **7 passed / 7** |
-| Frontend SPA & Workflows (`apps/web`) | Vitest + Testing Library | **26 passed / 26** |
-| Backend Modular Monolith & E2E Acceptance (`apps/api`, `tests/integration`) | Pytest | **28 passed / 28** |
-| **Total Automated Suite** | **`pnpm test`** | **61 passed / 61** |
+| Frontend SPA & Workflows (`apps/web`) | Vitest + Testing Library | **27 passed / 27** |
+| Backend Modular Monolith & E2E Acceptance (`apps/api`, `tests/integration`) | Pytest | **29 passed / 29** |
+| **Total Automated Suite** | **`pnpm test`** | **63 passed / 63** |
+
+### 5.2 Unicode, Reading List Covers & Layout Hardening
+
+- **Full Vietnamese NFC Unicode Persistence:** Set `use_setinputsizes=False` on `mssql+aioodbc` engines (`database.py`), migrated ORM human-text columns to `Unicode` / `UnicodeText`, and updated `sanitize_user_text()` (`common/text.py`) to preserve NFC diacritics & `&` while stripping `<script>`/`<iframe>` tags cleanly (fixing `Hello các con gi?i` and `&amp;` double-encoding).
+- **Reading List Cover Art:** Added batched `_fetch_list_cover_map()` in `ReadingListService` (`coverUrl`, `previewCovers`) and shared [`ReadingListCover`](../../apps/web/src/components/ReadingListCover.tsx) rendering 1–4 manga cover collages or a built-in `"Empty List"` SVG fallback across `ReadingListsPage`, `ReadingListDetailPage`, and `AddToListsModal`.
+- **Overflow-Safe Charts & Modals:** Constrained donut inner hole text (`max-w-[80px]` + 2-line wrap), widened legend wrapping, expanded `GenreRadarChart` `viewBox` (`0 0 360 264`), widened account inspection modal (`max-w-4xl`), and added `break-words [overflow-wrap:anywhere]` across comments, reports, profiles, lists, and analytics cards.

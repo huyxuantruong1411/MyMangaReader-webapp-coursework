@@ -702,7 +702,7 @@ Hỗ trợ bình luận ở cấp truyện hoặc cấp chương trong `Comments
 
 **Luồng code:**
 1. `CommentsSection` đếm ký tự realtime (`0 / 2000`), có checkbox `"Contains spoiler"` (`isSpoiler`), gửi `POST /api/v1/comments` ([comments_reactions/router.py#L78-L96](../../apps/api/src/manga_reader/modules/comments_reactions/presentation/router.py#L78-L96)).
-2. `CommentService.create_comment()` ([comments_reactions/service.py#L224-L319](../../apps/api/src/manga_reader/modules/comments_reactions/application/service.py#L224-L319)) xác nhận độ dài `1..2000` ký tự, truyện `PUBLIC/ACTIVE`, `chapter_id` thuộc đúng truyện, nếu có `parent_comment_id` phải không bị xóa, phải là root comment (`parent.parent_comment_id IS NULL`) và cùng ngữ cảnh truyện/chương; làm sạch HTML qua `sanitize_user_text()`, lưu `CommentModel` và ghi log `COMMENT`.
+2. `CommentService.create_comment()` ([comments_reactions/service.py#L224-L319](../../apps/api/src/manga_reader/modules/comments_reactions/application/service.py#L224-L319)) xác nhận độ dài `1..2000` ký tự, truyện `PUBLIC/ACTIVE`, `chapter_id` thuộc đúng truyện, nếu có `parent_comment_id` phải không bị xóa, phải là root comment (`parent.parent_comment_id IS NULL`) và cùng ngữ cảnh truyện/chương; chuẩn hóa Unicode `NFC` & gỡ thẻ nguy hiểm qua `sanitize_user_text()` ([text.py#L65-L73](../../apps/api/src/manga_reader/common/text.py#L65-L73)), kết hợp `use_setinputsizes=False` + cột `UnicodeText` trên MSSQL để bảo toàn dấu tiếng Việt nguyên vẹn, lưu `CommentModel` và ghi log `COMMENT`.
 
 **Điểm mở source:** [CommentsSection.tsx#L59-L82](../../apps/web/src/features/manga/CommentsSection.tsx#L59-L82), [CommentsSection.tsx#L510-L655](../../apps/web/src/features/manga/CommentsSection.tsx#L510-L655), [comments_reactions/router.py#L78-L96](../../apps/api/src/manga_reader/modules/comments_reactions/presentation/router.py#L78-L96), [comments_reactions/service.py#L224-L319](../../apps/api/src/manga_reader/modules/comments_reactions/application/service.py#L224-L319)
 
@@ -892,8 +892,8 @@ Các danh sách đọc cá nhân tuân thủ mô hình **riêng tư tuyệt đ�
 **Actor thiết kế:** Độc giả (`ACTIVE`). **Đánh giá:** Có đường code chính.
 
 **Luồng code:**
-1. Trên `/reading-lists`, `ReadingListsPage` ([ReadingListsPage.tsx#L11-L423](../../apps/web/src/features/lists/ReadingListsPage.tsx#L11-L423)) dùng `useDebouncedValue(search, 250)` gọi `GET /api/v1/lists/my?q=...` ([reading_lists/router.py#L42-L50](../../apps/api/src/manga_reader/modules/reading_lists/presentation/router.py#L42-L50)), kèm sắp xếp và phân trang 12 danh sách/trang.
-2. `ReadingListService.list_my_lists()` ([reading_lists/service.py#L94-L113](../../apps/api/src/manga_reader/modules/reading_lists/application/service.py#L94-L113)) luôn lọc `WHERE owner_reader_account_id == principal.account_id`, so khớp không dấu qua `normalize_search_text`.
+1. Trên `/reading-lists`, `ReadingListsPage` ([ReadingListsPage.tsx#L11-L430](../../apps/web/src/features/lists/ReadingListsPage.tsx#L11-L430)) dùng `useDebouncedValue(search, 250)` gọi `GET /api/v1/lists/my?q=...` ([reading_lists/router.py#L42-L50](../../apps/api/src/manga_reader/modules/reading_lists/presentation/router.py#L42-L50)), hiển thị lưới thẻ kèm `<ReadingListCover />` (collage ảnh bìa từ truyện trong list hoặc ảnh SVG `"Empty List"` mặc định), sắp xếp và phân trang 12 danh sách/trang.
+2. `ReadingListService.list_my_lists()` ([reading_lists/service.py#L140-L170](../../apps/api/src/manga_reader/modules/reading_lists/application/service.py#L140-L170)) luôn lọc `WHERE owner_reader_account_id == principal.account_id`, nạp batch tối đa 4 `previewCovers` / `coverUrl` qua `_fetch_list_cover_map()`, và so khớp không dấu qua `normalize_search_text`.
 
 **Điểm mở source:** [ReadingListsPage.tsx#L11-L195](../../apps/web/src/features/lists/ReadingListsPage.tsx#L11-L195), [reading_lists/router.py#L42-L50](../../apps/api/src/manga_reader/modules/reading_lists/presentation/router.py#L42-L50), [reading_lists/service.py#L94-L113](../../apps/api/src/manga_reader/modules/reading_lists/application/service.py#L94-L113)
 
@@ -903,7 +903,7 @@ Các danh sách đọc cá nhân tuân thủ mô hình **riêng tư tuyệt đ�
 **Actor thiết kế:** Độc giả (chỉ chủ sở hữu). **Đánh giá:** Có đường code chính.
 
 **Luồng code:**
-1. Route `/reading-lists/:listId` → `ReadingListDetailPage` ([ReadingListDetailPage.tsx#L15-L632](../../apps/web/src/features/lists/ReadingListDetailPage.tsx#L15-L632)) gọi `GET /api/v1/lists/{list_id}`, `GET /api/v1/lists/{list_id}/manga`, `GET /api/v1/lists/{list_id}/metadata-stats`.
+1. Route `/reading-lists/:listId` → `ReadingListDetailPage` ([ReadingListDetailPage.tsx#L15-L645](../../apps/web/src/features/lists/ReadingListDetailPage.tsx#L15-L645)) hiển thị `<ReadingListCover variant="detail" />` ở header và gọi `GET /api/v1/lists/{list_id}`, `GET /api/v1/lists/{list_id}/manga`, `GET /api/v1/lists/{list_id}/metadata-stats`.
 2. `ReadingListService._require_owned_list()` ([reading_lists/service.py#L50-L57](../../apps/api/src/manga_reader/modules/reading_lists/application/service.py#L50-L57)) truy vấn và kiểm tra `lst.owner_reader_account_id == owner_id`; nếu sai chủ ném `ResourceNotFoundError` (`404`) chống dò ID. Danh sách items chỉ trả truyện `PUBLIC`/`ACTIVE`.
 
 **Điểm mở source:** [ReadingListDetailPage.tsx#L15-L150](../../apps/web/src/features/lists/ReadingListDetailPage.tsx#L15-L150), [reading_lists/router.py#L103-L113](../../apps/api/src/manga_reader/modules/reading_lists/presentation/router.py#L103-L113), [reading_lists/service.py#L50-L57](../../apps/api/src/manga_reader/modules/reading_lists/application/service.py#L50-L57), [reading_lists/service.py#L159-L183](../../apps/api/src/manga_reader/modules/reading_lists/application/service.py#L159-L183)

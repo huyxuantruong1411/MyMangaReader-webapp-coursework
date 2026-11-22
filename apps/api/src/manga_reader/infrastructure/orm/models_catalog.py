@@ -16,7 +16,8 @@ from sqlalchemy import (
     Numeric,
     SmallInteger,
     String,
-    Text,
+    Unicode,
+    UnicodeText,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -90,8 +91,8 @@ class MangaModel(Base):
     slug: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     source_manga_id: Mapped[str] = mapped_column(String(255), nullable=False)
     mangadex_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
-    title: Mapped[str] = mapped_column(String(500), nullable=False)
-    description: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    title: Mapped[str] = mapped_column(Unicode(500), nullable=False)
+    description: Mapped[str] = mapped_column(UnicodeText, nullable=False, default="")
     publication_status: Mapped[str] = mapped_column(String(20), nullable=False, default="unknown")
     content_rating: Mapped[str] = mapped_column(String(20), nullable=False, default="unknown")
     publication_demographic: Mapped[str] = mapped_column(
@@ -129,8 +130,8 @@ class MangaDeletionTombstoneModel(Base):
 
     pool_manga_id: Mapped[str] = mapped_column(String(80), primary_key=True)
     manga_id: Mapped[UUID] = mapped_column(GUID(), nullable=False)
-    manga_title_snapshot: Mapped[str] = mapped_column(String(500), nullable=False)
-    reason: Mapped[str] = mapped_column(String(500), nullable=False)
+    manga_title_snapshot: Mapped[str] = mapped_column(Unicode(500), nullable=False)
+    reason: Mapped[str] = mapped_column(Unicode(500), nullable=False)
     deleted_by_admin_account_id: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
     deleted_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utc_now)
 
@@ -146,7 +147,7 @@ class MangaAltTitleModel(Base):
         GUID(), ForeignKey("mangas.manga_id", ondelete="CASCADE"), nullable=False
     )
     language_code: Mapped[str | None] = mapped_column(String(16), nullable=True)
-    alternative_title: Mapped[str] = mapped_column(String(500), nullable=False)
+    alternative_title: Mapped[str] = mapped_column(Unicode(500), nullable=False)
     display_order: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0)
 
 
@@ -156,9 +157,9 @@ class CreatorModel(Base):
 
     creator_id: Mapped[str] = mapped_column(String(100), primary_key=True)
     slug: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    name: Mapped[str] = mapped_column(Unicode(200), nullable=False)
     mangadex_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
-    biography: Mapped[str | None] = mapped_column(Text, nullable=True)
+    biography: Mapped[str | None] = mapped_column(UnicodeText, nullable=True)
 
 
 class CreatorBiographyModel(Base):
@@ -168,7 +169,7 @@ class CreatorBiographyModel(Base):
         String(100), ForeignKey("creators.creator_id", ondelete="CASCADE"), primary_key=True
     )
     language_code: Mapped[str] = mapped_column(String(16), primary_key=True)
-    biography: Mapped[str] = mapped_column(Text, nullable=False)
+    biography: Mapped[str] = mapped_column(UnicodeText, nullable=False)
 
 
 class CreatorLinkModel(Base):
@@ -178,7 +179,7 @@ class CreatorLinkModel(Base):
         String(100), ForeignKey("creators.creator_id", ondelete="CASCADE"), primary_key=True
     )
     platform: Mapped[str] = mapped_column(String(100), primary_key=True)
-    url: Mapped[str] = mapped_column(String(1000), nullable=False)
+    url: Mapped[str] = mapped_column(Unicode(1000), nullable=False)
 
 
 class MangaCreatorModel(Base):
@@ -213,7 +214,7 @@ class TagModel(Base):
     source_tag_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     mangadex_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     tag_group: Mapped[str] = mapped_column(String(20), nullable=False, default="genre")
-    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    name: Mapped[str] = mapped_column(Unicode(200), nullable=False)
 
 
 class TagNameModel(Base):
@@ -225,7 +226,7 @@ class TagNameModel(Base):
         primary_key=True,
     )
     language_code: Mapped[str] = mapped_column(String(16), primary_key=True)
-    tag_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    tag_name: Mapped[str] = mapped_column(Unicode(200), nullable=False)
 
 
 class MangaTagModel(Base):
@@ -265,9 +266,9 @@ class MangaCoverArtModel(Base):
         GUID(), ForeignKey("mangas.manga_id", ondelete="CASCADE"), nullable=False
     )
     cover_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    volume: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    volume: Mapped[str | None] = mapped_column(Unicode(40), nullable=True)
     locale: Mapped[str | None] = mapped_column(String(16), nullable=True)
-    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    description: Mapped[str | None] = mapped_column(Unicode(500), nullable=True)
     media_id: Mapped[int] = mapped_column(
         BigInteger().with_variant(Integer, "sqlite"),
         ForeignKey("media_objects.media_id", ondelete="NO ACTION"),
@@ -324,7 +325,7 @@ class MangaContentVectorModel(Base):
     manga_id: Mapped[UUID] = mapped_column(
         GUID(), ForeignKey("mangas.manga_id", ondelete="CASCADE"), primary_key=True
     )
-    feature_vector_json: Mapped[str] = mapped_column(Text, nullable=False)
+    feature_vector_json: Mapped[str] = mapped_column(UnicodeText, nullable=False)
     model_version: Mapped[str] = mapped_column(String(32), nullable=False, default="tfidf-v1")
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utc_now)
 
@@ -341,9 +342,9 @@ class MangaModerationLogModel(Base):
     )
     manga_id: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
     pool_manga_id: Mapped[str] = mapped_column(String(80), nullable=False)
-    manga_title_snapshot: Mapped[str] = mapped_column(String(500), nullable=False)
+    manga_title_snapshot: Mapped[str] = mapped_column(Unicode(500), nullable=False)
     action_type: Mapped[str] = mapped_column(String(10), nullable=False)
-    reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    reason: Mapped[str | None] = mapped_column(Unicode(500), nullable=True)
     source_report_id: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
     performed_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utc_now)
 
@@ -370,14 +371,14 @@ class ChapterModel(Base):
     )
     pool_chapter_id: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     source_chapter_id: Mapped[str] = mapped_column(String(255), nullable=False)
-    chapter_number: Mapped[str] = mapped_column(String(50), nullable=False)
+    chapter_number: Mapped[str] = mapped_column(Unicode(50), nullable=False)
     chapter_numeric: Mapped[Decimal] = mapped_column(
         Numeric(18, 6), nullable=False, default=Decimal("0")
     )
-    volume: Mapped[str | None] = mapped_column(String(40), nullable=True)
-    title: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    volume: Mapped[str | None] = mapped_column(Unicode(40), nullable=True)
+    title: Mapped[str] = mapped_column(Unicode(500), nullable=False, default="")
     language: Mapped[str] = mapped_column(String(16), nullable=False, default="en")
-    scanlation_group: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    scanlation_group: Mapped[str | None] = mapped_column(Unicode(255), nullable=True)
     publish_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
     source: Mapped[str] = mapped_column(String(100), nullable=False, default="mangadex")
     source_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -406,7 +407,7 @@ class ChapterPageModel(Base):
     )
     page_uid: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
     page_number: Mapped[int] = mapped_column(Integer, nullable=False)
-    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    filename: Mapped[str] = mapped_column(Unicode(255), nullable=False)
     media_id: Mapped[int] = mapped_column(
         BigInteger().with_variant(Integer, "sqlite"),
         ForeignKey("media_objects.media_id", ondelete="NO ACTION"),
@@ -441,7 +442,7 @@ class EtlJobModel(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utc_now)
     started_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
-    error_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    error_summary: Mapped[str | None] = mapped_column(UnicodeText, nullable=True)
 
 
 class EtlJobItemModel(Base):
@@ -478,7 +479,7 @@ class EtlJobItemModel(Base):
     checksum_validated: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
-    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(UnicodeText, nullable=True)
 
 
 class MangaSyncSubscriptionModel(Base):
@@ -527,7 +528,7 @@ class CdcEventModel(Base):
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="PENDING")
     retry_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     payload_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    payload_json: Mapped[str | None] = mapped_column(UnicodeText, nullable=True)
     received_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utc_now)
     processed_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
-    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    last_error: Mapped[str | None] = mapped_column(UnicodeText, nullable=True)

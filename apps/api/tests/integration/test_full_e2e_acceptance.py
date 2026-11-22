@@ -793,3 +793,88 @@ async def test_forgot_password_otp_recovery_and_pending_reregister(
         "/api/v1/auth/login", json={"identifier": username, "password": "NewStrong@456"}
     )
     assert login_ok.status_code == 200, login_ok.text
+
+
+async def test_vietnamese_unicode_and_reading_list_covers(
+    api_client: AsyncClient, app: FastAPI
+) -> None:
+    """Verify full Vietnamese diacritics/NFC preservation and reading list cover art serialization."""
+    admin_id, admin_pw = await _seed_admin(app, "admin_vn")
+    _ = admin_id
+    admin_tok = await _login_admin(api_client, "admin_vn", admin_pw)
+    admin_hdr = {"Authorization": f"Bearer {admin_tok}"}
+
+    sources = (await api_client.get("/api/v1/admin/external-sources", headers=admin_hdr)).json()[
+        "data"
+    ]
+    await api_client.post(
+        "/api/v1/admin/etl-sync",
+        headers=admin_hdr,
+        json={
+            "items": [
+                {
+                    "poolMangaId": sources[0]["poolMangaId"],
+                    "sourceMangaId": sources[0]["sourceMangaId"],
+                    "enableCdc": False,
+                }
+            ]
+        },
+    )
+
+    _r_id, r_tok, _ = await _register_and_login_reader(
+        api_client, app, username="reader_vn", email="reader_vn@test.local"
+    )
+    r_hdr = {"Authorization": f"Bearer {r_tok}"}
+
+    # Vietnamese profile name & bio without script injection and without &amp; double-encoding
+    prof = await api_client.patch(
+        "/api/v1/account/profile",
+        headers=r_hdr,
+        json={
+            "displayName": "Độc giả Minh Anh",
+            "bio": "<script>alert(1)</script>Thích truyện trinh thám & đời thường.",
+        },
+    )
+    assert prof.status_code == 200, prof.text
+    assert prof.json()["data"]["displayName"] == "Độc giả Minh Anh"
+    assert prof.json()["data"]["bio"] == "Thích truyện trinh thám & đời thường."
+
+    catalog = (await api_client.get("/api/v1/manga")).json()["data"]
+    manga_id = catalog[0]["mangaId"]
+
+    vn_comment = "Hello các con giời! Truyện rất hấp dẫn & đặc sắc."
+    cm = await api_client.post(
+        "/api/v1/comments",
+        headers=r_hdr,
+        json={"mangaId": manga_id, "content": vn_comment, "isSpoiler": False},
+    )
+    assert cm.status_code == 201, cm.text
+    assert cm.json()["data"]["content"] == vn_comment
+
+    # Empty list has null coverUrl / empty previewCovers; non-empty list exposes signed manga covers
+    empty_lst = await api_client.post(
+        "/api/v1/lists",
+        headers=r_hdr,
+        json={"name": "Top Action & Fantasy", "description": "Danh sách chọn lọc tiếng Việt."},
+    )
+    assert empty_lst.status_code == 201, empty_lst.text
+    list_id = empty_lst.json()["data"]["listId"]
+    assert empty_lst.json()["data"]["name"] == "Top Action & Fantasy"
+    assert empty_lst.json()["data"]["coverUrl"] is None
+    assert empty_lst.json()["data"]["previewCovers"] == []
+
+    await api_client.put(
+        f"/api/v1/manga/{manga_id}/my-list-memberships",
+        headers=r_hdr,
+        json={"selectedListIds": [list_id]},
+    )
+
+    my_lists = (await api_client.get("/api/v1/lists/my", headers=r_hdr)).json()["data"]
+    updated_lst = next(it for it in my_lists if it["listId"] == list_id)
+    assert updated_lst["coverUrl"] and "/api/v1/media/" in updated_lst["coverUrl"]
+    assert len(updated_lst["previewCovers"]) == 1
+
+    memberships = (
+        await api_client.get(f"/api/v1/manga/{manga_id}/my-list-memberships", headers=r_hdr)
+    ).json()["data"]
+    assert memberships["lists"][0]["coverUrl"] == updated_lst["coverUrl"]

@@ -40,7 +40,7 @@ export function AuthorDetailPage() {
 
   const visibleWorks = useMemo(() => {
     const items = worksQuery.data?.data ?? [];
-    const q = titleFilter.trim().toLowerCase();
+    const q = titleFilter.trim().normalize("NFC").toLowerCase();
     return items.filter((m) => {
       if (roleFilter !== "all") {
         const roles = (m.creatorRoles ?? []).map((r) => r.toLowerCase());
@@ -48,8 +48,8 @@ export function AuthorDetailPage() {
       }
       if (!q) return true;
       return (
-        m.title.toLowerCase().includes(q) ||
-        (m.tags ?? []).some((t) => t.name.toLowerCase().includes(q))
+        m.title.normalize("NFC").toLowerCase().includes(q) ||
+        (m.tags ?? []).some((t) => t.name.normalize("NFC").toLowerCase().includes(q))
       );
     });
   }, [worksQuery.data, titleFilter, roleFilter]);
@@ -82,11 +82,14 @@ export function AuthorDetailPage() {
         }}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase" style={{ color: "var(--mr-accent)" }}>
               Author / Artist Profile
             </p>
-            <h1 className="mt-1 text-2xl font-bold" style={{ color: "var(--mr-text-primary)" }}>
+            <h1
+              className="mt-1 break-words [overflow-wrap:anywhere] text-2xl font-bold"
+              style={{ color: "var(--mr-text-primary)" }}
+            >
               {creator.name}
             </h1>
             {creator.roles && creator.roles.length > 0 ? (

@@ -121,8 +121,11 @@ export function ProfilePage() {
           ) : null}
         </div>
 
-        <div className="flex-1">
-          <h1 className="text-xl font-bold" style={{ color: "var(--mr-text-primary)" }}>
+        <div className="min-w-0 flex-1">
+          <h1
+            className="break-words [overflow-wrap:anywhere] text-xl font-bold"
+            style={{ color: "var(--mr-text-primary)" }}
+          >
             {profile.displayName}
           </h1>
           <p className="text-xs font-mono" style={{ color: "var(--mr-text-muted)" }}>
@@ -172,7 +175,10 @@ export function ProfilePage() {
         className="space-y-2 border-t pt-4 text-sm"
         style={{ borderColor: "var(--mr-border-subtle)" }}
       >
-        <p className="whitespace-pre-wrap" style={{ color: "var(--mr-text-secondary)" }}>
+        <p
+          className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]"
+          style={{ color: "var(--mr-text-secondary)" }}
+        >
           {profile.bio || "No bio set yet."}
         </p>
         {profile.birthDate ? (

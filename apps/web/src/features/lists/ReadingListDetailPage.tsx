@@ -8,6 +8,7 @@ import {
   InteractiveTrendChart,
 } from "../../components/DataStoryCharts";
 import { MangaCard } from "../../components/MangaCard";
+import { ReadingListCover } from "../../components/ReadingListCover";
 import { EmptyState, ErrorState, LoadingState, NotFoundState } from "../../components/StateViews";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { ApiClientError, apiClient } from "../../services/apiClient";
@@ -114,30 +115,45 @@ export function ReadingListDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Link
-            to="/reading-lists"
-            className="text-xs underline"
-            style={{ color: "var(--mr-accent)" }}
-          >
-            ← All My Lists
-          </Link>
-          <h1 className="mt-1 text-2xl font-bold" style={{ color: "var(--mr-text-primary)" }}>
-            {list.name}
-          </h1>
-          {list.description ? (
-            <p className="mt-1 text-sm" style={{ color: "var(--mr-text-secondary)" }}>
-              {list.description}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-1 flex-wrap items-start gap-4">
+          <ReadingListCover
+            name={list.name}
+            coverUrl={list.coverUrl}
+            previewCovers={list.previewCovers}
+            itemCount={list.itemCount}
+            variant="detail"
+          />
+          <div className="min-w-0 flex-1">
+            <Link
+              to="/reading-lists"
+              className="text-xs underline"
+              style={{ color: "var(--mr-accent)" }}
+            >
+              ← All My Lists
+            </Link>
+            <h1
+              className="mt-1 break-words [overflow-wrap:anywhere] text-2xl font-bold"
+              style={{ color: "var(--mr-text-primary)" }}
+            >
+              {list.name}
+            </h1>
+            {list.description ? (
+              <p
+                className="mt-1 break-words [overflow-wrap:anywhere] text-sm"
+                style={{ color: "var(--mr-text-secondary)" }}
+              >
+                {list.description}
+              </p>
+            ) : null}
+            <p className="mt-1 text-xs" style={{ color: "var(--mr-text-muted)" }}>
+              {list.itemCount} stored item(s)
+              {typeof list.visibleItemCount === "number" && list.visibleItemCount !== list.itemCount
+                ? ` (${list.visibleItemCount} currently public)`
+                : ""}{" "}
+              · Private
             </p>
-          ) : null}
-          <p className="mt-1 text-xs" style={{ color: "var(--mr-text-muted)" }}>
-            {list.itemCount} stored item(s)
-            {typeof list.visibleItemCount === "number" && list.visibleItemCount !== list.itemCount
-              ? ` (${list.visibleItemCount} currently public)`
-              : ""}{" "}
-            · Private
-          </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2">

@@ -1058,4 +1058,53 @@ describe("Manga Reader Frontend Application", () => {
       expect(screen.getByText(/Password updated successfully for @reader01/i)).toBeInTheDocument();
     });
   });
+
+  it("renders reading list cover art and default empty artwork on ReadingListsPage", async () => {
+    const prevFetch = globalThis.fetch;
+
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.includes("/lists/my")) {
+        return makeJsonResponse({
+          data: [
+            {
+              listId: "list-with-cover",
+              name: "Top Action & Fantasy",
+              description: "Danh sách chọn lọc tiếng Việt.",
+              itemCount: 2,
+              visibility: "PRIVATE",
+              coverUrl: "/api/v1/media/manga-media/covers/c1.jpg?exp=9&sig=x",
+              previewCovers: [
+                "/api/v1/media/manga-media/covers/c1.jpg?exp=9&sig=x",
+                "/api/v1/media/manga-media/covers/c2.jpg?exp=9&sig=y",
+              ],
+              createdAt: "2026-11-20T00:00:00Z",
+              updatedAt: "2026-11-20T00:00:00Z",
+            },
+            {
+              listId: "list-empty",
+              name: "Empty Shelf",
+              description: null,
+              itemCount: 0,
+              visibility: "PRIVATE",
+              coverUrl: null,
+              previewCovers: [],
+              createdAt: "2026-11-20T00:00:00Z",
+              updatedAt: "2026-11-20T00:00:00Z",
+            },
+          ],
+          meta: { requestId: "req-test" },
+        });
+      }
+      return prevFetch(input, init);
+    });
+
+    renderRoute("/reading-lists", ACTIVE_READER);
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Top Action & Fantasy" })).toBeInTheDocument();
+    });
+    expect(screen.getByAltText("Top Action & Fantasy cover 1")).toBeInTheDocument();
+    expect(screen.getByAltText("Top Action & Fantasy cover 2")).toBeInTheDocument();
+    expect(screen.getByText("Empty List")).toBeInTheDocument();
+  });
 });

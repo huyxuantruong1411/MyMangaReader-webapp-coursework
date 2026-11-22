@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { CatalogPagination } from "../../components/CatalogPagination";
+import { ReadingListCover } from "../../components/ReadingListCover";
 import { EmptyState, ErrorState, LoadingState } from "../../components/StateViews";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { ApiClientError, apiClient } from "../../services/apiClient";
@@ -292,7 +293,7 @@ export function ReadingListsPage() {
                   checked={selectedSources.includes(lst.listId)}
                   onChange={() => toggleSource(lst.listId)}
                 />
-                <span>
+                <span className="max-w-xs break-words">
                   {lst.name} ({lst.itemCount})
                 </span>
               </label>
@@ -372,19 +373,29 @@ export function ReadingListsPage() {
               <Link
                 key={lst.listId}
                 to={`/reading-lists/${lst.listId}`}
-                className="flex flex-col justify-between rounded-[var(--mr-radius-md)] border p-4 transition-colors"
+                className="group flex min-w-0 flex-col justify-between gap-3 rounded-[var(--mr-radius-md)] border p-4 transition-colors hover:border-[var(--mr-accent)]"
                 style={{
                   backgroundColor: "var(--mr-bg-surface)",
                   borderColor: "var(--mr-border-subtle)",
                 }}
               >
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <h2 className="font-semibold" style={{ color: "var(--mr-text-primary)" }}>
+                <ReadingListCover
+                  name={lst.name}
+                  coverUrl={lst.coverUrl}
+                  previewCovers={lst.previewCovers}
+                  itemCount={lst.itemCount}
+                  variant="card"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <h2
+                      className="min-w-0 flex-1 break-words [overflow-wrap:anywhere] font-semibold"
+                      style={{ color: "var(--mr-text-primary)" }}
+                    >
                       {lst.name}
                     </h2>
                     <span
-                      className="rounded px-2 py-0.5 font-mono text-xs"
+                      className="shrink-0 rounded px-2 py-0.5 font-mono text-xs"
                       style={{
                         backgroundColor: "var(--mr-bg-elevated)",
                         color: "var(--mr-accent)",
@@ -395,14 +406,14 @@ export function ReadingListsPage() {
                   </div>
                   {lst.description ? (
                     <p
-                      className="mt-1.5 line-clamp-2 text-xs"
+                      className="mt-1.5 line-clamp-2 break-words [overflow-wrap:anywhere] text-xs"
                       style={{ color: "var(--mr-text-secondary)" }}
                     >
                       {lst.description}
                     </p>
                   ) : null}
                 </div>
-                <p className="mt-3 text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
+                <p className="text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
                   Private · Updated {new Date(lst.updatedAt).toLocaleDateString()}
                 </p>
               </Link>

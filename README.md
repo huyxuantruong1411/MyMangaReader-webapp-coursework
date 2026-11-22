@@ -2,7 +2,7 @@
 
 Complete **Full-Stack Modular Monolith** Manga Reader Web Application, built from the specifications in [`docs/agent-plan/`](docs/agent-plan/00_README_AGENT_ENTRYPOINT.md) (`Lab8.docx`, `Lab9.docx`, `Lab10.docx`, and `manga-reader-package:2.0` JSON Schema Draft 2020-12) and verified end-to-end across SQL Server 2022, FastAPI, and React 19.
 
-> **Current Stage:** Production-Ready Full-Stack Completion — **47 Canonical ORM Tables + 3 System Tables** on SQL Server 2022 (`QL_DocTruyen`, 10 T-SQL business-rule triggers, 9 covering index groups), **12 Backend Domain Modules** (`90` `/api/v1` endpoints), **Shared JSON Schema v2.0 Contracts**, **19-Route React 19 SPA**, Real Gmail SMTP OTP recovery & verification, Interactive SVG Analytics Dashboards, and Full Codebase Traceability Dictionaries (`61 / 61` automated tests passing).
+> **Current Stage:** Production-Ready Full-Stack Completion — **47 Canonical ORM Tables + 3 System Tables** on SQL Server 2022 (`QL_DocTruyen`, 10 T-SQL business-rule triggers, 9 covering index groups), **12 Backend Domain Modules** (`90` `/api/v1` endpoints), **Shared JSON Schema v2.0 Contracts**, **19-Route React 19 SPA**, full NFC Unicode Vietnamese support (`use_setinputsizes=False` + `Unicode`/`UnicodeText`), Real Gmail SMTP OTP recovery & verification, Reading List Cover Art + Empty Default SVG Artwork, Interactive Overflow-Safe SVG Analytics Dashboards, and Full Codebase Traceability Dictionaries (`63 / 63` automated tests passing).
 
 ---
 
@@ -40,12 +40,12 @@ Complete **Full-Stack Modular Monolith** Manga Reader Web Application, built fro
    - Zero-copy HMAC-signed `/api/v1/media/{bucket}/{object_key}` proxy streaming directly from MinIO S3 (`manga-media` / `manga-reader-media`) or local storage, with optional MangaDex At-Home CDN and deterministic in-memory WebP fallbacks.
 
 5. **Ratings, Threaded Comments, Private Reading Lists & Recommendations (`ratings`, `comments_reactions`, `reading_lists`, `recommendations`):**
-   - Reading-gated `1–10` ratings (`RATING_REQUIRES_READING`) with immutable `rating_histories`, 1-level threaded comments with edit history & Admin spoiler lock, and atomic Like/Dislike/None reactions.
-   - Owner-exclusive Private Reading Lists (`404` for non-owners) with Clone/Merge deduplication, quick-create membership sync, and interactive metadata breakdown charts.
+   - Reading-gated `1–10` ratings (`RATING_REQUIRES_READING`) with immutable `rating_histories`, 1-level threaded comments with edit history & Admin spoiler lock, NFC Unicode Vietnamese storage without `pyodbc` `?` corruption or HTML double-encoding, and atomic Like/Dislike/None reactions.
+   - Owner-exclusive Private Reading Lists (`404` for non-owners) with Clone/Merge deduplication, [`ReadingListCover`](apps/web/src/components/ReadingListCover.tsx) cover art collage (1–4 covers + SVG `"Empty List"` default artwork), quick-create membership sync, and interactive metadata breakdown charts.
    - Multi-strategy recommendations (`ITEM_BASED`, anonymized `USER_BASED`, TF-IDF `CONTENT_BASED`) with deterministic cold-start fallbacks.
 
 6. **Interactive SVG Dashboards & Plain-Language Moderation Workbench (`admin_analytics`, `moderation_reporting`):**
-   - Custom pure-SVG interactive data visualizations in [`DataStoryCharts.tsx`](apps/web/src/components/DataStoryCharts.tsx) (`InteractiveDonutChart`, `InteractiveTrendChart`, `GenreRadarChart`, `EngagementFunnelChart`) powering `My Reading Stats`, `ReadingListDetailPage`, `AdminDashboardPage`, and `AdminAccountsPage` without external chart library bloat.
+   - Custom pure-SVG interactive data visualizations in [`DataStoryCharts.tsx`](apps/web/src/components/DataStoryCharts.tsx) (`InteractiveDonutChart` with overflow-safe center labels & wrapping legends, `InteractiveTrendChart`, `GenreRadarChart`, `EngagementFunnelChart`) powering `My Reading Stats`, `ReadingListDetailPage`, `AdminDashboardPage`, and `AdminAccountsPage` without external chart library bloat.
    - Split-pane Moderation Workbench in [`AdminReportsPage`](apps/web/src/features/admin/AdminPages.tsx) with KPI queue summary, plain-language target resolution cards, audit history timeline, and atomic single-transaction actions (`WARN_USER`, `LOCK_COMMENT_PERMISSION`, `LOCK_ACCOUNT`, `HIDE_COMMENT`, `DELETE_COMMENT`, `HIDE_MANGA`, or automatic `SYSTEM` `CLOSED` on deleted targets).
 
 7. **Manga Package v2.0 ETL & CDC Ingestion (`etl_cdc`):**
@@ -137,7 +137,7 @@ pnpm dev:web
 | `pnpm format:check` | Check formatting with Prettier and `ruff format --check` |
 | `pnpm format:write` | Auto-format JS/TS/JSON/MD and Python source files |
 | `pnpm typecheck` | Run `tsc --noEmit` (strict) and `mypy --strict` |
-| `pnpm test` | Execute all `61` automated tests (`7` contracts + `26` web + `28` API/E2E) |
+| `pnpm test` | Execute all `63` automated tests (`7` contracts + `27` web + `29` API/E2E) |
 | `pnpm build` | Compile `@manga-reader/contracts` and build `apps/web` production bundle |
 | `pnpm db:migrate` | Run Alembic `upgrade head` |
 | `pnpm db:migrate:sql` | Preview generated SQL offline without mutating DB |

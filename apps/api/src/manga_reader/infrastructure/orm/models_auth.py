@@ -13,7 +13,8 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
-    Text,
+    Unicode,
+    UnicodeText,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -45,7 +46,7 @@ class AccountModel(Base):
         ForeignKey("admins.account_id", ondelete="NO ACTION"),
         nullable=True,
     )
-    lock_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    lock_reason: Mapped[str | None] = mapped_column(Unicode(500), nullable=True)
     last_status_change_at: Mapped[datetime] = mapped_column(
         UTCDateTime(), nullable=False, default=utc_now
     )
@@ -60,11 +61,11 @@ class ReaderModel(Base):
         ForeignKey("accounts.account_id", ondelete="CASCADE"),
         primary_key=True,
     )
-    display_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    avatar_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    display_name: Mapped[str] = mapped_column(Unicode(100), nullable=False)
+    avatar_url: Mapped[str | None] = mapped_column(Unicode(1000), nullable=True)
     avatar_bucket: Mapped[str | None] = mapped_column(String(63), nullable=True)
     avatar_object_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    bio: Mapped[str | None] = mapped_column(Text, nullable=True)
+    bio: Mapped[str | None] = mapped_column(UnicodeText, nullable=True)
     birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_birth_date_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
@@ -93,7 +94,7 @@ class UserSessionModel(Base):
     )
     refresh_token_hash: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
-    user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(Unicode(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utc_now)
     expires_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
@@ -117,7 +118,7 @@ class AccountStatusHistoryModel(Base):
     action_type: Mapped[str] = mapped_column(String(10), nullable=False)
     previous_status: Mapped[str] = mapped_column(String(24), nullable=False)
     new_status: Mapped[str] = mapped_column(String(24), nullable=False)
-    reason: Mapped[str] = mapped_column(String(500), nullable=False)
+    reason: Mapped[str] = mapped_column(Unicode(500), nullable=False)
     action_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utc_now)
 
 
@@ -135,9 +136,9 @@ class ActivityLogModel(Base):
     )
     event_type: Mapped[str] = mapped_column(String(80), nullable=False)
     target_type: Mapped[str | None] = mapped_column(String(60), nullable=True)
-    target_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    target_id: Mapped[str | None] = mapped_column(Unicode(128), nullable=True)
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
-    details_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    details_json: Mapped[str | None] = mapped_column(UnicodeText, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utc_now)
 
 
@@ -156,9 +157,9 @@ class OutboxEventModel(Base):
     event_type: Mapped[str] = mapped_column(String(80), nullable=False)
     aggregate_type: Mapped[str] = mapped_column(String(60), nullable=False)
     aggregate_id: Mapped[str] = mapped_column(String(128), nullable=False)
-    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    payload_json: Mapped[str] = mapped_column(UnicodeText, nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="PENDING")
     attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    last_error: Mapped[str | None] = mapped_column(UnicodeText, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utc_now)
     processed_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)

@@ -220,7 +220,7 @@ export function FormattedMarkdownText({
 
   return (
     <div
-      className={`space-y-2 text-sm ${className}`}
+      className={`min-w-0 space-y-2 break-words [overflow-wrap:anywhere] text-sm ${className}`}
       style={
         clampLines
           ? {

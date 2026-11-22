@@ -50,7 +50,7 @@ Composition root `AppContainer` ([container.py#L26-L100](../../apps/api/src/mang
 
 | Thành phần | Adapter cấu hình | File nguồn & Dòng | Trách nhiệm chính |
 |---|---|---|---|
-| **Database** | `DatabaseManager` (`mssql+aioodbc` / `sqlite+aiosqlite` / `postgresql+asyncpg`) | [database.py#L54-L121](../../apps/api/src/manga_reader/infrastructure/database.py#L54-L121) | Pool kết nối async, chuẩn đặt tên `IX_/UQ_/CK_/FK_/PK_` khớp SQL Server 2022 |
+| **Database** | `DatabaseManager` (`mssql+aioodbc` / `sqlite+aiosqlite` / `postgresql+asyncpg`) | [database.py#L54-L125](../../apps/api/src/manga_reader/infrastructure/database.py#L54-L125) | Pool kết nối async, chuẩn đặt tên `IX_/UQ_/CK_/FK_/PK_` khớp SQL Server 2022, bật `use_setinputsizes=False` với MSSQL để bind chuẩn Unicode `NVARCHAR` tiếng Việt |
 | **Cache & Rate Limit** | `RedisCacheAdapter` / `InMemoryCacheAdapter` + `CacheRateLimiter` | [cache.py#L46-L220](../../apps/api/src/manga_reader/infrastructure/cache.py#L46-L220) | Lưu hash OTP TTL 120s, cooldown 60s, đếm giới hạn tốc độ login & report |
 | **Object Storage & Signing** | `S3CompatibleStorageAdapter` (MinIO AWS4 HMAC) / `LocalDevStorageAdapter` + `MediaUrlSigner` | [storage.py#L27-L414](../../apps/api/src/manga_reader/infrastructure/storage.py#L27-L414) | Lưu ảnh bìa, avatar, trang đọc theo `(bucket, object_key)`; ký URL động TTL 300s (`ADR-018`) |
 | **Outbound Email** | `SmtpEmailAdapter` (`smtp.gmail.com:587` STARTTLS) / `DevConsoleEmailAdapter` | [email.py#L26-L168](../../apps/api/src/manga_reader/infrastructure/email.py#L26-L168) | Gửi email OTP HTML xác thực tài khoản, đặt lại mật khẩu và thông báo Lock/Unlock |
@@ -66,7 +66,7 @@ Composition root `AppContainer` ([container.py#L26-L100](../../apps/api/src/mang
 6. `reading_status_history` (M3 & M4): Enum trạng thái đọc `READING`/`PLAN_TO_READ`/`COMPLETED`/`ON_HOLD`/`DROPPED`.
 7. `ratings` (M4): Chấm điểm 1–10 (bắt buộc đã mở chương), lịch sử `CREATE/UPDATE/REMOVE`, tính lại trung bình cộng.
 8. `comments_reactions` (M5): Bình luận truyện/chương, reply 1 cấp, cờ Spoiler & Admin khóa cờ, lịch sử sửa bất biến, xóa mềm giữ khung, Reaction `LIKE/DISLIKE/null`.
-9. `reading_lists` (M7 & M8): CRUD & Clone/Merge danh sách đọc riêng tư, đồng bộ nhiều list idempotent, tìm/lọc nội bộ và thống kê Metadata động.
+9. `reading_lists` (M7 & M8): CRUD & Clone/Merge danh sách đọc riêng tư, đồng bộ nhiều list idempotent, trả `coverUrl` & `previewCovers` ký HMAC từ truyện bên trong (`null`/`[]` khi rỗng), tìm/lọc nội bộ không dấu và thống kê Metadata động.
 10. `moderation_reporting` (M1, M4, M5, M6): Gửi báo cáo Account/Manga/Comment (rate-limit, chống tự report, cờ ignore future reports), hàng đợi & xử lý nguyên tử cho Admin (`AUTO_CLOSE` khi target thiếu).
 11. `recommendations` (M3): 3 thuật toán Cosine trên vector tương tác & TF-IDF (`ITEM_BASED`, `USER_BASED`, `CONTENT_BASED`) + `POPULAR_FALLBACK`.
 12. `admin_analytics` (M1 & M2): Nhật ký kiểm toán bất biến, thống kê hành vi Reader, thống kê tương tác kho truyện và đối soát bộ đếm `reconcile_counters`.
@@ -211,7 +211,7 @@ Mọi route dưới đây được mount qua `api_v1_router` ([api/v1/router.py#
 
 ## 4. Từ điển 47 Bảng Nghiệp vụ & 3 Bảng Hệ thống (`QL_DocTruyen`)
 
-Trên SQL Server 2022 (`QL_DocTruyen`), `sys.tables WHERE is_ms_shipped = 0` hiện có **50 bảng** (`47` bảng ORM khai báo trong `models_auth.py`, `models_catalog.py`, `models_reader_social.py` + 3 bảng hạ tầng `alembic_version`, `schema_foundation_metadata`, `sysdiagrams`). Kiểu `GUID` & `UTCDateTime` ([orm/types.py#L15-L70](../../apps/api/src/manga_reader/infrastructure/orm/types.py#L15-L70)) bảo đảm tương thích đồng thời SQL Server (`UNIQUEIDENTIFIER`, `DATETIME2`) và SQLite test/dev.
+Trên SQL Server 2022 (`QL_DocTruyen`), `sys.tables WHERE is_ms_shipped = 0` hiện có **50 bảng** (`47` bảng ORM khai báo trong `models_auth.py`, `models_catalog.py`, `models_reader_social.py` + 3 bảng hạ tầng `alembic_version`, `schema_foundation_metadata`, `sysdiagrams`). Kiểu `GUID` & `UTCDateTime` ([orm/types.py#L15-L70](../../apps/api/src/manga_reader/infrastructure/orm/types.py#L15-L70)) cùng các cột `Unicode`/`UnicodeText` bảo đảm tương thích đồng thời SQL Server (`UNIQUEIDENTIFIER`, `DATETIME2`, `NVARCHAR` hỗ trợ đầy đủ tiếng Việt NFC) và SQLite test/dev.
 
 ### 4.1 Nhóm Tài khoản, Phiên, Nhật ký & Outbox (`models_auth.py` — 7 bảng)
 
