@@ -74,6 +74,52 @@ function toQuery(params: Record<string, string | number | boolean | undefined | 
   return qs ? `?${qs}` : "";
 }
 
+function isAbortError(err: unknown): boolean {
+  return (
+    (typeof DOMException !== "undefined" &&
+      err instanceof DOMException &&
+      err.name === "AbortError") ||
+    (typeof err === "object" &&
+      err !== null &&
+      "name" in err &&
+      (err as { name?: unknown }).name === "AbortError")
+  );
+}
+
+async function fetchWithLocalFallback(
+  url: string,
+  baseUrl: string,
+  normalizedPath: string,
+  requestInit: RequestInit,
+): Promise<Response> {
+  try {
+    return await fetch(url, requestInit);
+  } catch (err) {
+    if (isAbortError(err)) {
+      throw err;
+    }
+    const isLocalHost =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") &&
+      window.location.port !== "8020";
+    if (baseUrl.startsWith("/") && isLocalHost && import.meta.env.MODE !== "test") {
+      try {
+        return await fetch(`http://127.0.0.1:8020${baseUrl}${normalizedPath}`, requestInit);
+      } catch (fallbackErr) {
+        if (isAbortError(fallbackErr)) {
+          throw fallbackErr;
+        }
+      }
+    }
+    throw new ApiClientError({
+      status: 0,
+      code: "NETWORK_UNREACHABLE",
+      message:
+        "Cannot reach API server (127.0.0.1:8020). Please ensure 'pnpm dev:api' and 'pnpm dev:web' are running.",
+    });
+  }
+}
+
 export class ApiClient {
   private readonly baseUrl: string;
   private accessTokenProvider: () => string | null = () => null;
@@ -112,11 +158,16 @@ export class ApiClient {
       headers.set("Authorization", `Bearer ${token}`);
     }
 
-    const response = await fetch(`${this.baseUrl}${normalizedPath}`, {
-      ...init,
-      headers,
-      credentials: "include",
-    });
+    const response = await fetchWithLocalFallback(
+      `${this.baseUrl}${normalizedPath}`,
+      this.baseUrl,
+      normalizedPath,
+      {
+        ...init,
+        headers,
+        credentials: "include",
+      },
+    );
 
     if (
       response.status === 401 &&
@@ -144,7 +195,7 @@ export class ApiClient {
       throw new ApiClientError({
         status: response.status,
         code: errEnv?.error?.code ?? `HTTP_${response.status}`,
-        message: errEnv?.error?.message ?? response.statusText ?? "Request failed",
+        message: errEnv?.error?.message || response.statusText || "Request failed",
         requestId: errEnv?.meta?.requestId ?? responseRequestId,
         details: errEnv?.error?.details,
       });
