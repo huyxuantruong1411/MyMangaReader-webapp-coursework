@@ -63,7 +63,7 @@ Mẹo nhanh:
 - /                                : Trang chủ (Hero badge tổng số truyện, Continue Reading, phân trang đầy đủ 86,867 truyện / 3,620 trang cho Latest Updated, Recently Added, Top Rated, Recommendations)
 - /explore  &  /search/advanced    : Khám phá toàn bộ 86,867 bộ truyện + Advanced Search đa tiêu chí (Author/Artist, Year, Exported Chapters, Min Rating + Unrated, Ngôn ngữ gốc vs Ngôn ngữ chương, Lọc đa Tag Include/Exclude 3 trạng thái, View Grid/Compact/List, phân trang nhảy trang trực tiếp)
 - /search                          : Tìm kiếm truyện (tên chính/tên phụ/không dấu) & tác giả/họa sĩ (`author`/`artist`) + Autocomplete trên header (`Ctrl+K`)
-- /manga/:slug                     : Chi tiết truyện, bìa MinIO/fallback, danh sách chương (tìm/lọc volume), đánh giá 1-10, bình luận (`TOP`/`TOP_LIKED`/`NEWEST`), gợi ý
+- /manga/:slug                     : Chi tiết truyện, bìa MinIO/fallback, 4 tab chuyển mượt (Chapters phân trang Volume/Flat + lọc nhóm dịch/ngôn ngữ/sắp xếp, Cover Art Gallery theo locale + Lightbox, Recommendations, Comments)
 - /manga/:slug/chapter/:chapterId  : Trình đọc đa chế độ (Webtoon dọc / 1 trang / 2 trang LTR-RTL / Solo Cover / Focus `F` / nền đọc độc lập), giữ đúng trang khi đổi mode
 - /author/:creatorId/:slug         : Trang tác giả / họa sĩ
 - /profile/:username               : Hồ sơ công khai người đọc
@@ -115,9 +115,9 @@ pnpm check:all
 pnpm format:write
 
 # Chạy lẻ từng bộ test
-pnpm test              # Toàn bộ (Contracts + Web + API/E2E — 63 tests)
+pnpm test              # Toàn bộ (Contracts + Web + API/E2E — 64 tests)
 pnpm test:contracts    # Vitest cho JSON Schema Package v2.0 (7 tests)
-pnpm test:web          # Vitest + Testing Library cho Frontend React (27 tests)
+pnpm test:web          # Vitest + Testing Library cho Frontend React (28 tests)
 pnpm test:api          # Pytest cho Backend & E2E Acceptance Suite (29 tests)
 
 # Build bản Production

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AddToListsModal } from "../../components/AddToListsModal";
 import { CatalogPagination } from "../../components/CatalogPagination";
 import { FormattedMarkdownText } from "../../components/FormattedMarkdownText";
@@ -11,6 +11,16 @@ import { useAuth } from "../../hooks/useAuth";
 import { ApiClientError, apiClient, type ChapterItem } from "../../services/apiClient";
 import { compareVolumeKeys, getLocalePriority, resolveLocaleBadge } from "../../utils/localization";
 import { CommentsSection } from "./CommentsSection";
+
+type MangaDetailTab = "chapters" | "covers" | "recommendations" | "comments";
+type ChapterSortMode = "CHAPTER_ASC" | "CHAPTER_DESC" | "VIEWS_DESC" | "DATE_DESC";
+
+const VALID_DETAIL_TABS: ReadonlySet<MangaDetailTab> = new Set([
+  "chapters",
+  "covers",
+  "recommendations",
+  "comments",
+]);
 
 const READING_STATUSES = [
   { value: "", label: "Set reading status..." },
@@ -38,20 +48,37 @@ function formatRecMethodLabel(method: string, fallbackReason?: string | null): s
 
 export function MangaDetailPage() {
   const { slug = "" } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
+  const rawTab = searchParams.get("tab") as MangaDetailTab | null;
+  const activeTab: MangaDetailTab = rawTab && VALID_DETAIL_TABS.has(rawTab) ? rawTab : "chapters";
+
+  function selectTab(next: MangaDetailTab) {
+    const nextParams = new URLSearchParams(searchParams);
+    if (next === "chapters") {
+      nextParams.delete("tab");
+    } else {
+      nextParams.set("tab", next);
+    }
+    setSearchParams(nextParams, { replace: true });
+  }
+
   const [chapterLang, setChapterLang] = useState("");
   const [chapterVolume, setChapterVolume] = useState("");
+  const [chapterGroup, setChapterGroup] = useState("");
   const [chapterSearch, setChapterSearch] = useState("");
-  const [chapterOrder, setChapterOrder] = useState<"ASC" | "DESC">("ASC");
+  const [chapterSort, setChapterSort] = useState<ChapterSortMode>("CHAPTER_ASC");
+  const chapterOrder: "ASC" | "DESC" = chapterSort === "CHAPTER_DESC" ? "DESC" : "ASC";
   const [chapterViewMode, setChapterViewMode] = useState<"VOLUME_GROUPS" | "FLAT">("VOLUME_GROUPS");
   const [collapsedVolumes, setCollapsedVolumes] = useState<Record<string, boolean>>({});
   const [chapterRangeIdx, setChapterRangeIdx] = useState<number>(-1);
   const [chapterPage, setChapterPage] = useState<number>(1);
-  const [chapterPageSize, setChapterPageSize] = useState<number>(50);
+  const [chapterPageSize, setChapterPageSize] = useState<number>(25);
   const [jumpChapterInput, setJumpChapterInput] = useState("");
+  const [jumpFeedback, setJumpFeedback] = useState<string | null>(null);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
   const [altTitlesExpanded, setAltTitlesExpanded] = useState(false);
   const [altTitleSearch, setAltTitleSearch] = useState("");
@@ -97,6 +124,18 @@ export function MangaDetailPage() {
   const contentRecsQuery = useQuery({
     queryKey: ["manga", "recs", manga?.mangaId, "CONTENT_BASED"],
     queryFn: () => apiClient.getMangaRecommendations(manga!.mangaId, "CONTENT_BASED", 6),
+    enabled: Boolean(manga?.mangaId),
+  });
+
+  const commentsCountQuery = useQuery({
+    queryKey: ["comments", manga?.mangaId, "none", "ALL", "NEWEST", 1],
+    queryFn: () =>
+      apiClient.listComments({
+        mangaId: manga!.mangaId,
+        scope: "ALL",
+        sort: "NEWEST",
+        page: 1,
+      }),
     enabled: Boolean(manga?.mangaId),
   });
 
@@ -236,25 +275,43 @@ export function MangaDetailPage() {
     return list;
   }, [allCovers, coverLocaleFilter, coverSortAsc, manga?.originalLanguage]);
 
-  const { distinctVolumes, hasNoVolumeChapters } = useMemo(() => {
-    const vols = new Set<string>();
-    let noVol = false;
-    for (const ch of chaptersQuery.data?.data ?? []) {
-      const v = (ch.volume || "").trim();
-      if (v) vols.add(v);
-      else noVol = true;
-    }
-    return {
-      distinctVolumes: Array.from(vols).sort((a, b) => compareVolumeKeys(a, b, true)),
-      hasNoVolumeChapters: noVol,
-    };
-  }, [chaptersQuery.data]);
+  const { distinctVolumes, hasNoVolumeChapters, distinctLanguages, distinctScanlationGroups } =
+    useMemo(() => {
+      const vols = new Set<string>();
+      const langs = new Set<string>(manga?.stats.languages ?? []);
+      const groups = new Set<string>();
+      let noVol = false;
+      for (const ch of chaptersQuery.data?.data ?? []) {
+        const v = (ch.volume || "").trim();
+        if (v) vols.add(v);
+        else noVol = true;
+        if (ch.language) langs.add(ch.language);
+        const grp = (ch.scanlationGroup || "").trim();
+        if (grp) groups.add(grp);
+      }
+      return {
+        distinctVolumes: Array.from(vols).sort((a, b) => compareVolumeKeys(a, b, true)),
+        hasNoVolumeChapters: noVol,
+        distinctLanguages: Array.from(langs).sort((a, b) => a.localeCompare(b)),
+        distinctScanlationGroups: Array.from(groups).sort((a, b) => a.localeCompare(b)),
+      };
+    }, [chaptersQuery.data, manga?.stats.languages]);
 
   const filteredChapters = useMemo(() => {
     const list = chaptersQuery.data?.data ?? [];
     const q = chapterSearch.trim().normalize("NFC").toLowerCase();
     return list.filter((ch) => {
       if (chapterVolume === "__NONE__" && (ch.volume || "").trim() !== "") return false;
+      if (
+        chapterVolume &&
+        chapterVolume !== "__NONE__" &&
+        (ch.volume || "").trim() !== chapterVolume
+      ) {
+        return false;
+      }
+      if (chapterGroup && (ch.scanlationGroup || "").trim() !== chapterGroup) {
+        return false;
+      }
       if (
         q &&
         !ch.chapterNumber.toLowerCase().includes(q) &&
@@ -266,38 +323,30 @@ export function MangaDetailPage() {
       }
       return true;
     });
-  }, [chaptersQuery.data, chapterSearch, chapterVolume]);
+  }, [chaptersQuery.data, chapterSearch, chapterVolume, chapterGroup]);
 
-  const volumeGroups = useMemo(() => {
-    const buckets = new Map<string, ChapterItem[]>();
-    for (const ch of filteredChapters) {
-      const volKey = (ch.volume || "").trim() || "__NONE__";
-      const arr = buckets.get(volKey) ?? [];
-      arr.push(ch);
-      buckets.set(volKey, arr);
+  const sortedChapters = useMemo(() => {
+    if (chapterSort === "VIEWS_DESC") {
+      return [...filteredChapters].sort(
+        (a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0) || a.chapterNumeric - b.chapterNumeric,
+      );
     }
-    const keys = Array.from(buckets.keys()).sort((a, b) => {
-      if (a === "__NONE__") return 1;
-      if (b === "__NONE__") return -1;
-      return compareVolumeKeys(a, b, chapterOrder === "ASC");
-    });
-    return keys.map((key) => {
-      const items = buckets.get(key) ?? [];
-      return {
-        key,
-        isNoVolume: key === "__NONE__",
-        label: key === "__NONE__" ? "Unassigned · No Volume" : `Volume ${key}`,
-        chapters: items,
-      };
-    });
-  }, [filteredChapters, chapterOrder]);
+    if (chapterSort === "DATE_DESC") {
+      return [...filteredChapters].sort((a, b) => {
+        const ta = a.publishAt ? Date.parse(a.publishAt) : 0;
+        const tb = b.publishAt ? Date.parse(b.publishAt) : 0;
+        return tb - ta || b.chapterNumeric - a.chapterNumeric;
+      });
+    }
+    return filteredChapters;
+  }, [filteredChapters, chapterSort]);
 
   const CHAPTER_GROUP_SIZE = 50;
   const chapterRangeGroups = useMemo(() => {
-    if (filteredChapters.length <= CHAPTER_GROUP_SIZE) return [];
+    if (sortedChapters.length <= CHAPTER_GROUP_SIZE) return [];
     const groups: Array<{ index: number; label: string; start: number; end: number }> = [];
-    for (let i = 0; i < filteredChapters.length; i += CHAPTER_GROUP_SIZE) {
-      const slice = filteredChapters.slice(i, i + CHAPTER_GROUP_SIZE);
+    for (let i = 0; i < sortedChapters.length; i += CHAPTER_GROUP_SIZE) {
+      const slice = sortedChapters.slice(i, i + CHAPTER_GROUP_SIZE);
       const firstCh = slice[0]?.chapterNumber ?? String(i + 1);
       const lastCh = slice[slice.length - 1]?.chapterNumber ?? String(i + slice.length);
       groups.push({
@@ -308,7 +357,11 @@ export function MangaDetailPage() {
       });
     }
     return groups;
-  }, [filteredChapters]);
+  }, [sortedChapters]);
+
+  function chapterRangeIndexValid(idx: number, totalGroups: number): boolean {
+    return idx >= 0 && idx < totalGroups;
+  }
 
   const rangeScopedChapters = useMemo(() => {
     if (
@@ -316,19 +369,16 @@ export function MangaDetailPage() {
       chapterRangeGroups[chapterRangeIdx]
     ) {
       const grp = chapterRangeGroups[chapterRangeIdx];
-      return filteredChapters.slice(grp.start, grp.end);
+      return sortedChapters.slice(grp.start, grp.end);
     }
-    return filteredChapters;
-  }, [filteredChapters, chapterRangeGroups, chapterRangeIdx]);
-
-  function chapterRangeIndexValid(idx: number, totalGroups: number): boolean {
-    return idx >= 0 && idx < totalGroups;
-  }
+    return sortedChapters;
+  }, [sortedChapters, chapterRangeGroups, chapterRangeIdx]);
 
   useEffect(() => {
     setChapterRangeIdx(-1);
     setChapterPage(1);
-  }, [slug, chapterLang, chapterVolume, chapterOrder, chapterSearch]);
+    setJumpFeedback(null);
+  }, [slug, chapterLang, chapterVolume, chapterGroup, chapterSort, chapterSearch]);
 
   useEffect(() => {
     setChapterPage(1);
@@ -339,8 +389,71 @@ export function MangaDetailPage() {
     return rangeScopedChapters.slice(start, start + chapterPageSize);
   }, [rangeScopedChapters, chapterPage, chapterPageSize]);
 
+  const pagedVolumeGroups = useMemo(() => {
+    const buckets = new Map<string, ChapterItem[]>();
+    for (const ch of pagedChapters) {
+      const volKey = (ch.volume || "").trim() || "__NONE__";
+      const arr = buckets.get(volKey) ?? [];
+      arr.push(ch);
+      buckets.set(volKey, arr);
+    }
+    const keys =
+      chapterSort === "CHAPTER_ASC" || chapterSort === "CHAPTER_DESC"
+        ? Array.from(buckets.keys()).sort((a, b) => {
+            if (a === "__NONE__") return 1;
+            if (b === "__NONE__") return -1;
+            return compareVolumeKeys(a, b, chapterOrder === "ASC");
+          })
+        : Array.from(buckets.keys());
+    return keys.map((key) => {
+      const items = buckets.get(key) ?? [];
+      return {
+        key,
+        isNoVolume: key === "__NONE__",
+        label: key === "__NONE__" ? "Unassigned · No Volume" : `Volume ${key}`,
+        chapters: items,
+      };
+    });
+  }, [pagedChapters, chapterOrder, chapterSort]);
+
+  const hasActiveChapterFilters = Boolean(
+    chapterLang ||
+    chapterVolume ||
+    chapterGroup ||
+    chapterSearch.trim() ||
+    chapterSort !== "CHAPTER_ASC" ||
+    chapterRangeIdx !== -1,
+  );
+
+  function resetChapterFilters() {
+    setChapterLang("");
+    setChapterVolume("");
+    setChapterGroup("");
+    setChapterSearch("");
+    setChapterSort("CHAPTER_ASC");
+    setChapterRangeIdx(-1);
+    setChapterPage(1);
+    setJumpFeedback(null);
+  }
+
+  function handleLocateResumeChapter(resumeChapterId: string) {
+    const idx = sortedChapters.findIndex((ch) => ch.chapterId === resumeChapterId);
+    if (idx === -1) {
+      resetChapterFilters();
+      return;
+    }
+    const ch = sortedChapters[idx];
+    setChapterRangeIdx(-1);
+    setChapterPage(Math.floor(idx / chapterPageSize) + 1);
+    if (ch) {
+      const volKey = (ch.volume || "").trim() || "__NONE__";
+      setCollapsedVolumes((prev) => ({ ...prev, [volKey]: false }));
+    }
+  }
+
   function handleJumpToChapter(e: FormEvent) {
     e.preventDefault();
+    setJumpFeedback(null);
     const target = jumpChapterInput.trim().toLowerCase();
     if (!target || !manga) return;
     const match = filteredChapters.find(
@@ -350,6 +463,8 @@ export function MangaDetailPage() {
     );
     if (match) {
       navigate(`/manga/${manga.slug}/chapter/${match.chapterId}`);
+    } else {
+      setJumpFeedback(`No chapter matching "${jumpChapterInput.trim()}" found.`);
     }
   }
 
@@ -360,7 +475,7 @@ export function MangaDetailPage() {
 
   useEffect(() => {
     setCollapsedVolumes({});
-  }, [slug, chapterLang, chapterVolume, chapterOrder, chapterSearch]);
+  }, [slug, chapterLang, chapterVolume, chapterGroup, chapterSort, chapterSearch]);
 
   if (detailQuery.isLoading) {
     return <LoadingState variant="detail" label="Loading manga details..." />;
@@ -436,6 +551,84 @@ export function MangaDetailPage() {
 
   const viewer = manga.viewerState;
   const hasChapters = (chaptersQuery.data?.data.length ?? manga.stats.exportedChapterCount) > 0;
+  const itemRecs = itemRecsQuery.data?.data?.items ?? [];
+  const contentRecs = contentRecsQuery.data?.data?.items ?? [];
+  const totalRecsCount = itemRecs.length + contentRecs.length;
+  const totalCommentsCount = commentsCountQuery.data?.meta.total;
+  const totalChapterPages = Math.max(1, Math.ceil(rangeScopedChapters.length / chapterPageSize));
+  const chapterRangeStart =
+    rangeScopedChapters.length === 0 ? 0 : (chapterPage - 1) * chapterPageSize + 1;
+  const chapterRangeEnd = Math.min(rangeScopedChapters.length, chapterPage * chapterPageSize);
+
+  const detailTabs: Array<{ id: MangaDetailTab; icon: string; label: string; count?: number }> = [
+    { id: "chapters", icon: "📖", label: "Chapters", count: filteredChapters.length },
+    { id: "covers", icon: "🖼️", label: "Cover Art", count: allCovers.length },
+    { id: "recommendations", icon: "✨", label: "Recommendations", count: totalRecsCount },
+    { id: "comments", icon: "💬", label: "Comments", count: totalCommentsCount },
+  ];
+
+  function renderChapterRow(ch: ChapterItem, showVolumeBadge: boolean) {
+    const isCurrentProgress = viewer?.progress?.chapterId === ch.chapterId;
+    return (
+      <li
+        key={ch.chapterId}
+        className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm transition-colors hover:bg-white/[0.02]"
+        style={{
+          borderColor: "var(--mr-border-subtle)",
+          backgroundColor: isCurrentProgress ? "var(--mr-bg-elevated)" : "transparent",
+        }}
+      >
+        <Link
+          to={`/manga/${manga!.slug}/chapter/${ch.chapterId}`}
+          className="flex min-w-0 flex-1 flex-wrap items-center gap-2 break-words font-medium hover:underline"
+          style={{ color: "var(--mr-text-primary)" }}
+        >
+          <span
+            className="shrink-0 rounded px-1.5 py-0.5 font-mono text-xs"
+            style={{
+              backgroundColor: "var(--mr-bg-elevated)",
+              color: "var(--mr-accent)",
+            }}
+          >
+            Ch. {ch.chapterNumber}
+          </span>
+          {showVolumeBadge ? (
+            ch.volume ? (
+              <span className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
+                Vol. {ch.volume}
+              </span>
+            ) : (
+              <span className="text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
+                No Vol.
+              </span>
+            )
+          ) : null}
+          <span className="min-w-0 break-words">{ch.title || `Chapter ${ch.chapterNumber}`}</span>
+          {isCurrentProgress ? (
+            <span
+              className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+              style={{
+                backgroundColor: "rgba(52, 211, 153, 0.15)",
+                color: "var(--mr-success)",
+              }}
+            >
+              Resume Page {viewer?.progress?.pageNumber}
+            </span>
+          ) : null}
+        </Link>
+        <div
+          className="flex flex-wrap items-center gap-3 text-xs"
+          style={{ color: "var(--mr-text-muted)" }}
+        >
+          <span className="uppercase">{ch.language}</span>
+          <span>{ch.pageCount} pages</span>
+          {ch.scanlationGroup ? <span>{ch.scanlationGroup}</span> : null}
+          {ch.publishAt ? <span>{new Date(ch.publishAt).toLocaleDateString()}</span> : null}
+          <span>{(ch.viewCount ?? 0).toLocaleString()} views</span>
+        </div>
+      </li>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -989,606 +1182,708 @@ export function MangaDetailPage() {
         </div>
       </section>
 
-      {/* Cover Art Gallery Grouped & Filtered by Locale */}
-      {allCovers.length > 0 ? (
-        <section
-          aria-label="Cover art gallery"
-          className="space-y-3 rounded-[var(--mr-radius-lg)] border p-5"
+      {/* Tabbed Detail Workspace: Chapters | Cover Art | Recommendations | Comments */}
+      <section className="space-y-4">
+        <div
+          role="tablist"
+          aria-label="Manga detail sections"
+          className="flex flex-wrap gap-2 rounded-[var(--mr-radius-lg)] border p-1.5"
           style={{
             backgroundColor: "var(--mr-bg-surface)",
             borderColor: "var(--mr-border-subtle)",
           }}
         >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h2 className="text-lg font-bold" style={{ color: "var(--mr-text-primary)" }}>
-                Cover Art Gallery ({visibleCovers.length})
-              </h2>
-              <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
-                Filter official volume covers by release locale or inspect full-size artwork.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setCoverSortAsc((prev) => !prev)}
-              className="cursor-pointer rounded border px-2.5 py-1 text-xs font-medium"
-              style={{
-                backgroundColor: "var(--mr-bg-elevated)",
-                borderColor: "var(--mr-border-strong)",
-                color: "var(--mr-text-primary)",
-              }}
-            >
-              {coverSortAsc ? "Volume Asc ↑" : "Volume Desc ↓"}
-            </button>
-          </div>
-
-          <div className="flex flex-wrap gap-1.5 text-xs">
-            {coverLocaleTabs.map((tabItem) => {
-              const active = coverLocaleFilter === tabItem.key;
-              return (
-                <button
-                  key={tabItem.key}
-                  type="button"
-                  onClick={() => setCoverLocaleFilter(tabItem.key)}
-                  className="inline-flex cursor-pointer items-center gap-1 rounded-full border px-3 py-1 font-medium"
-                  style={{
-                    backgroundColor: active ? "var(--mr-accent)" : "var(--mr-bg-elevated)",
-                    borderColor: active ? "var(--mr-accent)" : "var(--mr-border-subtle)",
-                    color: active ? "#ffffff" : "var(--mr-text-secondary)",
-                  }}
-                >
-                  <span>{tabItem.flag}</span>
-                  <span>{tabItem.label}</span>
-                  <span className="font-mono text-[10px] opacity-80">({tabItem.count})</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {visibleCovers.map((cover, idx) => {
-              const locInfo = resolveLocaleBadge(cover.locale || manga.originalLanguage);
-              return (
-                <button
-                  key={`${cover.coverId ?? idx}-${cover.volume ?? "x"}-${cover.locale ?? "loc"}`}
-                  type="button"
-                  onClick={() => setLightboxIdx(idx)}
-                  className="group flex cursor-pointer flex-col overflow-hidden rounded-[var(--mr-radius-md)] border text-left transition hover:border-[var(--mr-accent)]"
-                  style={{
-                    backgroundColor: "var(--mr-bg-elevated)",
-                    borderColor: "var(--mr-border-subtle)",
-                  }}
-                >
-                  <div className="relative aspect-[3/4] w-full overflow-hidden">
-                    <img
-                      src={cover.url!}
-                      alt={`${manga.title} ${cover.volume ? `Vol. ${cover.volume}` : "Cover"}`}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <span
-                      className="absolute top-1.5 left-1.5 rounded px-1.5 py-0.5 text-[10px] font-bold"
-                      style={{ backgroundColor: "rgba(15, 17, 23, 0.85)", color: "#ffffff" }}
-                    >
-                      {cover.volume ? `Vol. ${cover.volume}` : "Special"}
-                    </span>
-                    <span
-                      className="absolute top-1.5 right-1.5 rounded px-1.5 py-0.5 text-[10px] font-semibold"
-                      style={{
-                        backgroundColor: "rgba(15, 17, 23, 0.85)",
-                        color: locInfo.color,
-                      }}
-                    >
-                      {locInfo.flag} {locInfo.code}
-                    </span>
-                  </div>
-                  {cover.description ? (
-                    <p
-                      className="line-clamp-1 px-2 py-1.5 text-[11px]"
-                      style={{ color: "var(--mr-text-muted)" }}
-                    >
-                      {cover.description}
-                    </p>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      {/* Chapter List */}
-      <section id="chapters" className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-bold" style={{ color: "var(--mr-text-primary)" }}>
-            Chapters ({filteredChapters.length.toLocaleString()})
-          </h2>
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <div
-              role="group"
-              aria-label="Chapter grouping mode"
-              className="flex overflow-hidden rounded border"
-              style={{ borderColor: "var(--mr-border-strong)" }}
-            >
+          {detailTabs.map((tabItem) => {
+            const isActive = activeTab === tabItem.id;
+            return (
               <button
+                key={tabItem.id}
+                id={`manga-tab-${tabItem.id}`}
                 type="button"
-                aria-pressed={chapterViewMode === "VOLUME_GROUPS"}
-                onClick={() => setChapterViewMode("VOLUME_GROUPS")}
-                className="cursor-pointer px-2.5 py-1 font-medium"
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`manga-panel-${tabItem.id}`}
+                onClick={() => selectTab(tabItem.id)}
+                className="flex cursor-pointer items-center gap-2 rounded-[var(--mr-radius-md)] border px-3.5 py-2 text-xs font-semibold transition-all duration-200 sm:text-sm"
                 style={{
-                  backgroundColor:
-                    chapterViewMode === "VOLUME_GROUPS"
-                      ? "var(--mr-bg-elevated)"
-                      : "var(--mr-bg-surface)",
-                  color:
-                    chapterViewMode === "VOLUME_GROUPS"
-                      ? "var(--mr-accent)"
-                      : "var(--mr-text-secondary)",
+                  backgroundColor: isActive ? "var(--mr-accent)" : "transparent",
+                  borderColor: isActive ? "var(--mr-accent)" : "transparent",
+                  color: isActive ? "#ffffff" : "var(--mr-text-secondary)",
                 }}
               >
-                Group by Volume
-              </button>
-              <button
-                type="button"
-                aria-pressed={chapterViewMode === "FLAT"}
-                onClick={() => setChapterViewMode("FLAT")}
-                className="cursor-pointer px-2.5 py-1 font-medium"
-                style={{
-                  backgroundColor:
-                    chapterViewMode === "FLAT" ? "var(--mr-bg-elevated)" : "var(--mr-bg-surface)",
-                  color:
-                    chapterViewMode === "FLAT" ? "var(--mr-accent)" : "var(--mr-text-secondary)",
-                }}
-              >
-                Flat List
-              </button>
-            </div>
-            <input
-              type="search"
-              aria-label="Search chapters"
-              value={chapterSearch}
-              onChange={(e) => setChapterSearch(e.target.value)}
-              placeholder="Search ch., vol., or group..."
-              className="w-40 rounded border px-2.5 py-1"
-              style={{
-                backgroundColor: "var(--mr-bg-surface)",
-                borderColor: "var(--mr-border-strong)",
-                color: "var(--mr-text-primary)",
-              }}
-            />
-            {filteredChapters.length > 0 ? (
-              <form onSubmit={handleJumpToChapter} className="flex items-center gap-1">
-                <input
-                  type="text"
-                  aria-label="Jump to chapter number"
-                  value={jumpChapterInput}
-                  onChange={(e) => setJumpChapterInput(e.target.value)}
-                  placeholder="Jump to Ch. #"
-                  className="w-24 rounded border px-2 py-1 font-mono text-xs"
-                  style={{
-                    backgroundColor: "var(--mr-bg-surface)",
-                    borderColor: "var(--mr-border-strong)",
-                    color: "var(--mr-text-primary)",
-                  }}
-                />
-                <button
-                  type="submit"
-                  className="cursor-pointer rounded border px-2 py-1 font-medium"
-                  style={{
-                    backgroundColor: "var(--mr-bg-elevated)",
-                    borderColor: "var(--mr-border-strong)",
-                    color: "var(--mr-accent)",
-                  }}
-                >
-                  Open
-                </button>
-              </form>
-            ) : null}
-            {distinctVolumes.length > 0 || hasNoVolumeChapters ? (
-              <select
-                aria-label="Filter chapter volume"
-                value={chapterVolume}
-                onChange={(e) => setChapterVolume(e.target.value)}
-                className="rounded border px-2.5 py-1"
-                style={{
-                  backgroundColor: "var(--mr-bg-surface)",
-                  borderColor: "var(--mr-border-strong)",
-                  color: "var(--mr-text-primary)",
-                }}
-              >
-                <option value="">All Volumes</option>
-                {distinctVolumes.map((vol) => (
-                  <option key={vol} value={vol}>
-                    Vol. {vol}
-                  </option>
-                ))}
-                {hasNoVolumeChapters ? (
-                  <option value="__NONE__">No Volume (Unassigned)</option>
+                <span aria-hidden="true">{tabItem.icon}</span>
+                <span>{tabItem.label}</span>
+                {tabItem.count !== undefined ? (
+                  <span
+                    className="rounded-full px-2 py-0.5 font-mono text-[11px]"
+                    style={{
+                      backgroundColor: isActive
+                        ? "rgba(255, 255, 255, 0.2)"
+                        : "var(--mr-bg-elevated)",
+                      color: isActive ? "#ffffff" : "var(--mr-text-muted)",
+                    }}
+                  >
+                    {tabItem.count.toLocaleString()}
+                  </span>
                 ) : null}
-              </select>
-            ) : null}
-            <select
-              aria-label="Filter chapter language"
-              value={chapterLang}
-              onChange={(e) => setChapterLang(e.target.value)}
-              className="rounded border px-2.5 py-1"
-              style={{
-                backgroundColor: "var(--mr-bg-surface)",
-                borderColor: "var(--mr-border-strong)",
-                color: "var(--mr-text-primary)",
-              }}
-            >
-              <option value="">All Languages</option>
-              {manga.stats.languages.map((lang) => (
-                <option key={lang} value={lang}>
-                  {lang.toUpperCase()}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label="Chapters per page"
-              value={chapterPageSize}
-              onChange={(e) => setChapterPageSize(Number(e.target.value))}
-              className="rounded border px-2 py-1"
-              style={{
-                backgroundColor: "var(--mr-bg-surface)",
-                borderColor: "var(--mr-border-strong)",
-                color: "var(--mr-text-primary)",
-              }}
-            >
-              <option value={25}>25 / page</option>
-              <option value={50}>50 / page</option>
-              <option value={100}>100 / page</option>
-            </select>
-            <button
-              type="button"
-              onClick={() => setChapterOrder((prev) => (prev === "ASC" ? "DESC" : "ASC"))}
-              className="cursor-pointer rounded border px-2.5 py-1"
-              style={{
-                backgroundColor: "var(--mr-bg-surface)",
-                borderColor: "var(--mr-border-strong)",
-                color: "var(--mr-text-primary)",
-              }}
-            >
-              Order: {chapterOrder === "ASC" ? "Oldest First (ASC)" : "Newest First (DESC)"}
-            </button>
-          </div>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Chapter Range Tabs when manga has > 50 chapters in Flat List mode */}
-        {chapterViewMode === "FLAT" && chapterRangeGroups.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-1.5 text-xs">
-            <span className="text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
-              Chapter ranges:
-            </span>
-            <button
-              type="button"
-              onClick={() => setChapterRangeIdx(-1)}
-              className="cursor-pointer rounded border px-2.5 py-1 font-medium"
-              style={{
-                backgroundColor:
-                  chapterRangeIdx === -1 ? "var(--mr-accent)" : "var(--mr-bg-surface)",
-                borderColor:
-                  chapterRangeIdx === -1 ? "var(--mr-accent)" : "var(--mr-border-subtle)",
-                color: chapterRangeIdx === -1 ? "#ffffff" : "var(--mr-text-secondary)",
-              }}
-            >
-              All ({filteredChapters.length})
-            </button>
-            {chapterRangeGroups.map((grp) => (
-              <button
-                key={grp.index}
-                type="button"
-                onClick={() => setChapterRangeIdx(grp.index)}
-                className="cursor-pointer rounded border px-2.5 py-1 font-mono text-[11px] font-medium"
-                style={{
-                  backgroundColor:
-                    chapterRangeIdx === grp.index ? "var(--mr-accent)" : "var(--mr-bg-surface)",
-                  borderColor:
-                    chapterRangeIdx === grp.index ? "var(--mr-accent)" : "var(--mr-border-subtle)",
-                  color: chapterRangeIdx === grp.index ? "#ffffff" : "var(--mr-text-secondary)",
-                }}
-              >
-                {grp.label}
-              </button>
-            ))}
-          </div>
-        ) : null}
-
-        {chaptersQuery.isLoading ? (
-          <LoadingState variant="table" count={8} label="Loading chapter list..." />
-        ) : filteredChapters.length === 0 ? (
-          <EmptyState
-            title="No chapters available"
-            description="This title currently has no readable chapters matching your filter."
-          />
-        ) : chapterViewMode === "VOLUME_GROUPS" ? (
-          <div className="space-y-3">
-            {volumeGroups.length > 1 ? (
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                <span style={{ color: "var(--mr-text-muted)" }}>
-                  Grouped into {volumeGroups.length} section(s){" "}
-                  {hasNoVolumeChapters ? "(No Volume chapters separated cleanly)" : ""}
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setCollapsedVolumes({})}
-                    className="cursor-pointer rounded border px-2.5 py-1 font-medium"
-                    style={{
-                      borderColor: "var(--mr-border-strong)",
-                      color: "var(--mr-accent)",
-                    }}
-                  >
-                    Expand All Volumes
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const allCollapsed: Record<string, boolean> = {};
-                      for (const g of volumeGroups) allCollapsed[g.key] = true;
-                      setCollapsedVolumes(allCollapsed);
-                    }}
-                    className="cursor-pointer rounded border px-2.5 py-1 font-medium"
-                    style={{
-                      borderColor: "var(--mr-border-strong)",
-                      color: "var(--mr-text-secondary)",
-                    }}
-                  >
-                    Collapse All
-                  </button>
-                </div>
-              </div>
-            ) : null}
-
-            {volumeGroups.map((grp) => {
-              const isCollapsed = Boolean(collapsedVolumes[grp.key]);
-              const firstCh = grp.chapters[0]?.chapterNumber ?? "";
-              const lastCh = grp.chapters[grp.chapters.length - 1]?.chapterNumber ?? "";
-              return (
-                <div
-                  key={grp.key}
-                  className="overflow-hidden rounded-[var(--mr-radius-md)] border"
-                  style={{
-                    backgroundColor: "var(--mr-bg-surface)",
-                    borderColor: grp.isNoVolume
-                      ? "var(--mr-border-strong)"
-                      : "var(--mr-border-subtle)",
-                  }}
-                >
-                  <button
-                    type="button"
-                    aria-expanded={!isCollapsed}
-                    onClick={() =>
-                      setCollapsedVolumes((prev) => ({
-                        ...prev,
-                        [grp.key]: !prev[grp.key],
-                      }))
-                    }
-                    className="flex w-full cursor-pointer flex-wrap items-center justify-between gap-2 px-4 py-3 text-left text-xs font-semibold transition hover:opacity-90"
-                    style={{
-                      backgroundColor: "var(--mr-bg-elevated)",
-                      color: "var(--mr-text-primary)",
-                    }}
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span style={{ color: "var(--mr-accent)" }}>{isCollapsed ? "▸" : "▾"}</span>
-                      <span>{grp.label}</span>
-                      <span
-                        className="rounded px-2 py-0.5 font-mono text-[10px]"
-                        style={{
-                          backgroundColor: "var(--mr-bg-surface)",
-                          color: "var(--mr-text-secondary)",
-                        }}
-                      >
-                        {grp.chapters.length} ch.
-                      </span>
-                      {firstCh ? (
-                        <span className="font-normal" style={{ color: "var(--mr-text-muted)" }}>
-                          {firstCh === lastCh ? `Ch. ${firstCh}` : `Ch. ${firstCh} – ${lastCh}`}
-                        </span>
-                      ) : null}
-                    </div>
-                    <span className="text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
-                      {isCollapsed ? "Click to expand" : "Click to collapse"}
-                    </span>
-                  </button>
-
-                  {!isCollapsed ? (
-                    <ul className="divide-y" style={{ borderColor: "var(--mr-border-subtle)" }}>
-                      {grp.chapters.map((ch) => {
-                        const isCurrentProgress = viewer?.progress?.chapterId === ch.chapterId;
-                        return (
-                          <li
-                            key={ch.chapterId}
-                            className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
-                            style={{
-                              borderColor: "var(--mr-border-subtle)",
-                              backgroundColor: isCurrentProgress
-                                ? "var(--mr-bg-elevated)"
-                                : "transparent",
-                            }}
-                          >
-                            <Link
-                              to={`/manga/${manga.slug}/chapter/${ch.chapterId}`}
-                              className="flex min-w-0 flex-1 flex-wrap items-center gap-2 break-words font-medium hover:underline"
-                              style={{ color: "var(--mr-text-primary)" }}
-                            >
-                              <span
-                                className="shrink-0 rounded px-1.5 py-0.5 font-mono text-xs"
-                                style={{
-                                  backgroundColor: "var(--mr-bg-elevated)",
-                                  color: "var(--mr-accent)",
-                                }}
-                              >
-                                Ch. {ch.chapterNumber}
-                              </span>
-                              <span className="min-w-0 break-words">
-                                {ch.title || `Chapter ${ch.chapterNumber}`}
-                              </span>
-                              {isCurrentProgress ? (
-                                <span
-                                  className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
-                                  style={{
-                                    backgroundColor: "rgba(52, 211, 153, 0.15)",
-                                    color: "var(--mr-success)",
-                                  }}
-                                >
-                                  Resume Page {viewer?.progress?.pageNumber}
-                                </span>
-                              ) : null}
-                            </Link>
-                            <div
-                              className="flex flex-wrap items-center gap-3 text-xs"
-                              style={{ color: "var(--mr-text-muted)" }}
-                            >
-                              <span className="uppercase">{ch.language}</span>
-                              <span>{ch.pageCount} pages</span>
-                              {ch.scanlationGroup ? <span>{ch.scanlationGroup}</span> : null}
-                              {ch.publishAt ? (
-                                <span>{new Date(ch.publishAt).toLocaleDateString()}</span>
-                              ) : null}
-                              <span>{ch.viewCount} views</span>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <>
-            <ul
-              className="divide-y rounded-[var(--mr-radius-md)] border"
+        <div
+          key={activeTab}
+          role="tabpanel"
+          id={`manga-panel-${activeTab}`}
+          aria-labelledby={`manga-tab-${activeTab}`}
+          className="mr-tab-panel-enter"
+        >
+          {activeTab === "chapters" ? (
+            <section
+              id="chapters"
+              className="space-y-4 rounded-[var(--mr-radius-lg)] border p-5"
               style={{
                 backgroundColor: "var(--mr-bg-surface)",
                 borderColor: "var(--mr-border-subtle)",
               }}
             >
-              {pagedChapters.map((ch) => {
-                const isCurrentProgress = viewer?.progress?.chapterId === ch.chapterId;
-                return (
-                  <li
-                    key={ch.chapterId}
-                    className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
-                    style={{
-                      borderColor: "var(--mr-border-subtle)",
-                      backgroundColor: isCurrentProgress ? "var(--mr-bg-elevated)" : "transparent",
-                    }}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-lg font-bold" style={{ color: "var(--mr-text-primary)" }}>
+                  Chapters ({sortedChapters.length.toLocaleString()})
+                </h2>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <div
+                    role="group"
+                    aria-label="Chapter grouping mode"
+                    className="flex overflow-hidden rounded border"
+                    style={{ borderColor: "var(--mr-border-strong)" }}
                   >
-                    <Link
-                      to={`/manga/${manga.slug}/chapter/${ch.chapterId}`}
-                      className="flex flex-wrap items-center gap-2 font-medium hover:underline"
-                      style={{ color: "var(--mr-text-primary)" }}
+                    <button
+                      type="button"
+                      aria-pressed={chapterViewMode === "VOLUME_GROUPS"}
+                      onClick={() => setChapterViewMode("VOLUME_GROUPS")}
+                      className="cursor-pointer px-2.5 py-1 font-medium"
+                      style={{
+                        backgroundColor:
+                          chapterViewMode === "VOLUME_GROUPS"
+                            ? "var(--mr-bg-elevated)"
+                            : "var(--mr-bg-surface)",
+                        color:
+                          chapterViewMode === "VOLUME_GROUPS"
+                            ? "var(--mr-accent)"
+                            : "var(--mr-text-secondary)",
+                      }}
                     >
-                      <span
-                        className="rounded px-1.5 py-0.5 font-mono text-xs"
+                      Group by Volume
+                    </button>
+                    <button
+                      type="button"
+                      aria-pressed={chapterViewMode === "FLAT"}
+                      onClick={() => setChapterViewMode("FLAT")}
+                      className="cursor-pointer px-2.5 py-1 font-medium"
+                      style={{
+                        backgroundColor:
+                          chapterViewMode === "FLAT"
+                            ? "var(--mr-bg-elevated)"
+                            : "var(--mr-bg-surface)",
+                        color:
+                          chapterViewMode === "FLAT"
+                            ? "var(--mr-accent)"
+                            : "var(--mr-text-secondary)",
+                      }}
+                    >
+                      Flat List
+                    </button>
+                  </div>
+                  <input
+                    type="search"
+                    aria-label="Search chapters"
+                    value={chapterSearch}
+                    onChange={(e) => setChapterSearch(e.target.value)}
+                    placeholder="Search ch., vol., or group..."
+                    className="w-40 rounded border px-2.5 py-1"
+                    style={{
+                      backgroundColor: "var(--mr-bg-elevated)",
+                      borderColor: "var(--mr-border-strong)",
+                      color: "var(--mr-text-primary)",
+                    }}
+                  />
+                  {filteredChapters.length > 0 ? (
+                    <form onSubmit={handleJumpToChapter} className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        aria-label="Jump to chapter number"
+                        value={jumpChapterInput}
+                        onChange={(e) => {
+                          setJumpChapterInput(e.target.value);
+                          setJumpFeedback(null);
+                        }}
+                        placeholder="Jump to Ch. #"
+                        className="w-24 rounded border px-2 py-1 font-mono text-xs"
                         style={{
                           backgroundColor: "var(--mr-bg-elevated)",
+                          borderColor: "var(--mr-border-strong)",
+                          color: "var(--mr-text-primary)",
+                        }}
+                      />
+                      <button
+                        type="submit"
+                        className="cursor-pointer rounded border px-2 py-1 font-medium"
+                        style={{
+                          backgroundColor: "var(--mr-bg-elevated)",
+                          borderColor: "var(--mr-border-strong)",
                           color: "var(--mr-accent)",
                         }}
                       >
-                        Ch. {ch.chapterNumber}
+                        Open
+                      </button>
+                    </form>
+                  ) : null}
+                  {distinctVolumes.length > 0 || hasNoVolumeChapters ? (
+                    <select
+                      aria-label="Filter chapter volume"
+                      value={chapterVolume}
+                      onChange={(e) => setChapterVolume(e.target.value)}
+                      className="rounded border px-2.5 py-1"
+                      style={{
+                        backgroundColor: "var(--mr-bg-elevated)",
+                        borderColor: "var(--mr-border-strong)",
+                        color: "var(--mr-text-primary)",
+                      }}
+                    >
+                      <option value="">All Volumes</option>
+                      {distinctVolumes.map((vol) => (
+                        <option key={vol} value={vol}>
+                          Vol. {vol}
+                        </option>
+                      ))}
+                      {hasNoVolumeChapters ? (
+                        <option value="__NONE__">No Volume (Unassigned)</option>
+                      ) : null}
+                    </select>
+                  ) : null}
+                  <select
+                    aria-label="Filter chapter language"
+                    value={chapterLang}
+                    onChange={(e) => setChapterLang(e.target.value)}
+                    className="rounded border px-2.5 py-1"
+                    style={{
+                      backgroundColor: "var(--mr-bg-elevated)",
+                      borderColor: "var(--mr-border-strong)",
+                      color: "var(--mr-text-primary)",
+                    }}
+                  >
+                    <option value="">All Languages</option>
+                    {distinctLanguages.map((lang) => (
+                      <option key={lang} value={lang}>
+                        {lang.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                  {distinctScanlationGroups.length > 0 ? (
+                    <select
+                      aria-label="Filter scanlation group"
+                      value={chapterGroup}
+                      onChange={(e) => setChapterGroup(e.target.value)}
+                      className="max-w-44 rounded border px-2.5 py-1"
+                      style={{
+                        backgroundColor: "var(--mr-bg-elevated)",
+                        borderColor: "var(--mr-border-strong)",
+                        color: "var(--mr-text-primary)",
+                      }}
+                    >
+                      <option value="">All Groups ({distinctScanlationGroups.length})</option>
+                      {distinctScanlationGroups.map((grp) => (
+                        <option key={grp} value={grp}>
+                          {grp}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
+                  <select
+                    aria-label="Sort chapters"
+                    value={chapterSort}
+                    onChange={(e) => setChapterSort(e.target.value as ChapterSortMode)}
+                    className="rounded border px-2.5 py-1"
+                    style={{
+                      backgroundColor: "var(--mr-bg-elevated)",
+                      borderColor: "var(--mr-border-strong)",
+                      color: "var(--mr-text-primary)",
+                    }}
+                  >
+                    <option value="CHAPTER_ASC">Ch. Ascending (Oldest)</option>
+                    <option value="CHAPTER_DESC">Ch. Descending (Newest)</option>
+                    <option value="VIEWS_DESC">Most Viewed</option>
+                    <option value="DATE_DESC">Recently Published</option>
+                  </select>
+                  <select
+                    aria-label="Chapters per page"
+                    value={chapterPageSize}
+                    onChange={(e) => setChapterPageSize(Number(e.target.value))}
+                    className="rounded border px-2 py-1"
+                    style={{
+                      backgroundColor: "var(--mr-bg-elevated)",
+                      borderColor: "var(--mr-border-strong)",
+                      color: "var(--mr-text-primary)",
+                    }}
+                  >
+                    <option value={15}>15 / page</option>
+                    <option value={25}>25 / page</option>
+                    <option value={50}>50 / page</option>
+                    <option value={100}>100 / page</option>
+                  </select>
+                  {hasActiveChapterFilters ? (
+                    <button
+                      type="button"
+                      onClick={resetChapterFilters}
+                      className="cursor-pointer rounded border px-2.5 py-1 font-medium"
+                      style={{
+                        borderColor: "var(--mr-danger)",
+                        color: "var(--mr-danger)",
+                      }}
+                    >
+                      Reset Filters
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+
+              {jumpFeedback ? (
+                <p className="text-xs font-medium" style={{ color: "var(--mr-warning)" }}>
+                  {jumpFeedback}
+                </p>
+              ) : null}
+
+              {sortedChapters.length > 0 ? (
+                <div
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--mr-radius-sm)] border px-3 py-2 text-xs"
+                  style={{
+                    backgroundColor: "var(--mr-bg-elevated)",
+                    borderColor: "var(--mr-border-subtle)",
+                    color: "var(--mr-text-muted)",
+                  }}
+                >
+                  <span data-testid="chapter-pagination-summary">
+                    Showing{" "}
+                    <strong style={{ color: "var(--mr-text-primary)" }}>
+                      {chapterRangeStart}–{chapterRangeEnd}
+                    </strong>{" "}
+                    of{" "}
+                    <strong style={{ color: "var(--mr-text-primary)" }}>
+                      {rangeScopedChapters.length.toLocaleString()}
+                    </strong>{" "}
+                    chapters · Page{" "}
+                    <strong style={{ color: "var(--mr-text-primary)" }}>{chapterPage}</strong> of{" "}
+                    <strong style={{ color: "var(--mr-text-primary)" }}>{totalChapterPages}</strong>
+                  </span>
+                  {viewer?.progress?.chapterId ? (
+                    <button
+                      type="button"
+                      onClick={() => handleLocateResumeChapter(viewer.progress!.chapterId)}
+                      className="cursor-pointer rounded border px-2.5 py-1 font-medium"
+                      style={{
+                        backgroundColor: "var(--mr-bg-surface)",
+                        borderColor: "var(--mr-border-strong)",
+                        color: "var(--mr-success)",
+                      }}
+                    >
+                      Locate Resume Ch.
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {/* Chapter Range Tabs when manga has > 50 chapters */}
+              {chapterRangeGroups.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                  <span className="text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
+                    Chapter ranges:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setChapterRangeIdx(-1)}
+                    className="cursor-pointer rounded border px-2.5 py-1 font-medium"
+                    style={{
+                      backgroundColor:
+                        chapterRangeIdx === -1 ? "var(--mr-accent)" : "var(--mr-bg-elevated)",
+                      borderColor:
+                        chapterRangeIdx === -1 ? "var(--mr-accent)" : "var(--mr-border-subtle)",
+                      color: chapterRangeIdx === -1 ? "#ffffff" : "var(--mr-text-secondary)",
+                    }}
+                  >
+                    All ({sortedChapters.length})
+                  </button>
+                  {chapterRangeGroups.map((grp) => (
+                    <button
+                      key={grp.index}
+                      type="button"
+                      onClick={() => setChapterRangeIdx(grp.index)}
+                      className="cursor-pointer rounded border px-2.5 py-1 font-mono text-[11px] font-medium"
+                      style={{
+                        backgroundColor:
+                          chapterRangeIdx === grp.index
+                            ? "var(--mr-accent)"
+                            : "var(--mr-bg-elevated)",
+                        borderColor:
+                          chapterRangeIdx === grp.index
+                            ? "var(--mr-accent)"
+                            : "var(--mr-border-subtle)",
+                        color:
+                          chapterRangeIdx === grp.index ? "#ffffff" : "var(--mr-text-secondary)",
+                      }}
+                    >
+                      {grp.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              {chaptersQuery.isLoading ? (
+                <LoadingState variant="table" count={8} label="Loading chapter list..." />
+              ) : sortedChapters.length === 0 ? (
+                <EmptyState
+                  title="No chapters available"
+                  description="This title currently has no readable chapters matching your filter."
+                />
+              ) : chapterViewMode === "VOLUME_GROUPS" ? (
+                <div className="space-y-3">
+                  {pagedVolumeGroups.length > 1 ? (
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <span style={{ color: "var(--mr-text-muted)" }}>
+                        Grouped into {pagedVolumeGroups.length} section(s) on this page{" "}
+                        {hasNoVolumeChapters ? "(No Volume chapters separated cleanly)" : ""}
                       </span>
-                      {ch.volume ? (
-                        <span className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
-                          Vol. {ch.volume}
-                        </span>
-                      ) : (
-                        <span className="text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
-                          No Vol.
-                        </span>
-                      )}
-                      <span>{ch.title || `Chapter ${ch.chapterNumber}`}</span>
-                      {isCurrentProgress ? (
-                        <span
-                          className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setCollapsedVolumes({})}
+                          className="cursor-pointer rounded border px-2.5 py-1 font-medium"
                           style={{
-                            backgroundColor: "rgba(52, 211, 153, 0.15)",
-                            color: "var(--mr-success)",
+                            borderColor: "var(--mr-border-strong)",
+                            color: "var(--mr-accent)",
                           }}
                         >
-                          Resume Page {viewer?.progress?.pageNumber}
-                        </span>
-                      ) : null}
-                    </Link>
-                    <div
-                      className="flex flex-wrap items-center gap-3 text-xs"
-                      style={{ color: "var(--mr-text-muted)" }}
-                    >
-                      <span className="uppercase">{ch.language}</span>
-                      <span>{ch.pageCount} pages</span>
-                      {ch.scanlationGroup ? <span>{ch.scanlationGroup}</span> : null}
-                      {ch.publishAt ? (
-                        <span>{new Date(ch.publishAt).toLocaleDateString()}</span>
-                      ) : null}
-                      <span>{ch.viewCount} views</span>
+                          Expand All Volumes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const allCollapsed: Record<string, boolean> = {};
+                            for (const g of pagedVolumeGroups) allCollapsed[g.key] = true;
+                            setCollapsedVolumes(allCollapsed);
+                          }}
+                          className="cursor-pointer rounded border px-2.5 py-1 font-medium"
+                          style={{
+                            borderColor: "var(--mr-border-strong)",
+                            color: "var(--mr-text-secondary)",
+                          }}
+                        >
+                          Collapse All
+                        </button>
+                      </div>
                     </div>
-                  </li>
-                );
-              })}
-            </ul>
+                  ) : null}
 
-            <CatalogPagination
-              page={chapterPage}
-              total={rangeScopedChapters.length}
-              pageSize={chapterPageSize}
-              hasNext={chapterPage * chapterPageSize < rangeScopedChapters.length}
-              onPageChange={setChapterPage}
-              label="Chapter list pagination"
-            />
-          </>
-        )}
+                  {pagedVolumeGroups.map((grp) => {
+                    const isCollapsed = Boolean(collapsedVolumes[grp.key]);
+                    const firstCh = grp.chapters[0]?.chapterNumber ?? "";
+                    const lastCh = grp.chapters[grp.chapters.length - 1]?.chapterNumber ?? "";
+                    return (
+                      <div
+                        key={grp.key}
+                        className="overflow-hidden rounded-[var(--mr-radius-md)] border"
+                        style={{
+                          backgroundColor: "var(--mr-bg-surface)",
+                          borderColor: grp.isNoVolume
+                            ? "var(--mr-border-strong)"
+                            : "var(--mr-border-subtle)",
+                        }}
+                      >
+                        <button
+                          type="button"
+                          aria-expanded={!isCollapsed}
+                          onClick={() =>
+                            setCollapsedVolumes((prev) => ({
+                              ...prev,
+                              [grp.key]: !prev[grp.key],
+                            }))
+                          }
+                          className="flex w-full cursor-pointer flex-wrap items-center justify-between gap-2 px-4 py-3 text-left text-xs font-semibold transition hover:opacity-90"
+                          style={{
+                            backgroundColor: "var(--mr-bg-elevated)",
+                            color: "var(--mr-text-primary)",
+                          }}
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span style={{ color: "var(--mr-accent)" }}>
+                              {isCollapsed ? "▸" : "▾"}
+                            </span>
+                            <span>{grp.label}</span>
+                            <span
+                              className="rounded px-2 py-0.5 font-mono text-[10px]"
+                              style={{
+                                backgroundColor: "var(--mr-bg-surface)",
+                                color: "var(--mr-text-secondary)",
+                              }}
+                            >
+                              {grp.chapters.length} ch.
+                            </span>
+                            {firstCh ? (
+                              <span
+                                className="font-normal"
+                                style={{ color: "var(--mr-text-muted)" }}
+                              >
+                                {firstCh === lastCh
+                                  ? `Ch. ${firstCh}`
+                                  : `Ch. ${firstCh} – ${lastCh}`}
+                              </span>
+                            ) : null}
+                          </div>
+                          <span className="text-[11px]" style={{ color: "var(--mr-text-muted)" }}>
+                            {isCollapsed ? "Click to expand" : "Click to collapse"}
+                          </span>
+                        </button>
+
+                        {!isCollapsed ? (
+                          <ul
+                            className="divide-y"
+                            style={{ borderColor: "var(--mr-border-subtle)" }}
+                          >
+                            {grp.chapters.map((ch) => renderChapterRow(ch, false))}
+                          </ul>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+
+                  <CatalogPagination
+                    page={chapterPage}
+                    total={rangeScopedChapters.length}
+                    pageSize={chapterPageSize}
+                    hasNext={chapterPage * chapterPageSize < rangeScopedChapters.length}
+                    onPageChange={setChapterPage}
+                    label="Chapter list pagination"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <ul
+                    className="divide-y rounded-[var(--mr-radius-md)] border"
+                    style={{
+                      backgroundColor: "var(--mr-bg-surface)",
+                      borderColor: "var(--mr-border-subtle)",
+                    }}
+                  >
+                    {pagedChapters.map((ch) => renderChapterRow(ch, true))}
+                  </ul>
+
+                  <CatalogPagination
+                    page={chapterPage}
+                    total={rangeScopedChapters.length}
+                    pageSize={chapterPageSize}
+                    hasNext={chapterPage * chapterPageSize < rangeScopedChapters.length}
+                    onPageChange={setChapterPage}
+                    label="Chapter list pagination"
+                  />
+                </div>
+              )}
+            </section>
+          ) : null}
+
+          {activeTab === "covers" ? (
+            allCovers.length > 0 ? (
+              <section
+                aria-label="Cover art gallery"
+                className="space-y-3 rounded-[var(--mr-radius-lg)] border p-5"
+                style={{
+                  backgroundColor: "var(--mr-bg-surface)",
+                  borderColor: "var(--mr-border-subtle)",
+                }}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h2 className="text-lg font-bold" style={{ color: "var(--mr-text-primary)" }}>
+                      Cover Art Gallery ({visibleCovers.length})
+                    </h2>
+                    <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
+                      Filter official volume covers by release locale or inspect full-size artwork.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCoverSortAsc((prev) => !prev)}
+                    className="cursor-pointer rounded border px-2.5 py-1 text-xs font-medium"
+                    style={{
+                      backgroundColor: "var(--mr-bg-elevated)",
+                      borderColor: "var(--mr-border-strong)",
+                      color: "var(--mr-text-primary)",
+                    }}
+                  >
+                    {coverSortAsc ? "Volume Asc ↑" : "Volume Desc ↓"}
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 text-xs">
+                  {coverLocaleTabs.map((tabItem) => {
+                    const active = coverLocaleFilter === tabItem.key;
+                    return (
+                      <button
+                        key={tabItem.key}
+                        type="button"
+                        onClick={() => setCoverLocaleFilter(tabItem.key)}
+                        className="inline-flex cursor-pointer items-center gap-1 rounded-full border px-3 py-1 font-medium"
+                        style={{
+                          backgroundColor: active ? "var(--mr-accent)" : "var(--mr-bg-elevated)",
+                          borderColor: active ? "var(--mr-accent)" : "var(--mr-border-subtle)",
+                          color: active ? "#ffffff" : "var(--mr-text-secondary)",
+                        }}
+                      >
+                        <span>{tabItem.flag}</span>
+                        <span>{tabItem.label}</span>
+                        <span className="font-mono text-[10px] opacity-80">({tabItem.count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                  {visibleCovers.map((cover, idx) => {
+                    const locInfo = resolveLocaleBadge(cover.locale || manga.originalLanguage);
+                    return (
+                      <button
+                        key={`${cover.coverId ?? idx}-${cover.volume ?? "x"}-${cover.locale ?? "loc"}`}
+                        type="button"
+                        onClick={() => setLightboxIdx(idx)}
+                        className="group flex cursor-pointer flex-col overflow-hidden rounded-[var(--mr-radius-md)] border text-left transition hover:border-[var(--mr-accent)]"
+                        style={{
+                          backgroundColor: "var(--mr-bg-elevated)",
+                          borderColor: "var(--mr-border-subtle)",
+                        }}
+                      >
+                        <div className="relative aspect-[3/4] w-full overflow-hidden">
+                          <img
+                            src={cover.url!}
+                            alt={`${manga.title} ${cover.volume ? `Vol. ${cover.volume}` : "Cover"}`}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <span
+                            className="absolute top-1.5 left-1.5 rounded px-1.5 py-0.5 text-[10px] font-bold"
+                            style={{ backgroundColor: "rgba(15, 17, 23, 0.85)", color: "#ffffff" }}
+                          >
+                            {cover.volume ? `Vol. ${cover.volume}` : "Special"}
+                          </span>
+                          <span
+                            className="absolute top-1.5 right-1.5 rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                            style={{
+                              backgroundColor: "rgba(15, 17, 23, 0.85)",
+                              color: locInfo.color,
+                            }}
+                          >
+                            {locInfo.flag} {locInfo.code}
+                          </span>
+                        </div>
+                        {cover.description ? (
+                          <p
+                            className="line-clamp-1 px-2 py-1.5 text-[11px]"
+                            style={{ color: "var(--mr-text-muted)" }}
+                          >
+                            {cover.description}
+                          </p>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : (
+              <EmptyState
+                title="No cover artwork available"
+                description="This manga currently has no uploaded cover artwork."
+              />
+            )
+          ) : null}
+
+          {activeTab === "recommendations" ? (
+            (itemRecsQuery.isLoading || contentRecsQuery.isLoading) && totalRecsCount === 0 ? (
+              <LoadingState variant="grid" count={6} label="Loading recommendations..." />
+            ) : totalRecsCount === 0 ? (
+              <EmptyState
+                title="No recommendations yet"
+                description="Recommendations will appear as catalog metadata and reader interactions grow."
+              />
+            ) : (
+              <div className="space-y-6">
+                {itemRecs.length > 0 ? (
+                  <section
+                    className="space-y-3 rounded-[var(--mr-radius-lg)] border p-5"
+                    style={{
+                      backgroundColor: "var(--mr-bg-surface)",
+                      borderColor: "var(--mr-border-subtle)",
+                    }}
+                  >
+                    <div>
+                      <h2 className="text-lg font-bold" style={{ color: "var(--mr-text-primary)" }}>
+                        Readers Also Liked
+                      </h2>
+                      <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
+                        {formatRecMethodLabel(
+                          itemRecsQuery.data!.data.method,
+                          itemRecsQuery.data!.data.fallbackReason,
+                        )}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
+                      {itemRecs.map((item) => (
+                        <MangaCard key={item.mangaId} manga={item} />
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
+
+                {contentRecs.length > 0 ? (
+                  <section
+                    className="space-y-3 rounded-[var(--mr-radius-lg)] border p-5"
+                    style={{
+                      backgroundColor: "var(--mr-bg-surface)",
+                      borderColor: "var(--mr-border-subtle)",
+                    }}
+                  >
+                    <div>
+                      <h2 className="text-lg font-bold" style={{ color: "var(--mr-text-primary)" }}>
+                        Similar Content &amp; Themes
+                      </h2>
+                      <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
+                        {formatRecMethodLabel(
+                          contentRecsQuery.data!.data.method,
+                          contentRecsQuery.data!.data.fallbackReason,
+                        )}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
+                      {contentRecs.map((item) => (
+                        <MangaCard key={item.mangaId} manga={item} />
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
+              </div>
+            )
+          ) : null}
+
+          {activeTab === "comments" ? (
+            <div
+              className="rounded-[var(--mr-radius-lg)] border p-5"
+              style={{
+                backgroundColor: "var(--mr-bg-surface)",
+                borderColor: "var(--mr-border-subtle)",
+              }}
+            >
+              <CommentsSection mangaId={manga.mangaId} />
+            </div>
+          ) : null}
+        </div>
       </section>
-
-      {/* Recommendations: Item-Based & Content-Based */}
-      {(itemRecsQuery.data?.data?.items?.length ?? 0) > 0 ? (
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-lg font-bold" style={{ color: "var(--mr-text-primary)" }}>
-              Readers Also Liked
-            </h2>
-            <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
-              {formatRecMethodLabel(
-                itemRecsQuery.data!.data.method,
-                itemRecsQuery.data!.data.fallbackReason,
-              )}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
-            {itemRecsQuery.data!.data.items.map((item) => (
-              <MangaCard key={item.mangaId} manga={item} />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {(contentRecsQuery.data?.data?.items?.length ?? 0) > 0 ? (
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-lg font-bold" style={{ color: "var(--mr-text-primary)" }}>
-              Similar Content &amp; Themes
-            </h2>
-            <p className="text-xs" style={{ color: "var(--mr-text-muted)" }}>
-              {formatRecMethodLabel(
-                contentRecsQuery.data!.data.method,
-                contentRecsQuery.data!.data.fallbackReason,
-              )}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
-            {contentRecsQuery.data!.data.items.map((item) => (
-              <MangaCard key={item.mangaId} manga={item} />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {/* Threaded Comments */}
-      <CommentsSection mangaId={manga.mangaId} />
 
       {listsModalOpen ? (
         <AddToListsModal

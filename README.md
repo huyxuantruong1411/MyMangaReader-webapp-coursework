@@ -2,7 +2,49 @@
 
 Complete **Full-Stack Modular Monolith** Manga Reader Web Application, built from the specifications in [`docs/agent-plan/Setup/`](docs/agent-plan/Setup/00_README_AGENT_ENTRYPOINT.md) (`Lab8.docx`, `Lab9.docx`, `Lab10.docx`, and `manga-reader-package:2.0` JSON Schema Draft 2020-12) and verified end-to-end across SQL Server 2022, FastAPI, and React 19.
 
-> **Current Stage:** Production-Ready Full-Stack Completion — **47 Canonical ORM Tables + 3 System Tables** on SQL Server 2022 (`QL_DocTruyen`, 10 T-SQL business-rule triggers, 9 covering index groups), **12 Backend Domain Modules** (`90` `/api/v1` endpoints), **Shared JSON Schema v2.0 Contracts**, **19-Route React 19 SPA**, full NFC Unicode Vietnamese support (`use_setinputsizes=False` + `Unicode`/`UnicodeText`), Real Gmail SMTP OTP recovery & verification, Reading List Cover Art + Empty Default SVG Artwork, Interactive Overflow-Safe SVG Analytics Dashboards, and Full Codebase Traceability Dictionaries (`63 / 63` automated tests passing).
+> **Current Stage:** Production-Ready Full-Stack Completion — **47 Canonical ORM Tables + 3 System Tables** on SQL Server 2022 (`QL_DocTruyen`, 10 T-SQL business-rule triggers, 9 covering index groups), **12 Backend Domain Modules** (`90` `/api/v1` endpoints), **Shared JSON Schema v2.0 Contracts**, **19-Route React 19 SPA** (animated 4-tab Manga Detail with paginated chapters), full NFC Unicode Vietnamese support (`use_setinputsizes=False` + `Unicode`/`UnicodeText`), Real Gmail SMTP OTP recovery & verification, Reading List Cover Art + Empty Default SVG Artwork, Interactive Overflow-Safe SVG Analytics Dashboards, and Full Codebase Traceability Dictionaries (`64 / 64` automated tests passing).
+
+![Manga Reader — Discovery Hub & Continue Reading](docs/media/image3.png)
+
+---
+
+## Visual UI Showcase
+
+Live application screenshots captured directly against SQL Server 2022 (`QL_DocTruyen`) and MinIO S3 (`manga-media`):
+
+### Discovery, Search & Manga Detail Workspace
+
+| Catalog Grid (`86,867` Titles · `3,620` Pages) | Unified Advanced Search & Multi-Axis Filters |
+|---|---|
+| ![Latest Updated Catalog Grid](docs/media/image4.png) | ![Advanced Manga Search](docs/media/image5.png) |
+
+| Manga Detail Hero (Authors vs Artists · Localized AKA) | Threaded Comments, Spoiler Masking & Edit History |
+|---|---|
+| ![Manga Detail Page](docs/media/image7.png) | ![Threaded Comments & Spoiler Controls](docs/media/image16.png) |
+
+### Personal Tracking, Lists, History & Reader Studio
+
+| Personal Library (5 Statuses · View Modes) | Add to Private Lists Modal |
+|---|---|
+| ![Personal Reading Library](docs/media/image6.png) | ![Add to Reading Lists Modal](docs/media/image8.png) |
+
+| Reading History Timeline with Cover Art | Reader Preferences Studio & Live Simulator |
+|---|---|
+| ![Reading History](docs/media/image10.png) | ![Reader Preferences Studio](docs/media/image13.png) |
+
+### Profile, SVG Analytics & Admin Moderation Console
+
+| Account Profile & Avatar Upload | Personal Reading Statistics (SVG Charts) |
+|---|---|
+| ![Profile & Avatar Upload](docs/media/image11.png) | ![Personal Reading Statistics Dashboard](docs/media/image14.png) |
+
+| Separated Top Authors vs Top Artists Charts | Admin Analytics Dashboard & Reconcile |
+|---|---|
+| ![Separated Top Authors and Top Artists](docs/media/image15.png) | ![Admin Analytics Dashboard](docs/media/image17.png) |
+
+| Admin Manga Catalog Management | Split-Pane Moderation Reports Workbench |
+|---|---|
+| ![Admin Manga Catalog Management](docs/media/image19.png) | ![Admin Moderation Workbench](docs/media/image20.png) |
 
 ---
 
@@ -33,7 +75,7 @@ Complete **Full-Stack Modular Monolith** Manga Reader Web Application, built fro
 
 3. **Catalog Discovery, Unified Search & Manga Detail Experience (`catalog_discovery`, `manga_creator`):**
    - Unified search & advanced filtering at `/explore` and `/search/advanced` (with `/search` redirecting seamlessly), offering 3-state tag filtering (`Include` / `Exclude` / `Ignore`, strictly keeping `unknown` separate from `safe`), separate **Author (Story)** and **Artist (Illustration)** creator pickers, debounced live search (`Ctrl+K` global header autocomplete), accent/case-insensitive search, and skeleton loading states.
-   - [`MangaDetailPage`](apps/web/src/features/manga/MangaDetailPage.tsx) and [`AuthorDetailPage`](apps/web/src/features/creator/AuthorDetailPage.tsx) provide separated **Authors (Story)** and **Artists (Illustration)** sections, localized **Also Known As** badges with language flags/colors, **Cover Art Gallery** filtered by locale + Lightbox preview, Markdown bio rendering (`FormattedMarkdownText`), and **Chapters grouped & collapsible by Volume** (cleanly separating unassigned chapters into a `No Volume (Unassigned)` group).
+   - [`MangaDetailPage`](apps/web/src/features/manga/MangaDetailPage.tsx) and [`AuthorDetailPage`](apps/web/src/features/creator/AuthorDetailPage.tsx) provide separated **Authors (Story)** and **Artists (Illustration)** sections, localized **Also Known As** badges with language flags/colors, and an animated 4-tab detail workspace (`Chapters` with `CatalogPagination` in both **Group by Volume** & **Flat List** modes plus Scanlation Group/Language/Sort/`Locate Resume Ch.` filters, locale-filtered **Cover Art Gallery** + Lightbox, **Recommendations**, and threaded **Comments**).
 
 4. **Multi-Mode Reader Canvas, Hybrid Media Delivery & Progress Resume (`reader_engine`):**
    - Reader modes (`VERTICAL_WEBTOON`, `SINGLE_PAGE`, `DOUBLE_PAGE` respecting `LTR`/`RTL`), fit modes (`FIT_WIDTH`, `FIT_HEIGHT`, `ORIGINAL`), Focus mode (`F`), exact active-page preservation across mode switches, debounced `reader_progress` checkpoints with `pages_revision` conflict recovery, and valid-view threshold deduplication.
@@ -89,6 +131,7 @@ QL-DocTruyen/
 └── docs/
     ├── agent-plan/          # Original specification files (Setup/ 15 files & Design/ 9 files)
     ├── architecture/        # Assessment, ADR-TECH-STACK, Architecture, Guidelines, Init & Completion Reports
+    ├── media/               # Curated live UI screenshots showcased in README
     ├── operations/          # LOCAL_SETUP.md & TROUBLESHOOTING.md
     ├── reference/           # Traceability/UI/API/DB dictionaries + original Lab8/Lab9/Lab10 docx & drawio
     └── system_dump/         # Host machine schema/inventory reference dump (heavy archives excluded in .gitignore)
@@ -137,7 +180,7 @@ pnpm dev:web
 | `pnpm format:check` | Check formatting with Prettier and `ruff format --check` |
 | `pnpm format:write` | Auto-format JS/TS/JSON/MD and Python source files |
 | `pnpm typecheck` | Run `tsc --noEmit` (strict) and `mypy --strict` |
-| `pnpm test` | Execute all `63` automated tests (`7` contracts + `27` web + `29` API/E2E) |
+| `pnpm test` | Execute all `64` automated tests (`7` contracts + `28` web + `29` API/E2E) |
 | `pnpm build` | Compile `@manga-reader/contracts` and build `apps/web` production bundle |
 | `pnpm db:migrate` | Run Alembic `upgrade head` |
 | `pnpm db:migrate:sql` | Preview generated SQL offline without mutating DB |

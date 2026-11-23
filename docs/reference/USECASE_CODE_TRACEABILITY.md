@@ -1,7 +1,7 @@
 # Truy vết Use Case sang Code thực tế (`QL-DocTruyen`)
 
 > **Dự án:** Hệ thống Đọc truyện Manga & Webtoon — Manga Reader (`QL-DocTruyen`)  
-> **Khảo sát source:** ngày 22/11/2026 tại commit `3a52a2a` (`2026-11-22`)  
+> **Khảo sát source:** ngày 23/11/2026 tại commit `3a52a2a` + bản cập nhật tab chi tiết manga (`MangaDetailPage.tsx`)  
 > **Phạm vi:** Backend FastAPI (12 domain modules trong `apps/api/src/manga_reader/`), Web Frontend React 19 + TypeScript (19 routes trong `apps/web/src/`), Shared JSON Schema Contract v2.0 (`packages/contracts/`), và Cơ sở dữ liệu SQL Server 2022 (`QL_DocTruyen`, 50 bảng, 10 T-SQL triggers, hệ thống chỉ mục tối ưu hóa).  
 > **Mục đích:** giúp người đọc lần thẳng từ từng use case nghiệp vụ (`UC-1` → `UC-8`) đến màn hình UI, API endpoint, service xử lý, bất biến nghiệp vụ (domain invariants), bảng dữ liệu/trigger và cấu hình vận hành đang chạy thực tế trong mã nguồn.
 
@@ -461,16 +461,16 @@ Toàn bộ dữ liệu công khai tại nhóm UC này bắt buộc lọc `visibi
 **Actor thiết kế:** Khách vãng lai, Độc giả. **Đánh giá:** Có đường code chính, đã nâng cấp đầy đủ Gallery Cover Art lọc theo locale, Also Known As kèm quốc kỳ và tách riêng Authors (Story) / Artists (Illustration).
 
 **Luồng code:**
-1. Truy cập `/manga/:slug`, `MangaDetailPage` ([MangaDetailPage.tsx#L39-L1697](../../apps/web/src/features/manga/MangaDetailPage.tsx#L39-L1697)) gọi song song `GET /api/v1/manga/{slug}`, `GET /api/v1/manga/{slug}/chapters`, và 2 dải gợi ý (`ITEM_BASED`, `CONTENT_BASED`).
+1. Truy cập `/manga/:slug`, `MangaDetailPage` ([MangaDetailPage.tsx#L49-L1992](../../apps/web/src/features/manga/MangaDetailPage.tsx#L49-L1992)) gọi song song `GET /api/v1/manga/{slug}`, `GET /api/v1/manga/{slug}/chapters`, 2 dải gợi ý (`ITEM_BASED`, `CONTENT_BASED`) và `commentsCountQuery` (`GET /api/v1/comments`), đồng thời tổ chức vùng dưới Hero Card thành **4 tab chuyển mượt** (`Chapters`, `Cover Art`, `Recommendations`, `Comments` — đồng bộ query `?tab=` với animation `.mr-tab-panel-enter` trong [index.css#L34-L47](../../apps/web/src/styles/index.css#L34-L47)).
 2. `CatalogDiscoveryService.get_manga_detail()` ([catalog_discovery/service.py#L944-L1110](../../apps/api/src/manga_reader/modules/catalog_discovery/application/service.py#L944-L1110)) dùng `_resolve_public_manga()` (trả `404 MANGA_NOT_FOUND` nếu ẩn hoặc đã xóa — không làm lộ tiêu đề truyện ẩn), tổng hợp:
    - `coverUrl` + danh sách `coverArts` (mỗi bìa gắn `volume`, `locale`, `url` đã ký HMAC).
    - `altTitleEntries` (tên thay thế + `languageCode`) để UI dựng box `"Also Known As"` kèm cờ/màu sắc ngôn ngữ (`resolveLocaleBadge()` trong [localization.ts#L291-L320](../../apps/web/src/utils/localization.ts#L291-L320)).
-   - `creators` khử trùng lặp khi một người kiêm hai vai trò (`ADR-017`), phía UI tách render thành 2 card riêng biệt: **`Authors (Story)`** và **`Artists (Illustration)`** ([MangaDetailPage.tsx#L669-L749](../../apps/web/src/features/manga/MangaDetailPage.tsx#L669-L749)).
-   - Bộ sưu tập **`Cover Art Gallery`** ([MangaDetailPage.tsx#L992-L1098](../../apps/web/src/features/manga/MangaDetailPage.tsx#L992-L1098)) có tab lọc theo `locale`, sắp xếp tăng/giảm theo tập và modal Lightbox phóng to.
+   - `creators` khử trùng lặp khi một người kiêm hai vai trò (`ADR-017`), phía UI tách render thành 2 card riêng biệt: **`Authors (Story)`** và **`Artists (Illustration)`** ([MangaDetailPage.tsx#L862-L942](../../apps/web/src/features/manga/MangaDetailPage.tsx#L862-L942)).
+   - Bộ sưu tập **`Cover Art Gallery`** nằm gọn trong tab `"Cover Art"` ([MangaDetailPage.tsx#L1693-L1805](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1693-L1805)) có tab lọc theo `locale`, sắp xếp tăng/giảm theo tập và modal Lightbox phóng to.
    - Tóm tắt nội dung qua `FormattedMarkdownText`, thẻ phân loại (`tags`), thống kê (`exportedChapterCount`, `ratingCount`, `totalViews`) và `viewerState` cá nhân nếu đã đăng nhập.
 
 **Điểm mở source:**
-- UI: [MangaDetailPage.tsx#L450-L1098](../../apps/web/src/features/manga/MangaDetailPage.tsx#L450-L1098), [localization.ts#L10-L372](../../apps/web/src/utils/localization.ts#L10-L372)
+- UI: [MangaDetailPage.tsx#L635-L1240](../../apps/web/src/features/manga/MangaDetailPage.tsx#L635-L1240), [MangaDetailPage.tsx#L1693-L1805](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1693-L1805), [localization.ts#L10-L372](../../apps/web/src/utils/localization.ts#L10-L372)
 - Router & Service: [catalog_discovery/router.py#L208-L218](../../apps/api/src/manga_reader/modules/catalog_discovery/presentation/router.py#L208-L218), [catalog_discovery/service.py#L944-L1110](../../apps/api/src/manga_reader/modules/catalog_discovery/application/service.py#L944-L1110)
 
 <a id="uc-36--xem-chi-tiết-creator"></a>
@@ -493,10 +493,10 @@ Toàn bộ dữ liệu công khai tại nhóm UC này bắt buộc lọc `visibi
 **Actor thiết kế:** Khách vãng lai, Độc giả. **Đánh giá:** Có đường code chính kèm cold-start fallback 2 tầng.
 
 **Luồng code:**
-1. Trên `MangaDetailPage` (`L91-L96`), UI gọi `GET /api/v1/manga/{mangaId}/recommendations?type=ITEM_BASED`.
+1. Trên `MangaDetailPage` (`L118-L122`, tab `"Recommendations"`), UI gọi `GET /api/v1/manga/{mangaId}/recommendations?type=ITEM_BASED`.
 2. `RecommendationService.recommend_item_based()` ([recommendations/service.py#L264-L305](../../apps/api/src/manga_reader/modules/recommendations/application/service.py#L264-L305)) dựng ma trận tương tác thưa (`_build_interaction_matrix`, `L109-L165`) từ đọc (`+1.0`), lưu list (`+2.0`) và điểm rating (`score / 2.0`), tính độ tương đồng Cosine giữa vector người dùng của truyện hiện tại và các truyện `PUBLIC` khác. Nếu chưa đủ dữ liệu tương tác (cold-start), hệ thống tự động hạ tầng sang `recommend_content_based()` rồi `POPULAR_FALLBACK` với `fallbackReason = "SPARSE_ITEM_INTERACTIONS"`.
 
-**Điểm mở source:** [MangaDetailPage.tsx#L91-L96](../../apps/web/src/features/manga/MangaDetailPage.tsx#L91-L96), [MangaDetailPage.tsx#L1545-L1569](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1545-L1569), [recommendations/router.py#L19-L32](../../apps/api/src/manga_reader/modules/recommendations/presentation/router.py#L19-L32), [recommendations/service.py#L109-L165](../../apps/api/src/manga_reader/modules/recommendations/application/service.py#L109-L165), [recommendations/service.py#L264-L305](../../apps/api/src/manga_reader/modules/recommendations/application/service.py#L264-L305)
+**Điểm mở source:** [MangaDetailPage.tsx#L118-L122](../../apps/web/src/features/manga/MangaDetailPage.tsx#L118-L122), [MangaDetailPage.tsx#L1815-L1842](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1815-L1842), [recommendations/router.py#L19-L32](../../apps/api/src/manga_reader/modules/recommendations/presentation/router.py#L19-L32), [recommendations/service.py#L109-L165](../../apps/api/src/manga_reader/modules/recommendations/application/service.py#L109-L165), [recommendations/service.py#L264-L305](../../apps/api/src/manga_reader/modules/recommendations/application/service.py#L264-L305)
 
 <a id="uc-38--gợi-ý-user-based"></a>
 ### UC-3.8 — Gợi ý User-based Collaborative Filtering
@@ -515,10 +515,10 @@ Toàn bộ dữ liệu công khai tại nhóm UC này bắt buộc lọc `visibi
 **Actor thiết kế:** Khách vãng lai, Độc giả. **Đánh giá:** Có đường code chính, vector đặc trưng được tính trước khi ETL hoặc tính on-the-fly fallback.
 
 **Luồng code:**
-1. Trên `MangaDetailPage` (`L97-L102`), UI gọi `GET /api/v1/manga/{mangaId}/recommendations?type=CONTENT_BASED`.
+1. Trên `MangaDetailPage` (`L124-L128`, tab `"Recommendations"`), UI gọi `GET /api/v1/manga/{mangaId}/recommendations?type=CONTENT_BASED`.
 2. `RecommendationService.recommend_content_based()` ([recommendations/service.py#L167-L262](../../apps/api/src/manga_reader/modules/recommendations/application/service.py#L167-L262)) đọc `MangaContentVectorModel` (`model_version='tfidf-v1'`, gồm trọng số tag, creator, demographic, từ khóa tiêu đề/mô tả tính qua `compute_content_feature_vector` ở [etl_cdc/service.py#L77-L103](../../apps/api/src/manga_reader/modules/etl_cdc/application/service.py#L77-L103)), lọc các bộ có độ tương đồng Cosine > `0.05`, loại trừ truyện ẩn/hiện tại và fallback sang `POPULAR_FALLBACK` nếu độ tương đồng thấp.
 
-**Điểm mở source:** [MangaDetailPage.tsx#L97-L102](../../apps/web/src/features/manga/MangaDetailPage.tsx#L97-L102), [MangaDetailPage.tsx#L1570-L1593](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1570-L1593), [recommendations/service.py#L167-L262](../../apps/api/src/manga_reader/modules/recommendations/application/service.py#L167-L262)
+**Điểm mở source:** [MangaDetailPage.tsx#L124-L128](../../apps/web/src/features/manga/MangaDetailPage.tsx#L124-L128), [MangaDetailPage.tsx#L1844-L1871](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1844-L1871), [recommendations/service.py#L167-L262](../../apps/api/src/manga_reader/modules/recommendations/application/service.py#L167-L262)
 
 <a id="uc-310--cập-nhật-trạng-thái-đọc"></a>
 ### UC-3.10 — Cập nhật trạng thái đọc
@@ -526,10 +526,10 @@ Toàn bộ dữ liệu công khai tại nhóm UC này bắt buộc lọc `visibi
 **Actor thiết kế:** Độc giả (`ACTIVE`). **Đánh giá:** Có đường code chính; mỗi độc giả có tối đa 1 bản ghi trạng thái hiện hành cho mỗi truyện (`UQ_reading_status_reader_manga`).
 
 **Luồng code:**
-1. Độc giả chọn trạng thái (`READING`, `PLAN_TO_READ`, `COMPLETED`, `ON_HOLD`, `DROPPED`, hoặc xóa bỏ `-- Not set --`) từ dropdown `"Reading status"` trên `MangaDetailPage` ([MangaDetailPage.tsx#L384-L403](../../apps/web/src/features/manga/MangaDetailPage.tsx#L384-L403), `L808-L824`) hoặc trực tiếp trong `/library` (`LibraryPage` — [LibraryPage.tsx#L102-L120](../../apps/web/src/features/account/LibraryPage.tsx#L102-L120)).
+1. Độc giả chọn trạng thái (`READING`, `PLAN_TO_READ`, `COMPLETED`, `ON_HOLD`, `DROPPED`, hoặc xóa bỏ `-- Not set --`) từ dropdown `"Reading status"` trên `MangaDetailPage` ([MangaDetailPage.tsx#L499-L517](../../apps/web/src/features/manga/MangaDetailPage.tsx#L499-L517), `L1001-L1017`) hoặc trực tiếp trong `/library` (`LibraryPage` — [LibraryPage.tsx#L102-L120](../../apps/web/src/features/account/LibraryPage.tsx#L102-L120)).
 2. `PUT /api/v1/manga/{manga_id}/reading-status` / `DELETE /api/v1/manga/{manga_id}/reading-status` ([reader_engine/router.py#L198-L235](../../apps/api/src/manga_reader/modules/reader_engine/presentation/router.py#L198-L235)) qua `ReaderService.set_reading_status()` / `clear_reading_status()` ([reader_engine/service.py#L803-L931](../../apps/api/src/manga_reader/modules/reader_engine/application/service.py#L803-L931)) upsert hoặc xóa `ReadingStatusRecordModel` và ghi `READING_STATUS_CHANGED` vào `activity_logs`.
 
-**Điểm mở source:** [MangaDetailPage.tsx#L384-L403](../../apps/web/src/features/manga/MangaDetailPage.tsx#L384-L403), [LibraryPage.tsx#L26-L400](../../apps/web/src/features/account/LibraryPage.tsx#L26-L400), [reader_engine/router.py#L198-L235](../../apps/api/src/manga_reader/modules/reader_engine/presentation/router.py#L198-L235), [reader_engine/service.py#L803-L931](../../apps/api/src/manga_reader/modules/reader_engine/application/service.py#L803-L931)
+**Điểm mở source:** [MangaDetailPage.tsx#L499-L517](../../apps/web/src/features/manga/MangaDetailPage.tsx#L499-L517), [LibraryPage.tsx#L26-L400](../../apps/web/src/features/account/LibraryPage.tsx#L26-L400), [reader_engine/router.py#L198-L235](../../apps/api/src/manga_reader/modules/reader_engine/presentation/router.py#L198-L235), [reader_engine/service.py#L803-L931](../../apps/api/src/manga_reader/modules/reader_engine/application/service.py#L803-L931)
 
 <a id="uc-311--lịch-sử-đọc-cá-nhân"></a>
 ### UC-3.11 — Lịch sử đọc cá nhân
@@ -553,25 +553,25 @@ Quản trị toàn bộ luồng đọc chương, tùy biến trình đọc, lưu
 <a id="uc-41--hiển-thị-danh-sách-chương"></a>
 ### UC-4.1 — Hiển thị danh sách chương
 
-**Actor thiết kế:** Khách vãng lai, Độc giả. **Đánh giá:** Có đường code chính; hỗ trợ tách nhóm theo Volume / No Volume đóng mở trực quan và đánh dấu chương đang đọc dở.
+**Actor thiết kế:** Khách vãng lai, Độc giả. **Đánh giá:** Có đường code chính; đặt trong tab riêng `"Chapters"` với phân trang cả 2 chế độ, tách Volume / Unassigned · No Volume trực quan và đánh dấu chương đang đọc dở.
 
 **Luồng code:**
 1. `MangaDetailPage` gọi `GET /api/v1/manga/{slug}/chapters` ([catalog_discovery/router.py#L221-L241](../../apps/api/src/manga_reader/modules/catalog_discovery/presentation/router.py#L221-L241)).
 2. `CatalogDiscoveryService.list_manga_chapters()` ([catalog_discovery/service.py#L1112-L1159](../../apps/api/src/manga_reader/modules/catalog_discovery/application/service.py#L1112-L1159)) sắp xếp tất định theo `(chapter_numeric, language, pool_chapter_id)` (quy tắc `ADR-013`, không bao giờ sắp xếp chuỗi `"10" < "2"`), sử dụng index `IX_chapters_canonical_order` / `IX_chapters_manga_volume`.
-3. Phía UI, khối `"Chapters"` ([MangaDetailPage.tsx#L271-L294](../../apps/web/src/features/manga/MangaDetailPage.tsx#L271-L294), [MangaDetailPage.tsx#L1100-L1542](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1100-L1542)) mặc định gom chương theo **Volume** và tách riêng chương không có tập vào nhóm **`"No Volume (Unassigned)"`** bằng bộ so sánh số tập thông minh `compareVolumeKeys()` ([localization.ts#L344-L372](../../apps/web/src/utils/localization.ts#L344-L372)). Người dùng có thể đóng/mở từng tập hoặc nhấn `"Expand All Volumes"` / `"Collapse All"`, đồng thời xem badge `"Resume Page X"` nếu chương đang đọc dở.
+3. Phía UI, tab `"Chapters"` ([MangaDetailPage.tsx#L392-L419](../../apps/web/src/features/manga/MangaDetailPage.tsx#L392-L419), [MangaDetailPage.tsx#L1241-L1691](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1241-L1691)) mặc định phân trang `25` chương/trang (lựa chọn `15/25/50/100`), gom `pagedChapters` thành `pagedVolumeGroups` theo **Volume**, tách riêng chương không có tập vào nhóm **`"Unassigned · No Volume"`** bằng `compareVolumeKeys()` ([localization.ts#L344-L372](../../apps/web/src/utils/localization.ts#L344-L372)), hỗ trợ đóng/mở tập hoặc `"Expand All Volumes"` / `"Collapse All"`, hiển thị badge `"Resume Page X"` và nút `"Locate Resume Ch."` để nhảy thẳng tới trang chứa chương đang đọc dở.
 
-**Điểm mở source:** [MangaDetailPage.tsx#L271-L340](../../apps/web/src/features/manga/MangaDetailPage.tsx#L271-L340), [MangaDetailPage.tsx#L1100-L1542](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1100-L1542), [catalog_discovery/service.py#L1112-L1159](../../apps/api/src/manga_reader/modules/catalog_discovery/application/service.py#L1112-L1159)
+**Điểm mở source:** [MangaDetailPage.tsx#L387-L453](../../apps/web/src/features/manga/MangaDetailPage.tsx#L387-L453), [MangaDetailPage.tsx#L1241-L1691](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1241-L1691), [catalog_discovery/service.py#L1112-L1159](../../apps/api/src/manga_reader/modules/catalog_discovery/application/service.py#L1112-L1159)
 
 <a id="uc-42--lọc--sắp-xếp-chương"></a>
 ### UC-4.2 — Lọc & sắp xếp chương
 
-**Actor thiết kế:** Khách vãng lai, Độc giả. **Đánh giá:** Có đường code chính, bổ sung đầy đủ nhảy số chương, chia nhóm 50 chương và phân trang nâng cao cả ở `MangaDetailPage` lẫn `ChapterPickerModal` trong trình đọc.
+**Actor thiết kế:** Khách vãng lai, Độc giả. **Đánh giá:** Có đường code chính, bổ sung đầy đủ lọc nhóm dịch, sắp xếp đa tiêu chí, nhảy số chương, chia nhóm 50 chương và `CatalogPagination` ở cả chế độ `Group by Volume` lẫn `Flat List`.
 
 **Luồng code:**
-1. Trên `MangaDetailPage`, thanh điều khiển hỗ trợ: chuyển chế độ `Group by Volume` / `Flat List`, tìm nhanh `"Search ch., vol., or group..."`, nhảy nhanh `"Jump to Ch. #"` (`handleJumpToChapter`, `L342-L355`), lọc theo `Volume` (kể cả `__NONE__`), lọc theo `Language`, đổi số dòng `25/50/100 / page`, đảo thứ tự `ASC/DESC`, thanh chọn dải 50 chương (`Chapter ranges`, `L1253-L1291`) và `CatalogPagination`.
+1. Trên `MangaDetailPage` (tab `"Chapters"`), thanh điều khiển hỗ trợ: chuyển chế độ `Group by Volume` / `Flat List`, tìm nhanh `"Search ch., vol., or group..."`, nhảy nhanh `"Jump to Ch. #"` (`handleJumpToChapter`, `L454-L470`), lọc theo `Volume` (`__NONE__`), `Language`, **Nhóm dịch (`Filter scanlation group`)**, **4 kiểu sắp xếp (`Ch. Ascending`, `Ch. Descending`, `Most Viewed`, `Recently Published`)**, đổi số dòng `15/25/50/100 / page`, nút `"Reset Filters"`, thanh chọn dải 50 chương (`Chapter ranges`, `L1496-L1539`) và `CatalogPagination` cho cả 2 chế độ.
 2. Bên trong `ChapterReaderPage`, ngoài dropdown chọn nhanh còn có modal `"Chapter selector"` ([ChapterReaderPage.tsx#L428-L492](../../apps/web/src/features/reader/ChapterReaderPage.tsx#L428-L492), `L991-L1150`) hỗ trợ tìm kiếm, lọc Volume, lọc cụm 50 chương và phân trang 25 chương/trang.
 
-**Điểm mở source:** [MangaDetailPage.tsx#L1106-L1297](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1106-L1297), [ChapterReaderPage.tsx#L428-L492](../../apps/web/src/features/reader/ChapterReaderPage.tsx#L428-L492), [ChapterReaderPage.tsx#L991-L1150](../../apps/web/src/features/reader/ChapterReaderPage.tsx#L991-L1150)
+**Điểm mở source:** [MangaDetailPage.tsx#L300-L470](../../apps/web/src/features/manga/MangaDetailPage.tsx#L300-L470), [MangaDetailPage.tsx#L1248-L1543](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1248-L1543), [ChapterReaderPage.tsx#L428-L492](../../apps/web/src/features/reader/ChapterReaderPage.tsx#L428-L492), [ChapterReaderPage.tsx#L991-L1150](../../apps/web/src/features/reader/ChapterReaderPage.tsx#L991-L1150)
 
 <a id="uc-43--chọn-chương--nạp-trang-ảnh"></a>
 ### UC-4.3 — Chọn chương & nạp trang ảnh
@@ -616,10 +616,10 @@ Quản trị toàn bộ luồng đọc chương, tùy biến trình đọc, lưu
 **Actor thiết kế:** Khách vãng lai, Độc giả. **Đánh giá:** Có đường code chính.
 
 **Luồng code:**
-1. Trên `MangaDetailPage`, nếu truyện chưa có tiến độ sẽ hiện nút `"Start Reading"`, nếu đã đọc dở hiện nút `"Read from Beginning"` trỏ tới `/manga/:slug/read?action=START` ([MangaDetailPage.tsx#L783-L801](../../apps/web/src/features/manga/MangaDetailPage.tsx#L783-L801)); nếu truyện không có chương nào (`!hasChapters`), hiển thị badge `"Metadata-only entry (0 exported chapters)"`.
+1. Trên `MangaDetailPage`, nếu truyện chưa có tiến độ sẽ hiện nút `"Start Reading"`, nếu đã đọc dở hiện nút `"Read from Beginning"` trỏ tới `/manga/:slug/read?action=START` ([MangaDetailPage.tsx#L976-L994](../../apps/web/src/features/manga/MangaDetailPage.tsx#L976-L994)); nếu truyện không có chương nào (`!hasChapters`), hiển thị badge `"Metadata-only entry (0 exported chapters)"`.
 2. `ReaderService.open_reader(..., action_type="START")` ([reader_engine/service.py#L314-L330](../../apps/api/src/manga_reader/modules/reader_engine/application/service.py#L314-L330)) chọn `chapters[0]` theo thứ tự chuẩn (`chapter_numeric ASC`, gồm cả Prologue `0`/`0.5`), đặt `initial_page = 1`, nếu chưa có chương trả `404 NO_CHAPTERS`.
 
-**Điểm mở source:** [MangaDetailPage.tsx#L772-L809](../../apps/web/src/features/manga/MangaDetailPage.tsx#L772-L809), [reader_engine/service.py#L314-L330](../../apps/api/src/manga_reader/modules/reader_engine/application/service.py#L314-L330)
+**Điểm mở source:** [MangaDetailPage.tsx#L965-L1002](../../apps/web/src/features/manga/MangaDetailPage.tsx#L965-L1002), [reader_engine/service.py#L314-L330](../../apps/api/src/manga_reader/modules/reader_engine/application/service.py#L314-L330)
 
 <a id="uc-46--đọc-tiếp--đồng-bộ-tiến-độ"></a>
 ### UC-4.6 — Đọc tiếp & đồng bộ tiến độ / Valid View
@@ -644,13 +644,13 @@ Quản trị toàn bộ luồng đọc chương, tùy biến trình đọc, lưu
 **Actor thiết kế:** Độc giả (`ACTIVE`). **Đánh giá:** Có đường code chính, bảo vệ kép điều kiện đã mở đọc chương ở cả Python Service và T-SQL Trigger.
 
 **Luồng code:**
-1. Trên `MangaDetailPage`, thanh chọn điểm `1–10` ([MangaDetailPage.tsx#L404-L436](../../apps/web/src/features/manga/MangaDetailPage.tsx#L404-L436), `L856-L900`) kiểm tra cờ `viewerState.canRate` (khóa bấm và hiện thông báo `"Open at least one chapter of this manga before submitting a rating"` nếu chưa đọc).
+1. Trên `MangaDetailPage`, thanh chọn điểm `1–10` ([MangaDetailPage.tsx#L519-L551](../../apps/web/src/features/manga/MangaDetailPage.tsx#L519-L551), `L1049-L1093`) kiểm tra cờ `viewerState.canRate` (khóa bấm và hiện thông báo `"Open at least one chapter of this manga before submitting a rating"` nếu chưa đọc).
 2. Khi nhấn điểm → `PUT /api/v1/manga/{manga_id}/rating` hoặc nút gỡ điểm → `DELETE /api/v1/manga/{manga_id}/rating` ([ratings/router.py#L42-L68](../../apps/api/src/manga_reader/modules/ratings/presentation/router.py#L42-L68)).
 3. `RatingService.upsert_rating()` ([ratings/service.py#L113-L214](../../apps/api/src/manga_reader/modules/ratings/application/service.py#L113-L214)) kiểm tra điểm `1..10`, đếm bản ghi trong `reading_histories` join `chapters` của truyện đó (nếu `== 0` ném `422 RATING_REQUIRES_READING`), upsert dòng duy nhất trên `ratings` (`UQ_ratings_reader_manga`), chèn sự kiện `CREATE`/`UPDATE` vào `rating_histories`, tính lại `mangas.average_rating` loại trừ `is_removed=True` và ghi `activity_logs`. Khi xóa (`remove_rating()`, `L216-L272`), đánh dấu `is_removed=True` và chèn sự kiện `REMOVE`.
 4. Trên SQL Server, cặp trigger `trg_ratings_require_reading_history` (mã `51012`) và `trg_ratings_recalculate_average` tự động bảo vệ quy tắc ở mức DB.
 
 **Điểm mở source:**
-- UI Rating Bar: [MangaDetailPage.tsx#L404-L436](../../apps/web/src/features/manga/MangaDetailPage.tsx#L404-L436), [MangaDetailPage.tsx#L856-L900](../../apps/web/src/features/manga/MangaDetailPage.tsx#L856-L900)
+- UI Rating Bar: [MangaDetailPage.tsx#L519-L551](../../apps/web/src/features/manga/MangaDetailPage.tsx#L519-L551), [MangaDetailPage.tsx#L1049-L1093](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1049-L1093)
 - Router & Service: [ratings/router.py#L29-L68](../../apps/api/src/manga_reader/modules/ratings/presentation/router.py#L29-L68), [ratings/service.py#L39-L272](../../apps/api/src/manga_reader/modules/ratings/application/service.py#L39-L272)
 - Triggers DB: `trg_ratings_require_reading_history` (`51012`), `trg_ratings_recalculate_average`
 

@@ -90,7 +90,10 @@ beforeEach(() => {
         });
       }
 
-      if (url.includes("/manga/azure-blade/recommendations")) {
+      if (
+        url.includes("/manga/azure-blade/recommendations") ||
+        url.includes("/manga/m-1/recommendations")
+      ) {
         return makeJsonResponse({
           data: {
             method: "CONTENT_BASED",
@@ -834,15 +837,139 @@ describe("Manga Reader Frontend Application", () => {
     expect(screen.getByText(/Authors \(Story\)/i)).toBeInTheDocument();
     expect(screen.getByText(/Artists \(Illustration\)/i)).toBeInTheDocument();
     expect(screen.getAllByText(/おやすみプンプン/).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: /Cover Art Gallery/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /All Locales/i })).toBeInTheDocument();
+
+    // Chapters tab is active by default; Cover Art panel is isolated in its own tab
+    expect(screen.getByRole("tab", { name: /Chapters/i })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("heading", { name: /Cover Art Gallery/i })).not.toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /Chapters \(2\)/i })).toBeInTheDocument();
     });
+    expect(screen.getAllByText(/Volume 1/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Unassigned · No Volume/i)).toBeInTheDocument();
 
+    // Switch to Cover Art tab cleanly
+    await user.click(screen.getByRole("tab", { name: /Cover Art/i }));
+    expect(screen.getByRole("heading", { name: /Cover Art Gallery/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /All Locales/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /Chapters \(2\)/i })).not.toBeInTheDocument();
+
     await user.click(screen.getByRole("button", { name: /English.*\(1\)/i }));
-    expect(screen.getAllByText(/Volume 1/i).length).toBeGreaterThan(0);
+    expect(screen.getByText("English Vol 1")).toBeInTheDocument();
+    expect(screen.queryByText("Japanese Vol 1")).not.toBeInTheDocument();
+  });
+
+  it("switches MangaDetailPage animated tabs cleanly and paginates/filters chapters in Volume Groups mode", async () => {
+    const user = userEvent.setup();
+    const prevFetch = globalThis.fetch;
+
+    const manyChapters = Array.from({ length: 30 }, (_, index) => {
+      const chNum = index + 1;
+      return {
+        chapterId: `ch-${chNum}`,
+        mangaId: "m-1",
+        chapterNumber: String(chNum),
+        chapterNumeric: chNum,
+        volume: chNum <= 15 ? "1" : "2",
+        title: `Episode ${chNum}`,
+        language: chNum % 2 === 0 ? "en" : "vi",
+        scanlationGroup: chNum <= 20 ? "Alpha Scans" : "Beta Scans",
+        pageCount: 18,
+        pagesRevision: 1,
+        viewCount: 100 + chNum * 5,
+        publishAt: "2026-11-20T00:00:00Z",
+      };
+    });
+
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.includes("/manga/azure-blade/chapters")) {
+        return makeJsonResponse({
+          data: manyChapters,
+          meta: { requestId: "req-test" },
+        });
+      }
+      if (
+        url.includes("/manga/azure-blade/recommendations") ||
+        url.includes("/manga/m-1/recommendations")
+      ) {
+        return makeJsonResponse({
+          data: {
+            method: "ITEM_BASED",
+            modelVersion: "tfidf-v1",
+            fallbackReason: null,
+            items: [
+              {
+                mangaId: "m-rec-1",
+                slug: "silver-horizon",
+                title: "Silver Horizon",
+                coverUrl: null,
+                publicationStatus: "ongoing",
+                contentRating: "safe",
+                publicationDemographic: "seinen",
+                originalLanguage: "ja",
+                year: 2025,
+                totalViews: 500,
+                averageRating: 8.7,
+                latestChapter: null,
+                tags: [],
+                updatedAt: "2026-11-20T00:00:00Z",
+              },
+            ],
+          },
+          meta: { requestId: "req-test" },
+        });
+      }
+      return prevFetch(input, init);
+    });
+
+    renderRoute("/manga/azure-blade", ACTIVE_READER);
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /Chapters \(30\)/i })).toBeInTheDocument();
+    });
+
+    // Default page size is 25, with pagination active even in Group by Volume mode
+    expect(screen.getByTestId("chapter-pagination-summary")).toHaveTextContent(
+      /Showing 1–25 of 30 chapters · Page 1 of 2/i,
+    );
+    expect(screen.getByText("Episode 1")).toBeInTheDocument();
+    expect(screen.queryByText("Episode 30")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Next/i }));
+    expect(screen.getByTestId("chapter-pagination-summary")).toHaveTextContent(
+      /Showing 26–30 of 30 chapters · Page 2 of 2/i,
+    );
+    expect(screen.getByText("Episode 30")).toBeInTheDocument();
+    expect(screen.queryByText("Episode 1")).not.toBeInTheDocument();
+
+    // Filter by scanlation group then reset
+    await user.selectOptions(screen.getByLabelText("Filter scanlation group"), "Beta Scans");
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /Chapters \(10\)/i })).toBeInTheDocument();
+    });
+    expect(screen.getByText("Episode 21")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Reset Filters/i }));
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /Chapters \(30\)/i })).toBeInTheDocument();
+    });
+
+    // Switch through Recommendations and Comments tabs exclusively
+    await user.click(screen.getByRole("tab", { name: /Recommendations/i }));
+    expect(screen.getByRole("tab", { name: /Recommendations/i })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await waitFor(() => {
+      expect(screen.getAllByText("Silver Horizon").length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByRole("heading", { name: /Chapters \(30\)/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: /Comments/i }));
+    expect(screen.getByRole("tab", { name: /Comments/i })).toHaveAttribute("aria-selected", "true");
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Post Comment/i })).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Silver Horizon")).not.toBeInTheDocument();
   });
 
   it("formats markdown author biography cleanly without raw asterisks", async () => {

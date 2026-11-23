@@ -1,7 +1,7 @@
 # Từ điển Giao diện Web → Code thực tế (`QL-DocTruyen`)
 
 > **Dự án:** Hệ thống Đọc truyện Manga & Webtoon — Manga Reader (`QL-DocTruyen`)  
-> **Khảo sát source:** ngày 22/11/2026 tại commit `3a52a2a` (`2026-11-22`)  
+> **Khảo sát source:** ngày 23/11/2026 tại commit `3a52a2a` + bản cập nhật tab chi tiết manga (`MangaDetailPage.tsx`)  
 > **Phạm vi:** 45 file React 19 / TypeScript & CSS trong `apps/web/src/`, 4 Layout Boundaries, 19 Routes, kết nối tới 12 Domain Modules FastAPI trong `apps/api/src/manga_reader/`.  
 > **Mục đích:** tra ngược từ mọi tên màn hình, tab, nút bấm, nhãn lọc, modal, drawer hoặc biểu đồ người dùng nhìn thấy trên trình duyệt (`Ctrl+F`) sang đúng file `.tsx`, hook, hàm xử lý sự kiện, phương thức `apiClient.ts`, endpoint API và service Backend xử lý tương ứng.
 
@@ -43,11 +43,11 @@ AppProviders (QueryClientProvider + AuthProvider)
     │   ├── UI-03 ExplorePage (/explore , /search/advanced , /search redirect)
     │   │   ├── UI-03.1 Tab "Manga Catalog & Advanced Filters" (Tag 3-state, Author/Artist Pickers, Presets, 3 View Modes, Phân trang)
     │   │   └── UI-03.2 Tab "Authors & Artists" (Live search creator, Role filter, Sort)
-    │   ├── UI-04 MangaDetailPage (/manga/:slug)
+    │   ├── UI-04 MangaDetailPage (/manga/:slug) — Hero + 4 Tab chuyển mượt (?tab=)
     │   │   ├── UI-04.1 Hero Bìa, Also Known As (+ Cờ/Màu Ngôn Ngữ), Tách Authors (Story) & Artists (Illustration), Đọc/Trạng thái/Rating
-    │   │   ├── UI-04.2 Cover Art Gallery lọc theo Locale + Lightbox phóng to
-    │   │   ├── UI-04.3 Danh sách Chương (Group by Volume / No Volume / Flat List / Range 50 ch. / Jump to Ch.)
-    │   │   └── UI-04.4 Dải Gợi ý (Similar Manga ITEM_BASED & Content Matches CONTENT_BASED)
+    │   │   ├── UI-04.2 Tab "Chapters" (Group by Volume / No Volume / Flat List + Phân trang cả 2 chế độ + Lọc Nhóm dịch / Ngôn ngữ / Sort / Locate Resume Ch.)
+    │   │   ├── UI-04.3 Tab "Cover Art" Gallery lọc theo Locale + Lightbox phóng to
+    │   │   └── UI-04.4 Tab "Recommendations" (Item/Content-Based) & Tab "Comments" (CommentsSection)
     │   ├── UI-05 CommentsSection (trong MangaDetailPage & Chapter Comments Drawer)
     │   ├── UI-06 AuthorDetailPage (/author/:creatorId/:slug) — Bio Markdown + Tách Works as Author & Works as Artist
     │   └── UI-11 ProfilePage (/profile/:username) — Công khai / Đổi Avatar / Report User
@@ -207,28 +207,36 @@ AppProviders (QueryClientProvider + AuthProvider)
 **Từ khóa:** `Also Known As`, `Authors (Story)`, `Artists (Illustration)`, `Continue Reading`, `Read from Beginning`, `Start Reading`, `Metadata-only entry (0 exported chapters)`, `Reading status`, `+ Reading Lists`, `Report Issue`, `Your Rating (1–10)`.
 
 **Luồng code:**
-1. `MangaDetailPage` ([MangaDetailPage.tsx#L39-L990](../../apps/web/src/features/manga/MangaDetailPage.tsx#L39-L990)) tải `getMangaDetail(slug)`.
-2. Cột trái hiển thị bìa chính (bấm mở Lightbox) + badge đếm tổng số bìa + thẻ thống kê điểm TB & `valid views` + khung **`Also Known As`** hiển thị tên thay thế kèm huy hiệu màu và quốc kỳ ngôn ngữ từ `resolveLocaleBadge()` ([localization.ts#L291-L320](../../apps/web/src/utils/localization.ts#L291-L320)); nếu >5 tên có nút `"View all"` và ô lọc tìm kiếm tên thay thế (`L507-L595`).
-3. Cột phải tách riêng 2 hộp: **`Authors (Story)`** (`role === "author"`) và **`Artists (Illustration)`** (`role === "artist"`) (`L669-L749`) với link sang `/author/:creatorId/:slug`. Phần mô tả dài >320 ký tự được render qua `<FormattedMarkdownText>` (kèm `break-words [overflow-wrap:anywhere]`) và nút `"Show full synopsis"` / `"Show less"`.
-4. Thanh chấm điểm `1–10` (`L404-L436`, `L856-L900`) vô hiệu hóa nút điểm nếu `!viewerState.canRate` (chưa mở chương nào), gọi `PUT/DELETE /api/v1/manga/{mangaId}/rating` và vô hiệu hóa lại query detail & rating history.
+1. `MangaDetailPage` ([MangaDetailPage.tsx#L49-L1185](../../apps/web/src/features/manga/MangaDetailPage.tsx#L49-L1185)) tải song song `getMangaDetail(slug)`, `listMangaChapters(slug)`, recommendations (`ITEM_BASED`/`CONTENT_BASED`) và `commentsCountQuery` (warm cache + đếm badge cho tab `Comments`).
+2. Cột trái hiển thị bìa chính (bấm mở Lightbox) + badge đếm tổng số bìa + thẻ thống kê điểm TB & `valid views` + khung **`Also Known As`** hiển thị tên thay thế kèm huy hiệu màu và quốc kỳ ngôn ngữ từ `resolveLocaleBadge()` ([localization.ts#L291-L320](../../apps/web/src/utils/localization.ts#L291-L320)); nếu >5 tên có nút `"View all"` và ô lọc tìm kiếm tên thay thế (`L700-L788`).
+3. Cột phải tách riêng 2 hộp: **`Authors (Story)`** (`role === "author"`) và **`Artists (Illustration)`** (`role === "artist"`) (`L862-L942`) với link sang `/author/:creatorId/:slug`. Phần mô tả dài >320 ký tự được render qua `<FormattedMarkdownText>` (kèm `break-words [overflow-wrap:anywhere]`) và nút `"Show full synopsis"` / `"Show less"`.
+4. Thanh chấm điểm `1–10` (`L519-L551`, `L1049-L1093`) vô hiệu hóa nút điểm nếu `!viewerState.canRate` (chưa mở chương nào), gọi `PUT/DELETE /api/v1/manga/{mangaId}/rating` và vô hiệu hóa lại query detail & rating history.
 
-### UI-04.2 — Cover Art Gallery theo Locale & Lightbox
+### UI-04.2 — Hệ thống 4 Tab chuyển mượt (`?tab=`) & Tab `"Chapters"` (Phân trang + Tiện ích lọc)
+
+**Từ khóa:** `Chapters`, `Cover Art`, `Recommendations`, `Comments`, `Group by Volume`, `Flat List`, `No Volume (Unassigned)`, `Expand All Volumes`, `Collapse All`, `Search ch., vol., or group...`, `Jump to Ch. #`, `Filter scanlation group`, `Sort chapters`, `Locate Resume Ch.`, `Reset Filters`, `Chapter ranges`.
+
+**Luồng code:**
+1. Dưới Hero Card, thanh tab chuẩn ARIA `role="tablist"` ([MangaDetailPage.tsx#L1188-L1240](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1188-L1240)) đồng bộ query string `?tab=chapters|covers|recommendations|comments` (`selectTab`), kết xuất duy nhất panel đang chọn với class CSS `.mr-tab-panel-enter` ([index.css#L34-L47](../../apps/web/src/styles/index.css#L34-L47), fade + dịch chuyển nhẹ 200ms) để tránh trang kéo dài vô tận theo chiều dọc.
+2. Trong tab **`Chapters`** ([MangaDetailPage.tsx#L300-L470](../../apps/web/src/features/manga/MangaDetailPage.tsx#L300-L470), `L1241-L1691`):
+   - **Phân trang cả 2 chế độ (`15 / 25 / 50 / 100 / page`, mặc định `25`):** `Group by Volume` dựng `pagedVolumeGroups` từ `pagedChapters` (tách riêng `"Unassigned · No Volume"` qua `compareVolumeKeys()`) và `Flat List` đều dùng chung `renderChapterRow()` + `<CatalogPagination />`, kèm thanh chọn dải 50 chương (`Chapter ranges`, `L1496-L1539`) và tóm tắt vị trí (`Showing X–Y of Z chapters · Page P of T`).
+   - **Bộ lọc & tiện ích hỗ trợ:** lọc theo Volume (`__NONE__`), Language, Nhóm dịch (`Filter scanlation group`), tìm kiếm không dấu/NFC (`Search ch., vol., or group...`), sắp xếp 4 chiều (`Ch. Ascending`, `Ch. Descending`, `Most Viewed`, `Recently Published`), nhảy nhanh `"Jump to Ch. #"` có báo nếu không khớp, nút `"Locate Resume Ch."` nhảy đúng trang chứa chương đang đọc dở, và `"Reset Filters"`.
+
+### UI-04.3 — Tab `"Cover Art"` Gallery theo Locale & Lightbox
 
 **Từ khóa:** `Cover Art Gallery`, `Volume Asc ↑ / Volume Desc ↓`, `All Locales`, `Cover artwork lightbox`.
 
-**Luồng code:** ([MangaDetailPage.tsx#L137-L238](../../apps/web/src/features/manga/MangaDetailPage.tsx#L137-L238), `L992-L1098`, `L1608-L1694`): lọc danh sách `manga.coverArts` theo `locale` (sắp xếp tab ưu tiên ngôn ngữ gốc trước nhờ `getLocalePriority()`), chống trùng lặp bìa theo tập ưu tiên locale đang chọn, click mở Lightbox toàn màn hình.
+**Luồng code:** ([MangaDetailPage.tsx#L176-L276](../../apps/web/src/features/manga/MangaDetailPage.tsx#L176-L276), `L1693-L1805`, `L1903-L1989`): lọc danh sách `manga.coverArts` theo `locale` (sắp xếp tab ưu tiên ngôn ngữ gốc trước nhờ `getLocalePriority()`), chống trùng lặp bìa theo tập ưu tiên locale đang chọn, click mở Lightbox toàn màn hình; tự hiện `<EmptyState>` nếu truyện không có ảnh bìa.
 
-### UI-04.3 — Danh sách Chương nhóm theo Volume / No Volume & Dải Gợi ý
+### UI-04.4 — Tab `"Recommendations"` & Tab `"Comments"`
 
-**Từ khóa:** `Group by Volume`, `Flat List`, `No Volume (Unassigned)`, `Expand All Volumes`, `Collapse All`, `Search ch., vol., or group...`, `Jump to Ch. #`, `Filter chapter volume`, `Filter chapter language`, `Chapter ranges`, `Similar Manga`, `Content Matches`.
+**Từ khóa:** `Readers Also Liked`, `Similar Content & Themes`, `Discussion & Comments`.
 
-**Luồng code:** ([MangaDetailPage.tsx#L253-L355](../../apps/web/src/features/manga/MangaDetailPage.tsx#L253-L355), `L1100-L1593`):
-- Mặc định chế độ `VOLUME_GROUPS`: phân bucket theo `volume`, tách riêng nhóm `"No Volume (Unassigned)"` (`__NONE__`), sắp xếp thông minh qua `compareVolumeKeys()`, bấm từng tiêu đề tập để đóng/mở (`collapsedVolumes`).
-- Chế độ `FLAT`: chia cụm 50 chương (`CHAPTER_GROUP_SIZE = 50`) + `CatalogPagination` (25/50/100 chương/trang).
-- Ô `"Jump to Ch. #"` tìm khớp `chapterNumber` để nhảy thẳng vào chương cần đọc.
-- Cuối trang hiển thị 2 dải gợi ý: `Similar Manga` (`ITEM_BASED`) và `Content Matches` (`CONTENT_BASED`).
+**Luồng code:**
+- Tab **`Recommendations`** ([MangaDetailPage.tsx#L1807-L1872](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1807-L1872)): hiển thị 2 khối `ITEM_BASED` và `CONTENT_BASED` với `<LoadingState>` / `<EmptyState>` chuẩn.
+- Tab **`Comments`** ([MangaDetailPage.tsx#L1874-L1884](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1874-L1884)): nhúng `<CommentsSection mangaId={manga.mangaId} />` dùng chung cache query đã warm từ `commentsCountQuery`.
 
-**File/hàm:** [MangaDetailPage.tsx#L15-L1697](../../apps/web/src/features/manga/MangaDetailPage.tsx#L15-L1697), [localization.ts#L10-L372](../../apps/web/src/utils/localization.ts#L10-L372), [AddToListsModal.tsx](../../apps/web/src/components/AddToListsModal.tsx), [ReportModal.tsx](../../apps/web/src/components/ReportModal.tsx).
+**File/hàm:** [MangaDetailPage.tsx#L15-L1992](../../apps/web/src/features/manga/MangaDetailPage.tsx#L15-L1992), [index.css#L34-L47](../../apps/web/src/styles/index.css#L34-L47), [localization.ts#L10-L372](../../apps/web/src/utils/localization.ts#L10-L372), [AddToListsModal.tsx](../../apps/web/src/components/AddToListsModal.tsx), [ReportModal.tsx](../../apps/web/src/components/ReportModal.tsx).
 
 ---
 
@@ -237,7 +245,7 @@ AppProviders (QueryClientProvider + AuthProvider)
 
 **Từ khóa:** `Discussion & Comments`, `Filter text or user...`, `Filter spoiler comments`, `Filter comment scope`, `Sort comments`, `Contains spoiler`, `Reveal Spoiler`, `Spoiler locked by Admin`, `Reply`, `Edit`, `Edited history`, `Delete`, `Like`, `Dislike`, `Report`, `[Bình luận đã bị xóa]`.
 
-**Cha → con:** Được nhúng tại cuối `MangaDetailPage` (mặc định `scope=ALL`) và trong `Chapter comments drawer` của `ChapterReaderPage` (mặc định `scope=CHAPTER` cho `chapterId` đang đọc).
+**Cha → con:** Được nhúng trong tab `"Comments"` của `MangaDetailPage` (mặc định `scope=ALL`) và trong `Chapter comments drawer` của `ChapterReaderPage` (mặc định `scope=CHAPTER` cho `chapterId` đang đọc).
 
 **Luồng code:**
 1. `CommentsSection` ([CommentsSection.tsx#L462-L729](../../apps/web/src/features/manga/CommentsSection.tsx#L462-L729)) gọi `GET /api/v1/comments` với `mangaId`, `chapterId`, `scope`, `sort` (`NEWEST`, `OLDEST`, `MOST_LIKED`), `page`. Bộ lọc text và spoiler lọc tức thì trên tập đã tải.
@@ -456,7 +464,8 @@ AppProviders (QueryClientProvider + AuthProvider)
 | "Trang Reports sao trước lại thấy JSON khó hiểu?" | [UI-13.4](#ui-13) | Đã thay hoàn toàn JSON thô bằng `<ReportTargetCard />` & `formatActivityLogSummary()` dịch sẵn ngữ cảnh đọc được ngay bằng mắt thường. |
 | "Sao Forgot Password không hiện OTP để test?" | [UI-01.3](#ui-01) | Hệ thống đã xóa bỏ hoàn toàn `devOtpPreview`; OTP 120s chỉ lưu dạng hash trong Cache và gửi qua Gmail SMTP thực (`SmtpEmailAdapter`). |
 | "Author với Artist tách nhau ở những màn nào?" | [UI-04.1](#ui-04), [UI-06](#ui-06), [UI-10.2](#ui-10), [UI-12.5](#ui-12), [UI-13.2](#ui-13) | Mọi màn hình (`MangaCard`, `MangaDetailPage`, `AuthorDetailPage`, `ReadingListDetailPage`, `SettingsPage`, `AdminAccountsPage`) đều tách 2 khu vực `Authors (Story)` và `Artists (Illustration)`. |
-| "Nhóm Chapter có Volume và No Volume hoạt động ra sao?" | [UI-04.3](#ui-04) | `MangaDetailPage` gom nhóm `volumeGroups`, dùng `compareVolumeKeys` xếp số tập tăng/giảm và tách riêng chương không có tập vào `"No Volume (Unassigned)"`. |
+| "Nhóm Chapter có Volume và No Volume hoạt động ra sao?" | [UI-04.2](#ui-04) | `MangaDetailPage` gom nhóm `pagedVolumeGroups` trên từng trang chương, dùng `compareVolumeKeys` xếp số tập tăng/giảm và tách riêng chương không có tập vào `"Unassigned · No Volume"` (vẫn hỗ trợ phân trang `CatalogPagination`). |
+| "Trang chi tiết truyện có kéo dài dọc toàn bộ Cover/Chapter/Comment không?" | [UI-04.2](#ui-04), [UI-04.3](#ui-04), [UI-04.4](#ui-04) | Không — vùng dưới Hero chia thành **4 tab chuyển mượt** (`Chapters`, `Cover Art`, `Recommendations`, `Comments`) đồng bộ URL `?tab=`, animation `.mr-tab-panel-enter` (`200ms`) và phân trang mặc định `25` chương/trang ở cả chế độ `Group by Volume` lẫn `Flat List`. |
 | "Tiếng Việt có dấu trong comment / list có bị lỗi `?` hay `&amp;` không?" | [UI-05](#ui-05), [UI-12.1](#ui-12) | Backend cấu hình `use_setinputsizes=False` cho `mssql+aioodbc`, dùng cột `Unicode`/`UnicodeText`, và `sanitize_user_text()` chuẩn hóa `NFC` không dùng `html.escape()` gây mã hóa kép `&amp;`. |
 | "Reading List lấy ảnh bìa từ đâu và list trống hiện gì?" | [UI-10](#ui-10), [UI-14](#ui-14) | `ReadingListService._fetch_list_cover_map()` trả tối đa 4 URL bìa ký HMAC (`previewCovers`/`coverUrl`) và `<ReadingListCover />` vẽ collage 1–4 ảnh hoặc SVG `"Empty List"` mặc định. |
 

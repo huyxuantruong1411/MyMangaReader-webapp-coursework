@@ -1,6 +1,6 @@
 # Manga Reader Web Application — Full-Stack Completion Report (Phases 0–11)
 
-- **Date:** 2026-11-20 (Updated: 2026-11-22)
+- **Date:** 2026-11-20 (Updated: 2026-11-23)
 - **Workspace:** `d:\work\TH-PTTK\QL-DocTruyen`
 - **Specification Baseline:** `docs/agent-plan/Setup/00_README_AGENT_ENTRYPOINT.md` → `14_HANDOFF_MANIFEST.md` (`Lab8.docx`, `Lab9.docx`, `Lab10.docx`, `manga-reader-package:2.0`)
 
@@ -96,13 +96,14 @@ Following the initial Phase 0–11 completion, the system underwent a second ref
 | Suite | Runner | Passed Tests |
 |---|---|---|
 | Contract Validation (`packages/contracts`) | Vitest | **7 passed / 7** |
-| Frontend SPA & Workflows (`apps/web`) | Vitest + Testing Library | **27 passed / 27** |
+| Frontend SPA & Workflows (`apps/web`) | Vitest + Testing Library | **28 passed / 28** |
 | Backend Modular Monolith & E2E Acceptance (`apps/api`, `tests/integration`) | Pytest | **29 passed / 29** |
-| **Total Automated Suite** | **`pnpm test`** | **63 passed / 63** |
+| **Total Automated Suite** | **`pnpm test`** | **64 passed / 64** |
 
-### 5.2 Unicode, Reading List Covers & Layout Hardening
+### 5.2 Unicode, Reading List Covers, Manga Detail Tabs & Layout Hardening
 
 - **Full Vietnamese NFC Unicode Persistence:** Set `use_setinputsizes=False` on `mssql+aioodbc` engines (`database.py`), migrated ORM human-text columns to `Unicode` / `UnicodeText`, and updated `sanitize_user_text()` (`common/text.py`) to preserve NFC diacritics & `&` while stripping `<script>`/`<iframe>` tags cleanly (fixing `Hello các con gi?i` and `&amp;` double-encoding).
 - **Reading List Cover Art:** Added batched `_fetch_list_cover_map()` in `ReadingListService` (`coverUrl`, `previewCovers`) and shared [`ReadingListCover`](../../apps/web/src/components/ReadingListCover.tsx) rendering 1–4 manga cover collages or a built-in `"Empty List"` SVG fallback across `ReadingListsPage`, `ReadingListDetailPage`, and `AddToListsModal`.
+- **Manga Detail Animated Tab Workspace & Chapter Pagination:** Refactored [`MangaDetailPage`](../../apps/web/src/features/manga/MangaDetailPage.tsx) below the hero header into 4 animated tabs (`Chapters`, `Cover Art`, `Recommendations`, `Comments`, synced via `?tab=` & `.mr-tab-panel-enter`), eliminating vertical bloat and adding `CatalogPagination` (`15/25/50/100` per page) across both **Group by Volume** and **Flat List** modes alongside Scanlation Group filtering, multi-mode sorting, `Locate Resume Ch.`, and `Reset Filters`.
 - **Overflow-Safe Charts & Modals:** Constrained donut inner hole text (`max-w-[80px]` + 2-line wrap), widened legend wrapping, expanded `GenreRadarChart` `viewBox` (`0 0 360 264`), widened account inspection modal (`max-w-4xl`), and added `break-words [overflow-wrap:anywhere]` across comments, reports, profiles, lists, and analytics cards.
-- **Local Connectivity Resilience:** Added `fetchWithLocalFallback()` & `NETWORK_UNREACHABLE` structured error handling in [`apiClient.ts`](../../apps/web/src/services/apiClient.ts) alongside matching `server.proxy` & `preview.proxy` rules in [`vite.config.ts`](../../apps/web/vite.config.ts) so dev (`:5173`) and preview (`:4173`) both reach FastAPI cleanly.
+- **Local Connectivity Resilience & Visual Showcase:** Added `fetchWithLocalFallback()` & `NETWORK_UNREACHABLE` structured error handling in [`apiClient.ts`](../../apps/web/src/services/apiClient.ts) alongside matching `server.proxy` & `preview.proxy` rules in [`vite.config.ts`](../../apps/web/vite.config.ts), and embedded curated platform screenshots from [`docs/media/`](../media/) in [`README.md`](../../README.md).
