@@ -1,8 +1,8 @@
 # Truy vết Use Case sang Code thực tế (`QL-DocTruyen`)
 
 > **Dự án:** Hệ thống Đọc truyện Manga & Webtoon — Manga Reader (`QL-DocTruyen`)  
-> **Khảo sát source:** ngày 23/11/2026 tại commit `3a52a2a` + bản cập nhật tab chi tiết manga (`MangaDetailPage.tsx`)  
-> **Phạm vi:** Backend FastAPI (12 domain modules trong `apps/api/src/manga_reader/`), Web Frontend React 19 + TypeScript (19 routes trong `apps/web/src/`), Shared JSON Schema Contract v2.0 (`packages/contracts/`), và Cơ sở dữ liệu SQL Server 2022 (`QL_DocTruyen`, 50 bảng, 10 T-SQL triggers, hệ thống chỉ mục tối ưu hóa).  
+> **Khảo sát source:** ngày 25/11/2026 (sau commit `d90e788` — rà soát toàn bộ hệ thống)  
+> **Phạm vi:** Backend FastAPI (12 domain modules trong `apps/api/src/manga_reader/`), Web Frontend React 19 + TypeScript (23 routes trong `apps/web/src/`), Shared JSON Schema Contract v2.0 (`packages/contracts/`), và Cơ sở dữ liệu SQL Server 2022 (`QL_DocTruyen`, 50 bảng, 10 T-SQL triggers, hệ thống chỉ mục tối ưu hóa).  
 > **Mục đích:** giúp người đọc lần thẳng từ từng use case nghiệp vụ (`UC-1` → `UC-8`) đến màn hình UI, API endpoint, service xử lý, bất biến nghiệp vụ (domain invariants), bảng dữ liệu/trigger và cấu hình vận hành đang chạy thực tế trong mã nguồn.
 
 ---
@@ -12,9 +12,9 @@
 1. **Bộ khung Use Case chuẩn của dự án:** tài liệu sử dụng hệ thống đánh số chính tắc của `QL-DocTruyen` trong [01_PRODUCT_SCOPE_AND_REQUIREMENTS.md](../agent-plan/Setup/01_PRODUCT_SCOPE_AND_REQUIREMENTS.md#L110-L237) và [02_SCREEN_FRAME_EVENT_FLOWS.md](../agent-plan/Setup/02_SCREEN_FRAME_EVENT_FLOWS.md) gồm **8 nhóm Use Case cha** (`UC-1`..`UC-8`) và **50 Use Case con** (49 UC gốc trong Lab8/Lab9/Lab10 cộng thêm luồng mở rộng `UC-6.7` Quên mật khẩu OTP 3 bước & tích hợp Gmail SMTP thực).
 2. **Thang đánh giá mức độ hiện thực hóa:**
    - **Có đường code chính:** đủ vòng UI → `apiClient` → FastAPI Router + Dependency Guard → Application Service → ORM/SQL Server (+ Activity Log / Outbox / MinIO / SMTP / Cache) với bộ kiểm thử tích hợp E2E đang chạy xanh (`pnpm check:all`).
-   - **Có đường code chính (UI đang tạm giữ theo cờ cấu hình):** backend API, service, validator v2.0, webhook CDC và UI page đều đã viết hoàn chỉnh và có test; tuy nhiên cờ giao diện `VITE_EXTERNAL_ETL_ENABLED=false` đang tạm ẩn tab/wizard nhập nguồn ETL ngoài trên Admin Sidebar để ưu tiên kho truyện local 80 bộ thực tế (`import_local_mangalibrary.py`).
+   - **Có đường code chính (UI đang tạm giữ theo cờ cấu hình):** backend API, service, validator v2.0, webhook CDC và UI page đều đã viết hoàn chỉnh và có test; tuy nhiên cờ giao diện `VITE_EXTERNAL_ETL_ENABLED=false` đang tạm ẩn tab/wizard nhập nguồn ETL ngoài trên Admin Sidebar để ưu tiên kho truyện local 86,867 bộ thực tế (`import_local_mangalibrary.py`).
    - **Một phần / Ghi nhận khác biệt cấu hình:** có đường code chính nhưng cần lưu ý ranh giới môi trường (ví dụ cơ chế đọc trang Hybrid kết hợp MangaDex At-Home API + cache + ảnh demo WebP minh họa bằng Pillow; hoặc phần kiểm tra giới hạn tốc độ dùng In-Memory/Redis theo `.env`).
-3. **Tính xác thực của tọa độ mã nguồn:** toàn bộ đường dẫn dạng `` `[file#Lstart-Lend](../../file#Lstart-Lend)` `` được trích xuất trực tiếp từ trạng thái source trên đĩa tại commit `3a52a2a` và truy vấn trực tiếp từ CSDL SQL Server `QL_DocTruyen`. Phần giao diện được tách chi tiết theo từng màn hình tại [WEB_UI_CODE_DICTIONARY.md](WEB_UI_CODE_DICTIONARY.md), còn danh mục toàn bộ REST API và lược đồ 47+3 bảng SQL Server nằm tại [BACKEND_API_AND_DATABASE_DICTIONARY.md](BACKEND_API_AND_DATABASE_DICTIONARY.md).
+3. **Tính xác thực của tọa độ mã nguồn:** toàn bộ đường dẫn dạng `` `[file#Lstart-Lend](../../file#Lstart-Lend)` `` được trích xuất trực tiếp từ trạng thái source trên đĩa sau commit `d90e788` và truy vấn trực tiếp từ CSDL SQL Server `QL_DocTruyen`. Phần giao diện được tách chi tiết theo từng màn hình tại [WEB_UI_CODE_DICTIONARY.md](WEB_UI_CODE_DICTIONARY.md), còn danh mục toàn bộ REST API và lược đồ 47+3 bảng SQL Server nằm tại [BACKEND_API_AND_DATABASE_DICTIONARY.md](BACKEND_API_AND_DATABASE_DICTIONARY.md).
 
 ---
 
@@ -96,7 +96,7 @@
 ```mermaid
 flowchart LR
   Actor["Actor<br/>(Guest / Reader / Admin / Upstream CDC)"]
-  UI["Web React 19 + TS<br/>4 Layout Boundaries & 19 Routes"]
+  UI["Web React 19 + TS<br/>4 Layout Boundaries & 23 Routes"]
   Client["apiClient.ts + AuthProvider<br/>Bearer JWT + Single-Flight Refresh"]
   Guard["FastAPI Router & Dependencies<br/>(Pydantic + Live Session Check)"]
   Service["12 Domain Services<br/>(Business Invariants + Transaction)"]
@@ -496,7 +496,7 @@ Toàn bộ dữ liệu công khai tại nhóm UC này bắt buộc lọc `visibi
 1. Trên `MangaDetailPage` (`L118-L122`, tab `"Recommendations"`), UI gọi `GET /api/v1/manga/{mangaId}/recommendations?type=ITEM_BASED`.
 2. `RecommendationService.recommend_item_based()` ([recommendations/service.py#L264-L305](../../apps/api/src/manga_reader/modules/recommendations/application/service.py#L264-L305)) dựng ma trận tương tác thưa (`_build_interaction_matrix`, `L109-L165`) từ đọc (`+1.0`), lưu list (`+2.0`) và điểm rating (`score / 2.0`), tính độ tương đồng Cosine giữa vector người dùng của truyện hiện tại và các truyện `PUBLIC` khác. Nếu chưa đủ dữ liệu tương tác (cold-start), hệ thống tự động hạ tầng sang `recommend_content_based()` rồi `POPULAR_FALLBACK` với `fallbackReason = "SPARSE_ITEM_INTERACTIONS"`.
 
-**Điểm mở source:** [MangaDetailPage.tsx#L118-L122](../../apps/web/src/features/manga/MangaDetailPage.tsx#L118-L122), [MangaDetailPage.tsx#L1815-L1842](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1815-L1842), [recommendations/router.py#L19-L32](../../apps/api/src/manga_reader/modules/recommendations/presentation/router.py#L19-L32), [recommendations/service.py#L109-L165](../../apps/api/src/manga_reader/modules/recommendations/application/service.py#L109-L165), [recommendations/service.py#L264-L305](../../apps/api/src/manga_reader/modules/recommendations/application/service.py#L264-L305)
+**Điểm mở source:** [MangaDetailPage.tsx#L118-L122](../../apps/web/src/features/manga/MangaDetailPage.tsx#L118-L122), [MangaDetailPage.tsx#L1817-L1842](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1817-L1842), [recommendations/router.py#L19-L32](../../apps/api/src/manga_reader/modules/recommendations/presentation/router.py#L19-L32), [recommendations/service.py#L109-L165](../../apps/api/src/manga_reader/modules/recommendations/application/service.py#L109-L165), [recommendations/service.py#L264-L305](../../apps/api/src/manga_reader/modules/recommendations/application/service.py#L264-L305)
 
 <a id="uc-38--gợi-ý-user-based"></a>
 ### UC-3.8 — Gợi ý User-based Collaborative Filtering
@@ -571,7 +571,7 @@ Quản trị toàn bộ luồng đọc chương, tùy biến trình đọc, lưu
 1. Trên `MangaDetailPage` (tab `"Chapters"`), thanh điều khiển hỗ trợ: chuyển chế độ `Group by Volume` / `Flat List`, tìm nhanh `"Search ch., vol., or group..."`, nhảy nhanh `"Jump to Ch. #"` (`handleJumpToChapter`, `L454-L470`), lọc theo `Volume` (`__NONE__`), `Language`, **Nhóm dịch (`Filter scanlation group`)**, **4 kiểu sắp xếp (`Ch. Ascending`, `Ch. Descending`, `Most Viewed`, `Recently Published`)**, đổi số dòng `15/25/50/100 / page`, nút `"Reset Filters"`, thanh chọn dải 50 chương (`Chapter ranges`, `L1496-L1539`) và `CatalogPagination` cho cả 2 chế độ.
 2. Bên trong `ChapterReaderPage`, ngoài dropdown chọn nhanh còn có modal `"Chapter selector"` ([ChapterReaderPage.tsx#L428-L492](../../apps/web/src/features/reader/ChapterReaderPage.tsx#L428-L492), `L991-L1150`) hỗ trợ tìm kiếm, lọc Volume, lọc cụm 50 chương và phân trang 25 chương/trang.
 
-**Điểm mở source:** [MangaDetailPage.tsx#L300-L470](../../apps/web/src/features/manga/MangaDetailPage.tsx#L300-L470), [MangaDetailPage.tsx#L1248-L1543](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1248-L1543), [ChapterReaderPage.tsx#L428-L492](../../apps/web/src/features/reader/ChapterReaderPage.tsx#L428-L492), [ChapterReaderPage.tsx#L991-L1150](../../apps/web/src/features/reader/ChapterReaderPage.tsx#L991-L1150)
+**Điểm mở source:** [MangaDetailPage.tsx#L300-L470](../../apps/web/src/features/manga/MangaDetailPage.tsx#L300-L470), [MangaDetailPage.tsx#L1250-L1543](../../apps/web/src/features/manga/MangaDetailPage.tsx#L1250-L1543), [ChapterReaderPage.tsx#L428-L492](../../apps/web/src/features/reader/ChapterReaderPage.tsx#L428-L492), [ChapterReaderPage.tsx#L991-L1150](../../apps/web/src/features/reader/ChapterReaderPage.tsx#L991-L1150)
 
 <a id="uc-43--chọn-chương--nạp-trang-ảnh"></a>
 ### UC-4.3 — Chọn chương & nạp trang ảnh
@@ -1097,7 +1097,7 @@ Trước khi xóa truyện cục bộ (`DELETE`), hệ thống kiểm tra `manga
 
 | Mức | Use case / Thành phần | Hiện trạng thực tế thấy trong Source | Ghi chú khi demo / vấn đáp |
 |---|---|---|---|
-| **Chú ý** | `UC-2.3` External ETL/CDC UI | Cờ `VITE_EXTERNAL_ETL_ENABLED=false` đang ẩn tab Source ETL & CDC khỏi Admin Sidebar và hiển thị màn `External ETL & CDC Integration Paused` | Backend (`etl_cdc/*`), schema v2.0 validator, webhook CDC và E2E tests vẫn hoạt động đầy đủ; bật `VITE_EXTERNAL_ETL_ENABLED=true` là hiện lại toàn bộ wizard. Kho hiện tại dùng 80 bộ thực từ `import_local_mangalibrary.py`. |
+| **Chú ý** | `UC-2.3` External ETL/CDC UI | Cờ `VITE_EXTERNAL_ETL_ENABLED=false` đang ẩn tab Source ETL & CDC khỏi Admin Sidebar và hiển thị màn `External ETL & CDC Integration Paused` | Backend (`etl_cdc/*`), schema v2.0 validator, webhook CDC và E2E tests vẫn hoạt động đầy đủ; bật `VITE_EXTERNAL_ETL_ENABLED=true` là hiện lại toàn bộ wizard. Kho hiện tại dùng 86,867 bộ thực (86,866 từ `MangaLibrary` + 1 bộ test `unknown`) qua `import_local_mangalibrary.py`. |
 | **Chú ý** | `UC-4.3` Tải trang đọc chương | Dùng cơ chế **Hybrid Page Engine**: ưu tiên đọc MinIO/local hoặc proxy ảnh MangaDex At-Home (khi bật `MANGADEX_FALLBACK_ENABLED=true` và có mạng), tự động fallback sang ảnh minh họa WebP render bằng Pillow khi offline | Nhờ fallback WebP mà ứng dụng không bao giờ vỡ trang khi mất mạng hoặc chạy offline hoàn toàn trong phòng vấn đáp. |
 | **Chú ý** | `admins.role_level` | Bảng `admins` có cột `role_level` (`SUPER_ADMIN`, `MODERATOR`) nhưng `require_admin()` chưa phân tầng chi tiết theo permission matrix | Tài liệu thiết kế đã ghi nhận đây là lựa chọn MVP; ngoại trừ bất biến cấm khóa tài khoản Admin khác (`UC-1.2`). |
 | **Chú ý** | Các ngưỡng NFR cấu hình (`ADR-015`) | `valid_view_threshold_seconds=15`, `valid_view_dedupe_window_seconds=300`, `login_rate_limit_max_attempts=10`, `avatar_max_bytes=5MB`, `otp_ttl_seconds=120` | Toàn bộ số này cấu hình tập trung trong Pydantic `Settings` (`settings.py#L64-L135`), cho phép chỉnh bằng biến môi trường `.env` không cần sửa code. |
@@ -1107,7 +1107,7 @@ Trước khi xóa truyện cục bộ (`DELETE`), hệ thống kiểm tra `manga
 
 ## Đối chiếu cấu trúc Lab8 / Lab9 / Lab10 và các Quyết định Kiến trúc (ADR)
 
-- **Lược đồ CSDL thực tế (`QL_DocTruyen`):** gồm **50 bảng** (`47` bảng nghiệp vụ ORM trong `models_auth.py`, `models_catalog.py`, `models_reader_social.py` + `alembic_version`, `schema_foundation_metadata`, `sysdiagrams`), **10 T-SQL Triggers** (khớp 100% mã lỗi `51010..51017` bảo vệ quy tắc bất biến, chống tự report, kiểm đọc chương trước khi rate, đồng bộ view & list counts) và **7 covering indexes bổ sung** tăng tốc truy vấn Catalog (`IX_mangas_sort_*`), lọc ngôn ngữ (`IX_manga_stats_languages_lang`) và nhóm tập (`IX_chapters_manga_volume`).
+- **Lược đồ CSDL thực tế (`QL_DocTruyen`):** gồm **50 bảng** (`47` bảng nghiệp vụ ORM trong `models_auth.py`, `models_catalog.py`, `models_reader_social.py` + `alembic_version`, `schema_foundation_metadata`, `sysdiagrams`), **10 T-SQL Triggers** (khớp 100% mã lỗi `51010..51017` bảo vệ quy tắc bất biến, chống tự report, kiểm đọc chương trước khi rate, đồng bộ view & list counts) và **9 nhóm covering/lookup indexes bổ sung** tăng tốc truy vấn Catalog (`IX_mangas_sort_*`), lọc ngôn ngữ (`IX_manga_stats_languages_lang`), nhóm tập (`IX_chapters_manga_volume`) và hàng đợi moderation (`IX_reports_filter`).
 - **Hợp nhất `ADR M-001..M-011`:**
   - `M-001 / ADR-001`: tách `reader_progress` khỏi `reading_histories` để lật trang liên tục không phình bảng lịch sử.
   - `M-003`: thêm `previous_is_spoiler` vào `comment_edit_histories`.

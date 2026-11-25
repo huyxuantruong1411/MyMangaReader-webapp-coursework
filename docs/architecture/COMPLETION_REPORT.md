@@ -1,6 +1,6 @@
 # Manga Reader Web Application — Full-Stack Completion Report (Phases 0–11)
 
-- **Date:** 2026-11-20 (Updated: 2026-11-23)
+- **Date:** 2026-11-20 (Updated: 2026-11-25)
 - **Workspace:** `d:\work\TH-PTTK\QL-DocTruyen`
 - **Specification Baseline:** `docs/agent-plan/Setup/00_README_AGENT_ENTRYPOINT.md` → `14_HANDOFF_MANIFEST.md` (`Lab8.docx`, `Lab9.docx`, `Lab10.docx`, `manga-reader-package:2.0`)
 
@@ -12,8 +12,8 @@ All 11 roadmap phases defined in `docs/agent-plan/Setup/13_IMPLEMENTATION_ROADMA
 
 - **Shared Package v2.0 Contract (`packages/contracts/`):** Pinned JSON Schema Draft 2020-12 (`manga-reader-package:2.0`), TypeScript types, Ajv2020 validator, 5 valid/invalid contract fixtures, and 7 passing Vitest contract tests.
 - **Database Schema & Migrations (`database/`, `apps/api/src/manga_reader/infrastructure/orm/`):** Canonical 47-table SQLAlchemy 2.x ORM model suite combining all 39 Lab10 tables with ADR reconciliations `M-001`..`M-011`, Alembic revisions `0001` & `0002` (verified online upgrade/downgrade and offline `--sql`), and idempotent dev seeder (`database/seeds/seed_dev.py`) ingesting 5 rich Package v2.0 titles with Pillow-generated WebP covers/pages and 3 demo accounts.
-- **Backend API Modular Monolith (`apps/api/`):** All 12 domain modules (`account_auth`, `manga_creator`, `catalog_discovery`, `etl_cdc`, `reader_engine`, `reading_status_history`, `ratings`, `comments_reactions`, `moderation_reporting`, `reading_lists`, `recommendations`, `admin_analytics`) wired under `/api/v1` with uniform envelopes, HMAC-signed media streaming proxy, live JWT + DB session revocation, and 24 passing Pytest unit/integration/E2E acceptance tests.
-- **Interactive Frontend SPA (`apps/web/`):** Complete React 19 + TypeScript + Vite + TanStack Query + Tailwind CSS v4 application implementing all 19 routes across Public, Immersive Reader, Authenticated Reader, and Isolated Admin layouts, with 10 passing Vitest component/workflow tests and verified production bundle build.
+- **Backend API Modular Monolith (`apps/api/`):** All 12 domain modules (`account_auth`, `manga_creator`, `catalog_discovery`, `etl_cdc`, `reader_engine`, `reading_status_history`, `ratings`, `comments_reactions`, `moderation_reporting`, `reading_lists`, `recommendations`, `admin_analytics`) wired under `/api/v1` (`90` endpoints) with uniform envelopes, HMAC-signed media streaming proxy, live JWT + DB session revocation, and 29 passing Pytest unit/integration/E2E acceptance tests.
+- **Interactive Frontend SPA (`apps/web/`):** Complete React 19 + TypeScript + Vite + TanStack Query + Tailwind CSS v4 application implementing all 23 routes across Public, Immersive Reader, Authenticated Reader, and Isolated Admin layouts, with 28 passing Vitest component/workflow tests and verified production bundle build.
 
 ---
 
@@ -32,7 +32,7 @@ All 11 roadmap phases defined in `docs/agent-plan/Setup/13_IMPLEMENTATION_ROADMA
 | **Phase 8** | Private Reading Lists, Clone/Merge & Dynamic Metadata Stats | **DONE** | `modules/reading_lists`, `ReadingListsPage.tsx`, `ReadingListDetailPage.tsx`, `AddToListsModal.tsx` |
 | **Phase 9** | Moderation Reporting (`ADR-020`), Activity Logs & Admin Analytics | **DONE** | `modules/moderation_reporting`, `modules/admin_analytics`, `ReportModal.tsx`, `AdminPages.tsx` |
 | **Phase 10** | Item-Based, Anonymized User-Based & Content-Based Recommendations | **DONE** | `modules/recommendations`, TF-IDF `manga_content_vectors`, cold-start fallbacks |
-| **Phase 11** | Full Interactive Frontend, Quality Gates & Live Full-Stack Verification | **DONE** | 19 wired routes, Vitest suite, `pnpm check:all` green, live API + Vite proxy smoke verified |
+| **Phase 11** | Full Interactive Frontend, Quality Gates & Live Full-Stack Verification | **DONE** | 23 wired routes, Vitest suite, `pnpm check:all` green, live API + Vite proxy smoke verified |
 
 ---
 
@@ -44,11 +44,11 @@ All 11 roadmap phases defined in `docs/agent-plan/Setup/13_IMPLEMENTATION_ROADMA
 |---|---|---|
 | JS/TS Lint | ESLint v9 (`@manga-reader/contracts`, `@manga-reader/web`) | **0 errors, 0 warnings** |
 | Python Lint | Ruff (`apps/api`, `database`, `tests`) | **All checks passed** |
-| Formatting | Prettier + `ruff format --check` (96 Python files + all TS/TSX/CSS/JSON) | **100% formatted** |
-| Type Checking | `tsc --noEmit` (strict) + `mypy --strict` (82 source files) | **0 errors** |
+| Formatting | Prettier + `ruff format --check` | **100% formatted** |
+| Type Checking | `tsc --noEmit` (strict) + `mypy --strict` (83 source files) | **0 errors** |
 | Contract Tests | Vitest (`packages/contracts`) | **7 passed / 7** |
-| Frontend Tests | Vitest + Testing Library (`apps/web`) | **10 passed / 10** |
-| Backend & E2E Tests | Pytest (`apps/api` + `tests/integration/test_full_e2e_acceptance.py` covering E2E-1..E2E-5 + Alembic upgrade/downgrade + read-only SQL Server check) | **24 passed / 24** |
+| Frontend Tests | Vitest + Testing Library (`apps/web`) | **28 passed / 28** |
+| Backend & E2E Tests | Pytest (`apps/api/tests/integration/test_full_e2e_acceptance.py` covering E2E-1..E2E-5 + Alembic upgrade/downgrade + optional live SQL Server check) | **29 passed / 29** |
 | Production Builds | `tsc` (`contracts`) + `tsc -b && vite build` (`web`) | **Built cleanly (`dist/` generated)** |
 
 ### 3.2 Live Full-Stack Smoke Verification
@@ -88,7 +88,7 @@ Following the initial Phase 0–11 completion, the system underwent a second ref
 5. **Full Codebase Traceability & Technical Dictionaries (`docs/reference/`):**
    - Created comprehensive, line-anchored reference dictionaries:
      - [`USECASE_CODE_TRACEABILITY.md`](../reference/USECASE_CODE_TRACEABILITY.md) (`UC-1`..`UC-8`, 50 sub-use-cases)
-     - [`WEB_UI_CODE_DICTIONARY.md`](../reference/WEB_UI_CODE_DICTIONARY.md) (`UI-00`..`UI-16`, all 19 routes & components)
+     - [`WEB_UI_CODE_DICTIONARY.md`](../reference/WEB_UI_CODE_DICTIONARY.md) (`UI-00`..`UI-16`, all 23 routes & components)
      - [`BACKEND_API_AND_DATABASE_DICTIONARY.md`](../reference/BACKEND_API_AND_DATABASE_DICTIONARY.md) (12 modules, 90 `/api/v1` endpoints, 50 SQL tables, 9 index groups, 10 T-SQL triggers)
 
 ### 5.1 Updated Automated Test Matrix

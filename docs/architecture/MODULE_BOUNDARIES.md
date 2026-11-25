@@ -9,7 +9,7 @@
 
 | # | Module Package (`modules/<name>`) | Owned UC-IDs | Primary Owned Tables (Lab10 + ADRs) | Core Responsibility |
 |---|---|---|---|---|
-| 1 | `account_auth` | `UC-1.1..1.3`, `UC-6`, `UC-6.1..6.5` | `accounts`, `readers`, `admins`, `user_sessions`, `account_status_histories` | Registration (`PENDING_VERIFICATION`), OTP (Redis 120s), login/throttle, session rotation/revocation, RBAC resolution, profile/avatar/password, Admin lock/unlock. |
+| 1 | `account_auth` | `UC-1.1..1.3`, `UC-6`, `UC-6.1..6.5`, `UC-6.7` | `accounts`, `readers`, `admins`, `user_sessions`, `account_status_histories` | Registration (`PENDING_VERIFICATION`), OTP (Redis 120s), login/throttle, session rotation/revocation, RBAC resolution, profile/avatar/password, 3-step forgot password OTP, Admin lock/unlock. |
 | 2 | `manga_creator` | `UC-2`, `UC-2.1..2.2`, `UC-2.4` | `mangas`, `manga_alt_titles`, `manga_links`, `manga_cover_arts`, `manga_stats`, `manga_stats_languages`, `manga_lineage`, `creators`, `creator_biographies`, `creator_links`, `manga_creators`, `tags`, `tag_names`, `manga_tags`, `chapters`, `chapter_pages`, `media_objects`, `manga_moderation_logs` | Canonical Manga/Creator/Tag/Chapter/Media aggregates, visibility lifecycle (`PUBLIC`/`HIDDEN`), safe local deletion + tombstone + `is_syncing` guard, stable chapter ordering (`chapter_numeric`, `language`, stable ID). |
 | 3 | `catalog_discovery` | `UC-3`, `UC-3.1..3.6` | Read models / search index projections over `mangas`, `creators`, `tags`, `chapters` | Public catalogue listing, advanced tag/metadata filtering (`unknown` != `safe`), autocomplete (max 10), full-text/fuzzy title & creator search, Manga detail aggregation, Creator detail page. Enforces central `PUBLIC` scope. |
 | 4 | `etl_cdc` | `UC-2.3` | `etl_jobs`, `etl_job_items`, `manga_sync_subscriptions`, `cdc_events` | `manga-reader-package:2.0` Draft 2020-12 contract validation, external-to-internal identity mapping, batch per-item atomic ETL, checksum/revision checks, CDC webhook intake, idempotency, retry & quarantine. |
@@ -94,4 +94,4 @@ modules/<module_name>/
 └── presentation/        # FastAPI APIRouter & transport request/response schemas (added per phase)
 ```
 
-*(During Foundation Initialization, modules expose clean package boundaries and architectural docstrings; `etl_cdc` additionally implements the complete `manga-reader-package:2.0` contract validation and identity mapping layer required by Phase 4.)*
+*(All 12 domain modules are fully implemented across `domain/`, `application/`, `infrastructure/`, and `presentation/` layers, and mounted under `/api/v1` with `90` HTTP endpoints.)*

@@ -4,8 +4,8 @@ This package houses the single shared source of truth for the external Manga Rea
 
 ## Source Transparency Notice
 
-> **Important (Phase 0 Audit):** The raw source file `Pasted text(2).txt` referenced in `docs/agent-plan/00_README_AGENT_ENTRYPOINT.md` was not present in the workspace during initialization.  
-> `schemas/manga-reader-package.v2.0.schema.json` has been reconstructed **strictly and faithfully** from every definition, constraint, constant, enum, required field, and `additionalProperties: false` rule documented in `docs/agent-plan/05_PACKAGE_V2_ETL_CDC.md`.  
+> **Important (Phase 0 Audit):** The raw source file `Pasted text(2).txt` referenced in `docs/agent-plan/Setup/00_README_AGENT_ENTRYPOINT.md` was not present in the workspace during initialization.  
+> `schemas/manga-reader-package.v2.0.schema.json` has been reconstructed **strictly and faithfully** from every definition, constraint, constant, enum, required field, and `additionalProperties: false` rule documented in `docs/agent-plan/Setup/05_PACKAGE_V2_ETL_CDC.md`.  
 > When the original `Pasted text(2).txt` becomes available, diff it verbatim against `schemas/manga-reader-package.v2.0.schema.json` and update only if byte-level differences exist.
 
 ## Non-Negotiable Contract Rules

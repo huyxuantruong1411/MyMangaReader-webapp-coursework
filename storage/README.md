@@ -24,8 +24,8 @@ Every `object_key` and `bucket` passes strict validation before storage access:
 | Mode (`STORAGE_BACKEND`) | Implementation | Description |
 |---|---|---|
 | `local-dev` *(default)* | `LocalDevStorageAdapter` | Stores objects under `storage/local-dev/<bucket>/<object_key>` (gitignored). Zero external credentials required for local dev & CI tests. **Not for production.** |
-| `minio` | `MinioS3StorageAdapter` | Connects to the existing local MinIO container (`mangalibrary-minio` at `http://127.0.0.1:9010`, console `http://127.0.0.1:9011`). Use a dedicated bucket `manga-reader-media` so existing coursework objects in `manga-media` (`1,116` objects) are never overwritten. |
-| `s3` | `MinioS3StorageAdapter` | Any S3-compatible production store (AWS S3, Cloudflare R2, MinIO cluster) paired with a CDN edge. |
+| `minio` | `S3CompatibleStorageAdapter` | Connects to the existing local MinIO container (`mangalibrary-minio` at `http://127.0.0.1:9010`, console `http://127.0.0.1:9011`). Use a dedicated bucket `manga-reader-media` so existing coursework objects in `manga-media` (`1,116` objects) are never overwritten. |
+| `s3` | `S3CompatibleStorageAdapter` | Any S3-compatible production store (AWS S3, Cloudflare R2, MinIO cluster) paired with a CDN edge. |
 
 ## 4. Garbage Collection Safety (`M-004` / `ADR-011`)
 

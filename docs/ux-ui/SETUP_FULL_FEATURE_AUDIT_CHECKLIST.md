@@ -1,6 +1,6 @@
 # Full Functional & SQL Server Compatibility Audit Checklist (`docs/agent-plan/Setup/00..14`)
 
-Tài liệu này lập checklist đối chiếu toàn bộ yêu cầu chức năng trong 15 tài liệu đặc tả [Setup](file:///d:/work/TH-PTTK/QL-DocTruyen/docs/agent-plan/Setup/01_PRODUCT_SCOPE_AND_REQUIREMENTS.md), [Domain Rules](file:///d:/work/TH-PTTK/QL-DocTruyen/docs/agent-plan/Setup/03_DOMAIN_RULES_AND_STATE_MACHINES.md), [API Contracts](file:///d:/work/TH-PTTK/QL-DocTruyen/docs/agent-plan/Setup/10_API_CONTRACTS_AND_EVENTS.md) và [Test Strategy](file:///d:/work/TH-PTTK/QL-DocTruyen/docs/agent-plan/Setup/11_TEST_STRATEGY_ACCEPTANCE.md) với codebase thực tế (12 backend modules + React frontend) đang kết nối trực tiếp SQL Server `QL_DocTruyen` và MinIO `manga-media`.
+Tài liệu này lập checklist đối chiếu toàn bộ yêu cầu chức năng trong 15 tài liệu đặc tả [Setup](../agent-plan/Setup/01_PRODUCT_SCOPE_AND_REQUIREMENTS.md), [Domain Rules](../agent-plan/Setup/03_DOMAIN_RULES_AND_STATE_MACHINES.md), [API Contracts](../agent-plan/Setup/10_API_CONTRACTS_AND_EVENTS.md) và [Test Strategy](../agent-plan/Setup/11_TEST_STRATEGY_ACCEPTANCE.md) với codebase thực tế (12 backend modules + React frontend) đang kết nối trực tiếp SQL Server `QL_DocTruyen` và MinIO `manga-media`.
 
 ---
 
@@ -9,35 +9,35 @@ Tài liệu này lập checklist đối chiếu toàn bộ yêu cầu chức nă
 1. **Lỗi `.is_(False)` / `.is_(True)` sinh cú pháp `IS 0` / `IS 1` trên T-SQL (`ProgrammingError 102` — lỗi trực tiếp gây HTTP 500 ở `/manga/:slug`)**
    - **Nguyên nhân gốc:** SQLAlchemy 2.0 trên dialect `mssql+aioodbc` biên dịch `.is_(False)` / `.is_(True)` thành `col IS 0` / `col IS 1`, trong khi T-SQL chỉ chấp nhận `IS NULL` / `IS NOT NULL` cho toán tử `IS` và bắt buộc dùng `= 0` / `= 1` cho cột `BIT`.
    - **Khắc phục (14 vị trí trên 7 service):** Chuyển sang `== false()` / `== true()` (`from sqlalchemy import false, true`) để sinh `= 0` / `= 1` tương thích cả SQL Server, SQLite và PostgreSQL:
-     - [catalog_discovery/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/catalog_discovery/application/service.py) (2 chỗ `RatingModel.is_removed`)
-     - [comments_reactions/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/comments_reactions/application/service.py) (`CommentModel.is_deleted`)
-     - [ratings/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/ratings/application/service.py) (3 chỗ `RatingModel.is_removed`)
-     - [reader_engine/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/reader_engine/application/service.py) (`ReadingHistoryModel.is_valid_view`)
-     - [reading_lists/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/reading_lists/application/service.py) (`RatingModel.is_removed`)
-     - [recommendations/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/recommendations/application/service.py) (`RatingModel.is_removed`)
-     - [admin_analytics/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/admin_analytics/application/service.py) (5 chỗ `RatingModel.is_removed` & `CommentModel.is_deleted`)
+     - [catalog_discovery/application/service.py](../../apps/api/src/manga_reader/modules/catalog_discovery/application/service.py) (2 chỗ `RatingModel.is_removed`)
+     - [comments_reactions/application/service.py](../../apps/api/src/manga_reader/modules/comments_reactions/application/service.py) (`CommentModel.is_deleted`)
+     - [ratings/application/service.py](../../apps/api/src/manga_reader/modules/ratings/application/service.py) (3 chỗ `RatingModel.is_removed`)
+     - [reader_engine/application/service.py](../../apps/api/src/manga_reader/modules/reader_engine/application/service.py) (`ReadingHistoryModel.is_valid_view`)
+     - [reading_lists/application/service.py](../../apps/api/src/manga_reader/modules/reading_lists/application/service.py) (`RatingModel.is_removed`)
+     - [recommendations/application/service.py](../../apps/api/src/manga_reader/modules/recommendations/application/service.py) (`RatingModel.is_removed`)
+     - [admin_analytics/application/service.py](../../apps/api/src/manga_reader/modules/admin_analytics/application/service.py) (5 chỗ `RatingModel.is_removed` & `CommentModel.is_deleted`)
 
 2. **Chia nguyên (`INT`) của `AVG(score)` trong T-SQL**
    - **Nguyên nhân:** `func.avg(RatingModel.score)` trên cột `INT` bị T-SQL làm tròn xuống số nguyên (`AVG(8, 9) = 8` thay vì `8.500`).
-   - **Khắc phục:** Dùng `func.avg(cast(RatingModel.score, Numeric(9, 3)))` trong [ratings/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/ratings/application/service.py) và [admin_analytics/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/admin_analytics/application/service.py).
+   - **Khắc phục:** Dùng `func.avg(cast(RatingModel.score, Numeric(9, 3)))` trong [ratings/application/service.py](../../apps/api/src/manga_reader/modules/ratings/application/service.py) và [admin_analytics/application/service.py](../../apps/api/src/manga_reader/modules/admin_analytics/application/service.py).
 
 3. **Xóa truyện/chapter với `FK_reader_progress_chapters_chapter_id` (`ON DELETE NO ACTION`), giới hạn 2.100 tham số và `INSTEAD OF DELETE` trigger (`trg_mangas_cleanup_before_delete`)**
    - **Nguyên nhân:** SQL Server đặt `FK_reader_progress_chapters_chapter_id` là `ON DELETE NO ACTION` để tránh multiple cascade paths; `session.delete(manga)` kiểm tra `rowcount == 1` dễ gây `StaleDataError` với trigger `SET NOCOUNT ON`; `chapter_ids` truyền vào `.in_(...)` có thể vượt 2.100 tham số.
-   - **Khắc phục:** Trong [manga_creator/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/manga_creator/application/service.py) và [etl_cdc/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/etl_cdc/application/service.py): dùng subquery cho `ChapterPageModel`, xóa `ReaderProgressModel` trước khi xóa chapter/manga, xóa `CommentModel` con trước gốc, sau đó `expunge(manga)` + Core `delete(MangaModel)`.
+   - **Khắc phục:** Trong [manga_creator/application/service.py](../../apps/api/src/manga_reader/modules/manga_creator/application/service.py) và [etl_cdc/application/service.py](../../apps/api/src/manga_reader/modules/etl_cdc/application/service.py): dùng subquery cho `ChapterPageModel`, xóa `ReaderProgressModel` trước khi xóa chapter/manga, xóa `CommentModel` con trước gốc, sau đó `expunge(manga)` + Core `delete(MangaModel)`.
 
 4. **Thứ tự flush `MangaStatsModel` trước `MangaStatsLanguageModel`**
-   - **Khắc phục:** Gọi `await session.flush()` ngay sau `session.add(MangaStatsModel(...))` trong `_recompute_manga_stats` ([etl_cdc/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/etl_cdc/application/service.py)) để thỏa mãn `FK_manga_stats_languages_manga_stats`.
+   - **Khắc phục:** Gọi `await session.flush()` ngay sau `session.add(MangaStatsModel(...))` trong `_recompute_manga_stats` ([etl_cdc/application/service.py](../../apps/api/src/manga_reader/modules/etl_cdc/application/service.py)) để thỏa mãn `FK_manga_stats_languages_manga_stats`.
 
 5. **Guard trùng report bình luận & tự report bình luận (`trg_comment_reports_guard` 51015/51016)**
-   - **Khắc phục:** Kiểm tra ở tầng ứng dụng trong [moderation_reporting/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/moderation_reporting/application/service.py) để trả về mã chuẩn `422 SELF_REPORT_FORBIDDEN` và `409 DUPLICATE_REPORT` trước khi T-SQL trigger ném lỗi 500.
+   - **Khắc phục:** Kiểm tra ở tầng ứng dụng trong [moderation_reporting/application/service.py](../../apps/api/src/manga_reader/modules/moderation_reporting/application/service.py) để trả về mã chuẩn `422 SELF_REPORT_FORBIDDEN` và `409 DUPLICATE_REPORT` trước khi T-SQL trigger ném lỗi 500.
 
 6. **Reset `client_sequence = 0` khi chuyển chapter trong Reader**
-   - **Khắc phục:** Đặt lại `prog_row.client_sequence = 0` khi mở chapter mới bằng `SELECT` trong [reader_engine/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/reader_engine/application/service.py) để tránh lỗi `409 PROGRESS_CONFLICT` khi client bắt đầu sequence từ 1 ở chapter mới.
+   - **Khắc phục:** Đặt lại `prog_row.client_sequence = 0` khi mở chapter mới bằng `SELECT` trong [reader_engine/application/service.py](../../apps/api/src/manga_reader/modules/reader_engine/application/service.py) để tránh lỗi `409 PROGRESS_CONFLICT` khi client bắt đầu sequence từ 1 ở chapter mới.
 
 7. **Content-Based Recommendation cho toàn bộ 86.867 truyện & giới hạn `.in_(...)` 2.100 tham số**
    - **Khắc phục:**
-     - [recommendations/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/recommendations/application/service.py): Tính on-the-fly TF-IDF vector từ tags/creators/demographic/title/description nếu truyện chưa có sẵn dòng trong `manga_content_vectors`.
-     - [catalog_discovery/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/catalog_discovery/application/service.py), [comments_reactions/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/comments_reactions/application/service.py), [admin_analytics/application/service.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/src/manga_reader/modules/admin_analytics/application/service.py): thay danh sách ID lớn trong `.in_(...)` bằng subquery hoặc giới hạn batch `<= 1500`.
+     - [recommendations/application/service.py](../../apps/api/src/manga_reader/modules/recommendations/application/service.py): Tính on-the-fly TF-IDF vector từ tags/creators/demographic/title/description nếu truyện chưa có sẵn dòng trong `manga_content_vectors`.
+     - [catalog_discovery/application/service.py](../../apps/api/src/manga_reader/modules/catalog_discovery/application/service.py), [comments_reactions/application/service.py](../../apps/api/src/manga_reader/modules/comments_reactions/application/service.py), [admin_analytics/application/service.py](../../apps/api/src/manga_reader/modules/admin_analytics/application/service.py): thay danh sách ID lớn trong `.in_(...)` bằng subquery hoặc giới hạn batch `<= 1500`.
 
 ---
 
@@ -69,7 +69,7 @@ Tài liệu này lập checklist đối chiếu toàn bộ yêu cầu chức nă
 | CAT-001..004 | Danh mục công khai chỉ trả `PUBLIC` + `ACTIVE`, sort đa tiêu chí, phân trang 3.620+ trang (`86.867` đầu truyện) | `GET /api/v1/manga`, `GET /api/v1/tags` | `mangas`, `manga_stats`, `tags`, `tag_names` |
 | CAT-005..010 | Autocomplete (<=10 kết quả) & Search full-text/fuzzy không dấu trên tiêu đề chính + tên phụ (`manga_alt_titles`) | `GET /api/v1/manga/autocomplete`, `GET /api/v1/manga/search` | `mangas`, `manga_alt_titles`, `creators` |
 | CAT-011..015 | Tìm kiếm Creator theo vai trò `author`/`artist` (không phân biệt hoa thường), trang chi tiết Creator + tác phẩm gộp dual-role không nhân đôi card | `GET /api/v1/creators/search`, `GET /api/v1/creators/{id}`, `GET /api/v1/creators/{id}/manga` | `creators`, `creator_biographies`, `creator_links`, `manga_creators` |
-| CAT-016..021 | Bộ lọc nâng cao: `includeTags`/`excludeTags` xung đột trả `400`, `tagMode` (`GROUP_OR`, `ALL_AND`, `ANY_OR`), `demographic`, `status`, `contentRating` (`safe` loại trừ `unknown`), ngôn ngữ gốc & chapter, năm, số chapter exported, điểm, lượt xem, ngày thêm, `hideInStatus`, `hideInLists` | `GET /api/v1/manga`, [ExplorePage.tsx](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/web/src/features/discovery/ExplorePage.tsx) | `mangas`, `manga_tags`, `reading_status_records`, `list_items` |
+| CAT-016..021 | Bộ lọc nâng cao: `includeTags`/`excludeTags` xung đột trả `400`, `tagMode` (`GROUP_OR`, `ALL_AND`, `ANY_OR`), `demographic`, `status`, `contentRating` (`safe` loại trừ `unknown`), ngôn ngữ gốc & chapter, năm, số chapter exported, điểm, lượt xem, ngày thêm, `hideInStatus`, `hideInLists` | `GET /api/v1/manga`, [ExplorePage.tsx](../../apps/web/src/features/discovery/ExplorePage.tsx) | `mangas`, `manga_tags`, `reading_status_records`, `list_items` |
 | UC-3.5 | Chi tiết truyện đầy đủ (bìa, alt titles, creators, tags, links, exported stats, official volumes/chapters, rating, viewerState riêng) | `GET /api/v1/manga/{mangaIdOrSlug}`, `GET /api/v1/manga/{id}/chapters` | `mangas`, `ratings`, `reader_progress`, `reading_histories` |
 | CAT-022..029 | 3 thuật toán gợi ý: `ITEM_BASED` CF, `CONTENT_BASED` TF-IDF (precomputed + on-the-fly fallback), `USER_BASED` ẩn danh (loại truyện đã `COMPLETED`/`DROPPED`/đã đọc) | `GET /api/v1/manga/{id}/recommendations`, `GET /api/v1/recommendations/me` | `manga_content_vectors`, `reading_histories`, `ratings`, `reading_status_records` |
 
@@ -78,9 +78,9 @@ Tài liệu này lập checklist đối chiếu toàn bộ yêu cầu chức nă
 | ID | Yêu cầu | Endpoint / Thành phần | Bảng / Trigger liên quan |
 |---|---|---|---|
 | READ-001..011 | Sắp xếp chapter theo `chapter_numeric`, `language`, `pool_chapter_id`; hỗ trợ `START` (đọc từ đầu), `CONTINUE` (tiếp tục đúng trang + fallback `page_uid`), `SELECT` (chọn chapter); dựng page manifest liên tục `1..N` + stream proxy ký HMAC (MinIO zero-copy / MangaDex fallback / lazy WebP) | `GET /reader/open`, `GET /chapters/{id}/pages`, `GET /media/{bucket}/{objectKey}` | `chapters`, `chapter_pages`, `media_objects`, `reader_progress` |
-| READ-012..021 | Cài đặt `VERTICAL_WEBTOON`/`SINGLE_PAGE`/`DOUBLE_PAGE`, `LTR`/`RTL`, `FIT_WIDTH`/`FIT_HEIGHT`/`ORIGINAL`, `preloadPageCount`, lưu theo user & giữ đúng trang khi đổi layout | `GET /reader/settings`, `PUT /reader/settings`, [ChapterReaderPage.tsx](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/web/src/features/reader/ChapterReaderPage.tsx) | `reader_settings` |
+| READ-012..021 | Cài đặt `VERTICAL_WEBTOON`/`SINGLE_PAGE`/`DOUBLE_PAGE`, `LTR`/`RTL`, `FIT_WIDTH`/`FIT_HEIGHT`/`ORIGINAL`, `preloadPageCount`, lưu theo user & giữ đúng trang khi đổi layout | `GET /reader/settings`, `PUT /reader/settings`, [ChapterReaderPage.tsx](../../apps/web/src/features/reader/ChapterReaderPage.tsx) | `reader_settings` |
 | READ-026..034 | Lưu tiến độ trang chính xác (`reader_progress`) tách biệt khỏi lịch sử mở chapter (`reading_histories`), từ chối sequence cũ (`409 PROGRESS_CONFLICT`), reset sequence khi chuyển chapter, ghi nhận lượt xem hợp lệ sau ngưỡng thời gian + chống spam F5 | `PUT /reader/progress`, `GET /reader/progress/{mangaId}`, `POST /reader/view-session/{id}/complete`, `GET /reader/history` | `reader_progress`, `reading_histories`, `trg_reading_histories_count_valid_views` |
-| UC-3.10 | Trạng thái đọc cá nhân (`READING`, `PLAN_TO_READ`, `COMPLETED`, `ON_HOLD`, `DROPPED`; không chứa `RE_READING`), xóa trạng thái, trang Thư viện `/library` | `PUT /manga/{id}/reading-status`, `DELETE /manga/{id}/reading-status`, `GET /account/me/reading-status` | `reading_status_records`, [LibraryPage.tsx](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/web/src/features/account/LibraryPage.tsx) |
+| UC-3.10 | Trạng thái đọc cá nhân (`READING`, `PLAN_TO_READ`, `COMPLETED`, `ON_HOLD`, `DROPPED`; không chứa `RE_READING`), xóa trạng thái, trang Thư viện `/library` | `PUT /manga/{id}/reading-status`, `DELETE /manga/{id}/reading-status`, `GET /account/me/reading-status` | `reading_status_records`, [LibraryPage.tsx](../../apps/web/src/features/account/LibraryPage.tsx) |
 
 ### Module 5 & Module 7 (Social) — Đánh giá & Bình luận (`ratings`, `comments_reactions`, `UC-4.7..4.8`, `UC-5..5.8`)
 
@@ -108,17 +108,15 @@ Tài liệu này lập checklist đối chiếu toàn bộ yêu cầu chức nă
 
 ## 3. Kết quả kiểm chứng thực tế
 
-Tất cả các kiểm tra dưới đây được chạy sau lần chỉnh sửa code cuối cùng:
+Tất cả các kiểm tra dưới đây được chạy sau lần rà soát hệ thống cuối cùng (`pnpm check:all`):
 
-- **Lint & Format:** `pnpm lint` (`eslint` + `ruff`) và `pnpm format:check` (`prettier` + `ruff format --check`, 98 file Python) — **Pass**.
+- **Lint & Format:** `pnpm lint` (`eslint` + `ruff`) và `pnpm format:check` (`prettier` + `ruff format --check`) — **Pass**.
 - **Typecheck:** `pnpm typecheck` (`tsc` cho `@manga-reader/contracts` & `@manga-reader/web` + `mypy src` strict trên 83 file Python) — **Pass**.
 - **Contracts & Frontend Tests:**
   - `packages/contracts`: `vitest run` — **7 passed**.
-  - `apps/web`: `vitest run` ([App.test.tsx](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/web/tests/App.test.tsx)) — **14 passed** (lần chạy đầu gặp 1 worker timeout khi đang chạy nối tiếp sau typecheck; lần chạy lại đơn lẻ pass đủ 14/14).
+  - `apps/web`: `vitest run` ([App.test.tsx](../../apps/web/tests/App.test.tsx)) — **28 passed**.
 - **Backend & Live SQL Server `QL_DocTruyen` + MinIO Tests:**
-  - `uv --directory apps/api run pytest` — **26 passed in 179.71s**, bao gồm 2 test live trên `QL_DocTruyen` trong [test_live_mssql_optional.py](file:///d:/work/TH-PTTK/QL-DocTruyen/apps/api/tests/integration/test_live_mssql_optional.py):
+  - `uv --directory apps/api run pytest` — **29 passed**, bao gồm 2 test live trên `QL_DocTruyen` trong [test_live_mssql_optional.py](../../apps/api/tests/integration/test_live_mssql_optional.py) (tổng `64 passed / 64` qua `pnpm test`):
     1. `test_live_mssql_catalog_detail_search_recs_and_minio_read_only`: kiểm tra danh mục 86.866+ truyện, tags, Advanced Search (`GROUP_OR`/`ALL_AND`, demographic, `safe != unknown`), autocomplete, search, creator, stream cover ký HMAC từ MinIO `manga-media`, `CONTENT_BASED`/`ITEM_BASED` recommendation, và xác nhận `GET /api/v1/manga/mysterious-disappearances` trả về `200 OK` (fix lỗi `Incorrect syntax near '0'`).
     2. `test_live_mssql_full_12_module_end_to_end_and_triggers`: kiểm tra end-to-end toàn bộ 12 module cùng tất cả trigger SQL Server (`trg_account_status_histories_guard`, `trg_activity_logs_immutable`, `trg_ratings_require_reading_history`, `trg_ratings_recalculate_average`, `trg_reading_histories_count_valid_views`, `trg_comment_reactions_sync_counts`, `trg_list_items_sync_item_count`, `trg_mangas_cleanup_before_delete`) và dọn sạch hoàn toàn dữ liệu kiểm thử tạm (`Leftover test accounts: 0`, `Total mangas: 86867`).
-- **Production Build & Dump:** `pnpm build` và `pnpm dump:context` (174 source files) — **Pass**.
-- **Live HTTP API Check (`http://127.0.0.1:8020` đang chạy nền):** `GET /api/v1/health` (`status: ok`) và `GET /api/v1/manga/mysterious-disappearances` (`200 OK`, `ratingCount: 128`, `averageRating: 7.688`, `exportedChapterCount: 255`).
-- **Live Chrome Browser UI (`http://localhost:5173`):** Chưa chạy được bước kiểm tra trực tiếp trên Chrome trong phiên này do `chrome_devtools` MCP server chưa kết nối sau khi restart session.
+- **Production Build:** `pnpm build` — **Pass**.

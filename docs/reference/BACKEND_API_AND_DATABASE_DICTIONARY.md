@@ -1,7 +1,7 @@
 # Từ điển Backend API, Hạ tầng & Cơ sở dữ liệu (`QL-DocTruyen`)
 
 > **Dự án:** Hệ thống Đọc truyện Manga & Webtoon — Manga Reader (`QL-DocTruyen`)  
-> **Khảo sát source:** ngày 22/11/2026 tại commit `3a52a2a` (`2026-11-22`)  
+> **Khảo sát source:** ngày 25/11/2026 (sau commit `d90e788` — rà soát toàn bộ hệ thống)  
 > **Phạm vi:** 83 file Python FastAPI + SQLAlchemy 2.x Async trong `apps/api/src/manga_reader/`, Alembic migrations trong `database/migrations/`, và CSDL SQL Server 2022 (`QL_DocTruyen`, 50 bảng, 10 T-SQL triggers, hệ thống covering indexes).  
 > **Mục đích:** tài liệu tra cứu kỹ thuật đầy đủ cho toàn bộ bề mặt HTTP API (`/api/v1/*`), cấu trúc phân tầng Modular Monolith 12 module, các lớp Adapter hạ tầng và từ điển chi tiết từng bảng dữ liệu / chỉ mục / trigger.
 

@@ -1,8 +1,8 @@
 # Từ điển Giao diện Web → Code thực tế (`QL-DocTruyen`)
 
 > **Dự án:** Hệ thống Đọc truyện Manga & Webtoon — Manga Reader (`QL-DocTruyen`)  
-> **Khảo sát source:** ngày 23/11/2026 tại commit `3a52a2a` + bản cập nhật tab chi tiết manga (`MangaDetailPage.tsx`)  
-> **Phạm vi:** 45 file React 19 / TypeScript & CSS trong `apps/web/src/`, 4 Layout Boundaries, 19 Routes, kết nối tới 12 Domain Modules FastAPI trong `apps/api/src/manga_reader/`.  
+> **Khảo sát source:** ngày 25/11/2026 (sau commit `d90e788` — rà soát toàn bộ hệ thống)  
+> **Phạm vi:** 45 file React 19 / TypeScript & CSS trong `apps/web/src/`, 4 Layout Boundaries, 23 Routes, kết nối tới 12 Domain Modules FastAPI trong `apps/api/src/manga_reader/`.  
 > **Mục đích:** tra ngược từ mọi tên màn hình, tab, nút bấm, nhãn lọc, modal, drawer hoặc biểu đồ người dùng nhìn thấy trên trình duyệt (`Ctrl+F`) sang đúng file `.tsx`, hook, hàm xử lý sự kiện, phương thức `apiClient.ts`, endpoint API và service Backend xử lý tương ứng.
 
 ---
@@ -15,7 +15,7 @@
 
 ```mermaid
 flowchart TB
-  Browser["Trình duyệt<br/>19 Routes · 4 Layouts"]
+  Browser["Trình duyệt<br/>23 Routes · 4 Layouts"]
   Router["router.tsx + Layouts<br/>Public · ReaderShell · Authenticated · Admin"]
   Header["AppHeader + Autocomplete (Ctrl K)<br/>useTheme + AuthProvider"]
   Query["TanStack Query v5 + apiClient.ts<br/>Bearer JWT + Single-Flight Refresh"]
@@ -31,7 +31,7 @@ flowchart TB
 
 ```text
 AppProviders (QueryClientProvider + AuthProvider)
-└── AppRoutes (19 Routes trên 4 Layout Boundaries)
+└── AppRoutes (23 Routes trên 4 Layout Boundaries)
     ├── AppHeader (toàn cục: Logo, Nav, Ctrl+K Live Search Manga/Creators, UserAvatar, Dark/Light Theme)
     ├── [PublicLayout] (/ , /explore , /search/advanced , /search , /manga/:slug , /author/:id/:slug , /profile/:username , /login , /register , /forgot-password , /verify-email , *)
     │   ├── UI-01 Cụm Xác thực (AuthPages.tsx)

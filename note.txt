@@ -21,8 +21,8 @@ Trạng thái hiện tại (SẴN SÀNG CHẠY & TEST NGAY):
 --------------------------------------------------------------------------------
 - Web Frontend (React + Vite):   http://127.0.0.1:5173
 - Backend API (FastAPI):         http://127.0.0.1:8020
-- Swagger UI (API Docs):         http://127.0.0.1:8020/docs
-- ReDoc (API Docs):              http://127.0.0.1:8020/redoc
+- Swagger UI (API Docs):         http://127.0.0.1:8020/api/v1/docs
+- ReDoc (API Docs):              http://127.0.0.1:8020/api/v1/redoc
 - Health Check (qua Vite proxy): http://127.0.0.1:5173/api/v1/health
 
 Lưu ý: Vite tự động proxy mọi request `/api/*` sang `http://127.0.0.1:8020` ở cả chế độ dev (`:5173`) lẫn preview (`:4173`), đồng thời `ApiClient` có cơ chế tự fallback về `:8020` khi chạy localhost.
@@ -72,7 +72,7 @@ Mẹo nhanh:
 [Yêu cầu đăng nhập Reader]
 - /library                         : Thư viện cá nhân 5 trạng thái (`READING`, `PLAN_TO_READ`, `COMPLETED`, `ON_HOLD`, `DROPPED`) tách biệt khỏi Reading Lists
 - /history                         : Lịch sử đọc phân nhóm theo ngày + nút đọc tiếp đúng số trang đã dừng
-- /reading-lists  &  /lists        : Danh sách đọc riêng tư + Cover Art Collage (1–4 bìa hoặc ảnh SVG "Empty List") + Clone/Merge danh sách
+- /reading-lists                   : Danh sách đọc riêng tư + Cover Art Collage (1–4 bìa hoặc ảnh SVG "Empty List") + Clone/Merge danh sách
 - /reading-lists/:listId           : Chi tiết danh sách + Biểu đồ & Thống kê metadata động + Xác nhận xóa 2 bước
 - /settings                        : Sửa hồ sơ, Upload Avatar, Đổi mật khẩu, Cài đặt trình đọc, Lịch sử đánh giá, Thống kê cá nhân
 

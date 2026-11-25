@@ -138,5 +138,5 @@ pnpm check:all     # Run all five gates sequentially
 
 For detailed architectural, UI, API, and database mapping across the repository:
 - [USECASE_CODE_TRACEABILITY.md](../reference/USECASE_CODE_TRACEABILITY.md) — Use Cases `UC-1`..`UC-8` mapped end-to-end across Frontend, API, Services, ORM, and SQL Server Triggers.
-- [WEB_UI_CODE_DICTIONARY.md](../reference/WEB_UI_CODE_DICTIONARY.md) — Dictionary of all 19 routes, 4 layouts, modals, drawers, SVG charts, and shared components (`UI-00`..`UI-16`).
+- [WEB_UI_CODE_DICTIONARY.md](../reference/WEB_UI_CODE_DICTIONARY.md) — Dictionary of all 23 routes, 4 layouts, modals, drawers, SVG charts, and shared components (`UI-00`..`UI-16`).
 - [BACKEND_API_AND_DATABASE_DICTIONARY.md](../reference/BACKEND_API_AND_DATABASE_DICTIONARY.md) — Dictionary of 12 domain modules, HTTP endpoints (`/api/v1/*`), 47 ORM tables + 3 system tables, covering indexes, and 10 T-SQL triggers.

@@ -1,7 +1,7 @@
 # System Architecture Overview
 
 > **Architecture Style:** Layered Modular Monolith (Extractable Worker Boundary)  
-> **Source Alignment:** `docs/agent-plan/00..14`, `docs/architecture/ADR-TECH-STACK.md`
+> **Source Alignment:** `docs/agent-plan/Setup/00..14` & `docs/agent-plan/Design/00..08`, `docs/architecture/ADR-TECH-STACK.md`
 
 ---
 
@@ -105,7 +105,7 @@ The architecture enforces distinct typed identity wrappers (`common/identities.p
 
 ```text
 apps/web/src/
-├── app/           # App root, Providers (QueryClient, Theme, Auth), Route table (all 16+ routes)
+├── app/           # App root, Providers (QueryClient, Theme, Auth), Route table (all 23 routes across 4 layouts)
 ├── layouts/       # PublicLayout, AuthenticatedLayout, AdminLayout, ReaderShellLayout
 ├── components/    # Design-system primitives + standardized states (Loading, Empty, Error, Forbidden, NotFound)
 ├── features/      # Domain-aligned feature modules (explore, search, manga, reader, creator, account, lists, admin)

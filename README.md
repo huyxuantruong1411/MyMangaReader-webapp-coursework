@@ -2,7 +2,7 @@
 
 Complete **Full-Stack Modular Monolith** Manga Reader Web Application, built from the specifications in [`docs/agent-plan/Setup/`](docs/agent-plan/Setup/00_README_AGENT_ENTRYPOINT.md) (`Lab8.docx`, `Lab9.docx`, `Lab10.docx`, and `manga-reader-package:2.0` JSON Schema Draft 2020-12) and verified end-to-end across SQL Server 2022, FastAPI, and React 19.
 
-> **Current Stage:** Production-Ready Full-Stack Completion — **47 Canonical ORM Tables + 3 System Tables** on SQL Server 2022 (`QL_DocTruyen`, 10 T-SQL business-rule triggers, 9 covering index groups), **12 Backend Domain Modules** (`90` `/api/v1` endpoints), **Shared JSON Schema v2.0 Contracts**, **19-Route React 19 SPA** (animated 4-tab Manga Detail with paginated chapters), full NFC Unicode Vietnamese support (`use_setinputsizes=False` + `Unicode`/`UnicodeText`), Real Gmail SMTP OTP recovery & verification, Reading List Cover Art + Empty Default SVG Artwork, Interactive Overflow-Safe SVG Analytics Dashboards, and Full Codebase Traceability Dictionaries (`64 / 64` automated tests passing).
+> **Current Stage:** Production-Ready Full-Stack Completion — **47 Canonical ORM Tables + 3 System Tables** on SQL Server 2022 (`QL_DocTruyen`, 10 T-SQL business-rule triggers, 9 covering index groups), **12 Backend Domain Modules** (`90` `/api/v1` endpoints), **Shared JSON Schema v2.0 Contracts**, **23-Route React 19 SPA** (animated 4-tab Manga Detail with paginated chapters), full NFC Unicode Vietnamese support (`use_setinputsizes=False` + `Unicode`/`UnicodeText`), Real Gmail SMTP OTP recovery & verification, Reading List Cover Art + Empty Default SVG Artwork, Interactive Overflow-Safe SVG Analytics Dashboards, and Full Codebase Traceability Dictionaries (`64 / 64` automated tests passing).
 
 ![Manga Reader — Discovery Hub & Continue Reading](docs/media/image3.png)
 
@@ -52,7 +52,7 @@ Live application screenshots captured directly against SQL Server 2022 (`QL_DocT
 
 | Layer | Technology | Location |
 |---|---|---|
-| **Frontend Web SPA** | React 19 + TypeScript (strict) + Vite + React Router v7 + TanStack Query v5 + Tailwind CSS v4 (45 files, 4 Layouts, 19 Routes) | [`apps/web/`](apps/web/) |
+| **Frontend Web SPA** | React 19 + TypeScript (strict) + Vite + React Router v7 + TanStack Query v5 + Tailwind CSS v4 (45 files, 4 Layouts, 23 Routes) | [`apps/web/`](apps/web/) |
 | **Backend API Monolith** | Python 3.13 + FastAPI + Uvicorn + Pydantic v2 + SQLAlchemy 2.x Async + Pillow + Argon2id + PyJWT + `uv` (83 Python files, 12 Modules) | [`apps/api/`](apps/api/) |
 | **Shared Data Contract** | `manga-reader-package:2.0` (JSON Schema Draft 2020-12, Ajv2020 + Python `jsonschema`, fixtures) | [`packages/contracts/`](packages/contracts/) |
 | **Database & Migrations** | SQL Server 2022 (`QL_DocTruyen` primary — 50 tables, 10 T-SQL triggers, covering indexes) + Alembic (`0001`, `0002`) + SQLite fallback | [`database/`](database/) |
@@ -102,7 +102,7 @@ Comprehensive source-linked reference guides tracing every requirement, screen, 
 | Document | Scope | Link |
 |---|---|---|
 | **Use Case → Code Traceability** | All 8 parent UCs & 50 sub-UCs (`UC-1`..`UC-8`, including `UC-6.7` Forgot Password OTP), `Ctrl+F` keyword index, Actor RBAC matrix, runtime flow diagram, code snippets, and ADR mapping | [`docs/reference/USECASE_CODE_TRACEABILITY.md`](docs/reference/USECASE_CODE_TRACEABILITY.md) |
-| **Web UI → Code Dictionary** | `UI-00`..`UI-16`: all 4 layouts, 19 routes, header autocomplete, tabs, modals, drawers, SVG charts, shared components, and quick Q&A lookup | [`docs/reference/WEB_UI_CODE_DICTIONARY.md`](docs/reference/WEB_UI_CODE_DICTIONARY.md) |
+| **Web UI → Code Dictionary** | `UI-00`..`UI-16`: all 4 layouts, 23 routes, header autocomplete, tabs, modals, drawers, SVG charts, shared components, and quick Q&A lookup | [`docs/reference/WEB_UI_CODE_DICTIONARY.md`](docs/reference/WEB_UI_CODE_DICTIONARY.md) |
 | **Backend API & DB Dictionary** | 12 domain modules, all `90` HTTP endpoints under `/api/v1`, 13 error classes, infrastructure adapters, 47 ORM tables + 3 system tables, 9 covering index groups, and all 10 T-SQL triggers | [`docs/reference/BACKEND_API_AND_DATABASE_DICTIONARY.md`](docs/reference/BACKEND_API_AND_DATABASE_DICTIONARY.md) |
 
 ---
@@ -113,7 +113,7 @@ Comprehensive source-linked reference guides tracing every requirement, screen, 
 QL-DocTruyen/
 ├── apps/
 │   ├── api/                 # FastAPI modular monolith (83 Python files, 12 domain modules + unit/E2E tests)
-│   └── web/                 # React 19 + Vite SPA (45 TS/TSX/CSS files, 19 interactive routes + Vitest suite)
+│   └── web/                 # React 19 + Vite SPA (45 TS/TSX/CSS files, 23 routes + Vitest suite)
 ├── packages/
 │   └── contracts/           # Pinned manga-reader-package:2.0 JSON Schema Draft 2020-12 + fixtures + Ajv2020
 ├── database/
@@ -134,7 +134,8 @@ QL-DocTruyen/
     ├── media/               # Curated live UI screenshots showcased in README
     ├── operations/          # LOCAL_SETUP.md & TROUBLESHOOTING.md
     ├── reference/           # Traceability/UI/API/DB dictionaries + original Lab8/Lab9/Lab10 docx & drawio
-    └── system_dump/         # Host machine schema/inventory reference dump (heavy archives excluded in .gitignore)
+    ├── system_dump/         # Host machine schema/inventory reference dump (heavy archives excluded in .gitignore)
+    └── ux-ui/               # UX/UI audits, design system guide, acceptance matrix & SQL Server audit checklist
 ```
 
 ---
@@ -201,6 +202,9 @@ pnpm dev:web
   - [`docs/architecture/SYSTEM_ARCHITECTURE.md`](docs/architecture/SYSTEM_ARCHITECTURE.md)
   - [`docs/architecture/MODULE_BOUNDARIES.md`](docs/architecture/MODULE_BOUNDARIES.md)
   - [`docs/architecture/DEVELOPMENT_GUIDELINES.md`](docs/architecture/DEVELOPMENT_GUIDELINES.md)
+- **UX/UI & Audit Docs:**
+  - [`docs/ux-ui/DESIGN_SYSTEM_IMPLEMENTATION.md`](docs/ux-ui/DESIGN_SYSTEM_IMPLEMENTATION.md)
+  - [`docs/ux-ui/SETUP_FULL_FEATURE_AUDIT_CHECKLIST.md`](docs/ux-ui/SETUP_FULL_FEATURE_AUDIT_CHECKLIST.md)
 - **Data & Storage:**
   - [`database/documentation/SCHEMA_IMPLEMENTATION_PLAN.md`](database/documentation/SCHEMA_IMPLEMENTATION_PLAN.md)
   - [`packages/contracts/README.md`](packages/contracts/README.md)
